@@ -261,6 +261,9 @@ export interface OverpassPoi {
   phone: string | null;
   opening_hours: string | null;
   cuisine: string | null;
+  /** Brand name and its Wikidata id, when OSM carries them — the logo is looked up from the id. */
+  brand: string | null;
+  brand_wikidata: string | null;
   /**
    * Which index the row came from. Overture is not OpenStreetMap: it carries
    * OSM among other sources under other licences, so a row from the TREK index
