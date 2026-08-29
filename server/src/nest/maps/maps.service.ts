@@ -39,6 +39,7 @@ import {
   parsePoiCategories,
   resolveOverpassEndpoints,
   resolveOverpassTimeoutMs,
+  OVERPASS_QUERY_TIMEOUT_S,
   stripWikiMarkup,
   parseWikipediaTag,
   toWikiLang,
@@ -1224,7 +1225,7 @@ export class MapsService {
       .join('\n');
     // `out center tags <n>` returns ways/relations with a computed center and caps
     // the result count in one round-trip.
-    const query = `[out:json][timeout:20];\n(\n${selectors}\n);\nout center tags ${cap + 25};`;
+    const query = `[out:json][timeout:${OVERPASS_QUERY_TIMEOUT_S}];\n(\n${selectors}\n);\nout center tags ${cap + 25};`;
 
     const elements = await overpassFetch(query);
 
