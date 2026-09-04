@@ -46,6 +46,7 @@ import {
   haversineMetres,
   namesOverlap,
   mergeSearchResults,
+  readChargingInfo,
   type GoogleOpeningHours,
   type OverpassPoi,
 } from './maps.helpers';
@@ -869,6 +870,10 @@ export class MapsService {
               // gets its own mark here exactly as it does on the Overpass path.
               brand: p.brand?.name ?? null,
               brand_wikidata: p.brand?.wikidata ?? null,
+              // Sockets are an OSM thing; the index has no charging fields, so
+              // a station answered from here reports "not stated" rather than
+              // claiming it offers nothing.
+              charging: null,
               // The index has no cuisine field, so this null is the truth
               // rather than a field being dropped on the way through.
               cuisine: null,
@@ -1273,6 +1278,10 @@ export class MapsService {
         // Only the plain Q-id form is passed on; anything else would be a lookup we
         // would have to guess at.
         brand_wikidata: /^Q[0-9]+$/.test(tags['brand:wikidata'] || '') ? tags['brand:wikidata'] : null,
+        // Only where it means something. Every POI carries `capacity` and `fee` for its
+        // own reasons — a restaurant's capacity is seats — so reading them as charging
+        // data anywhere else would be wrong on most of the map.
+        charging: categoryOfFilter.get(matched) === 'charging' ? readChargingInfo(tags) : null,
         source: 'openstreetmap',
       });
     }
