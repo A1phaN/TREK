@@ -4442,6 +4442,47 @@ function runMigrations(db: Database.Database): void {
       db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_file_links_file_budget ON file_links(file_id, budget_item_id)');
       db.exec('CREATE INDEX IF NOT EXISTS idx_file_links_budget_item_id ON file_links(budget_item_id)');
     },
+    /**
+     * Which chat message an uploaded image belongs to.
+     *
+     * A column on `trip_files` rather than a link row, matching the two that
+     * predate it: a chat image is uploaded for exactly one message and dies with
+     * it, so the cascade is the whole relationship. Guarded through
+     * pragma_table_info like every other column add here, not through a caught
+     * "duplicate column name": that swallows the next error too.
+     *
+     * Appended LAST: the array is index-addressed against schema_version.
+     */
+    () => {
+      const cols = db.prepare("SELECT name FROM pragma_table_info('trip_files')").all() as Array<{ name: string }>;
+      if (!cols.some((c) => c.name === 'message_id')) {
+        db.exec('ALTER TABLE trip_files ADD COLUMN message_id INTEGER REFERENCES collab_messages(id) ON DELETE CASCADE');
+      }
+      db.exec('CREATE INDEX IF NOT EXISTS idx_trip_files_message_id ON trip_files(message_id)');
+    },
+    /**
+     * Links somebody shared with the trip.
+     *
+     * Its own table rather than a note with a URL in it: a link is pinned,
+     * ordered and opened, and none of that is what a note does. `user_id` is who
+     * shared it, so the list can say so and so a member leaving takes their rows
+     * with them.
+     *
+     * Appended LAST: the array is index-addressed against schema_version.
+     */
+    () => {
+      db.exec(`CREATE TABLE IF NOT EXISTS collab_links (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        url TEXT NOT NULL,
+        pinned INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`);
+      db.exec('CREATE INDEX IF NOT EXISTS idx_collab_links_trip ON collab_links(trip_id)');
+    },
   ];
 
   if (currentVersion < migrations.length) {
