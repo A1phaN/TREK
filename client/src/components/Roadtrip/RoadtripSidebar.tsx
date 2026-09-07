@@ -416,7 +416,7 @@ function ServiceStop({ stop, entry, driveFindings, selected, onSelect, onEditSta
               // theme-lint-disable — the road-signage palette in `roadtripModel`, shared
               // with the corridor list and the map pin so one kind of stop looks like
               // itself wherever it turns up.
-              style={{ background: serviceColor(stop.stopType), color: '#fff' }}
+              style={{ background: serviceColor(stop.stopType), color: '#fff' }} // theme-lint-disable — road-signage palette
             >
               <Icon size={12} strokeWidth={2.1} aria-hidden />
             </span>
@@ -425,7 +425,7 @@ function ServiceStop({ stop, entry, driveFindings, selected, onSelect, onEditSta
           <span
             className={DISC}
             // theme-lint-disable — same palette, read-only.
-            style={{ background: serviceColor(stop.stopType), color: '#fff' }}
+            style={{ background: serviceColor(stop.stopType), color: '#fff' }} // theme-lint-disable — road-signage palette
           >
             <Icon size={12} strokeWidth={2.1} aria-label={label} />
           </span>

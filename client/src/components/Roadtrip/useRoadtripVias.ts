@@ -1,8 +1,27 @@
 import { useCallback, useEffect, useState } from 'react'
 import { roadtripApi } from '../../api/client'
+import { useNetworkMode } from '../../hooks/useNetworkMode'
 import { isEmptyReanchoring, type Reanchoring } from './roadtripModel'
 import type { RoadtripDayTrack, RoadtripVia } from '@trek/shared'
 
+/**
+ * Via points are DELIBERATELY online-only, which the repo asks to be said out
+ * loud rather than left to be discovered.
+ *
+ * Everything else on this screen goes through a repo and the mutation queue:
+ * optimistic Dexie write, temporary negative id, idempotent replay on
+ * reconnect. A via cannot follow that shape as it stands, because its anchor is
+ * a POSITION rather than an id — `after_order_index` counts stops as the routing
+ * request builds them — so a queued write replayed after somebody else has
+ * added or removed a stop would re-pin the drive onto a leg nobody chose, and it
+ * would do so silently, hours later. The correct offline story needs the anchor
+ * to be an assignment id first, which is a change to the wire contract and to
+ * the migration, not to this hook.
+ *
+ * Until then the honest behaviour is to say so: `editable` is false with no
+ * network, so the map stops offering a drag it cannot keep, instead of failing
+ * one write at a time and losing the edit.
+ */
 export interface RoadtripVias {
   /** Every via of the trip, keyed by day. */
   byDay: Record<number, RoadtripVia[]>
@@ -24,6 +43,14 @@ export interface RoadtripVias {
    * them. The list is kept and the staleness is said instead.
    */
   stale: boolean
+  /**
+   * Whether shaping the drive is possible right now.
+   *
+   * False with no network: the domain is online-only (see the note above this
+   * interface), so the surfaces disable the gesture rather than accepting one
+   * and dropping it.
+   */
+  editable: boolean
   add: (dayId: number, afterOrderIndex: number, lat: number, lng: number) => Promise<void>
   /**
    * Lay a chain of vias on one day, optionally clearing the legs it fills first.
@@ -76,6 +103,9 @@ export function useRoadtripVias(tripId: number | string | null, active: boolean)
    * quietly showing a trip that has lost its detours.
    */
   const [stale, setStale] = useState(false)
+  // Read through the app's single source of truth for connectivity, which also
+  // covers the offline switch a user can set with the network still up.
+  const { offline } = useNetworkMode()
 
   const group = useCallback((vias: RoadtripVia[]) => {
     const next: Record<number, RoadtripVia[]> = {}
@@ -159,5 +189,5 @@ export function useRoadtripVias(tripId: number | string | null, active: boolean)
     await reload()
   }, [tripId, reload])
 
-  return { byDay, trackByDay, stale, add, addMany, move, remove, reanchor }
+  return { byDay, trackByDay, stale, editable: !offline, add, addMany, move, remove, reanchor }
 }

@@ -711,10 +711,23 @@ export function MapViewGL({
       // sits on that surface. Stopping only pointerdown left both running at once: the
       // handle moved AND the map slid out from under it.
       const swallow = (e: Event) => e.stopPropagation()
+      // Where the gesture began, so a click can be told from a drag. Without it
+      // every pointerup committed a move to wherever inside the 17px handle the
+      // pointer happened to be: at a low zoom that is kilometres, and the write
+      // re-routes the whole trip. Leaflet gets this for free from `dragend`,
+      // which is why the two renderers behaved differently for one gesture.
+      let startedAt: { x: number; y: number } | null = null
+      const MOVED_ENOUGH = 4
       const onDown = (e: PointerEvent) => {
+        // Primary button only. Right-clicking ran onDown, then contextmenu ->
+        // remove AND pointerup -> move, so one gesture sent two writes; on the
+        // platforms where contextmenu comes first, the move landed on an id that
+        // no longer existed and reported a failure for a deletion that worked.
+        if (e.button !== 0) return
         e.stopPropagation()
         e.preventDefault()
         dragging = true
+        startedAt = { x: e.clientX, y: e.clientY }
         el.setPointerCapture(e.pointerId)
         el.style.cursor = 'grabbing'
       }
@@ -728,9 +741,28 @@ export function MapViewGL({
         if (!dragging) return
         dragging = false
         el.style.cursor = 'grab'
+        const from = startedAt
+        startedAt = null
+        const travelled = from ? Math.hypot(e.clientX - from.x, e.clientY - from.y) : 0
+        if (travelled < MOVED_ENOUGH) {
+          // A click, not a drag. Put the pin back where the via actually is: the
+          // move handler has been following the pointer across the handle.
+          pin.setLngLat([via.lng, via.lat])
+          return
+        }
         const rect = map.getContainer().getBoundingClientRect()
         const at = map.unproject([e.clientX - rect.left, e.clientY - rect.top])
         viaHandlersRef.current.onMoveVia?.(via.day_id, via.id, at.lat, at.lng)
+      }
+      // The browser fires this when the captured element is torn out of the DOM,
+      // which is exactly what a delete does. Committing a position there wrote a
+      // move for a via that was being removed.
+      const onCancel = () => {
+        if (!dragging) return
+        dragging = false
+        startedAt = null
+        el.style.cursor = 'grab'
+        pin.setLngLat([via.lng, via.lat])
       }
       const onContext = (e: MouseEvent) => {
         e.preventDefault()
@@ -739,7 +771,7 @@ export function MapViewGL({
       el.addEventListener('pointerdown', onDown)
       el.addEventListener('pointermove', onMove)
       el.addEventListener('pointerup', onUp)
-      el.addEventListener('pointercancel', onUp)
+      el.addEventListener('pointercancel', onCancel)
       el.addEventListener('contextmenu', onContext)
       el.addEventListener('mousedown', swallow)
       el.addEventListener('touchstart', swallow, { passive: true })
@@ -748,7 +780,7 @@ export function MapViewGL({
         el.removeEventListener('pointerdown', onDown)
         el.removeEventListener('pointermove', onMove)
         el.removeEventListener('pointerup', onUp)
-        el.removeEventListener('pointercancel', onUp)
+        el.removeEventListener('pointercancel', onCancel)
         el.removeEventListener('contextmenu', onContext)
         el.removeEventListener('mousedown', swallow)
         el.removeEventListener('touchstart', swallow)
@@ -870,8 +902,17 @@ export function MapViewGL({
   useEffect(() => {
     const map = mapRef.current
     if (!map || !mapReady || !onRouteClick) return
-    const onClick = (e: { lngLat: { lat: number; lng: number }; preventDefault?: () => void }) => {
+    const onClick = (e: { lngLat: { lat: number; lng: number }; point?: { x: number; y: number }; preventDefault?: () => void }) => {
       e.preventDefault?.()
+      // Layer handlers are independent: MapLibre evaluates each registration
+      // against the same click, so a point that hits both the offered-route band
+      // and the current-route band fires both. Every alternative starts and ends
+      // at the same two stops, and when the leg already carries vias the current
+      // road is itself one of the offers, so the overlap is the whole leg. One
+      // click then dropped a via AND chose a different road, two writes and two
+      // trip reloads for a gesture the user made once. The picker is a modal
+      // choice about that leg; dropping a via mid-choice is not offered anywhere.
+      if (e.point && map.queryRenderedFeatures?.(e.point, { layers: ['route-alt-hit'] })?.length) return
       onRouteClick(e.lngLat.lat, e.lngLat.lng)
     }
     const enter = () => { map.getCanvas().style.cursor = 'copy' }

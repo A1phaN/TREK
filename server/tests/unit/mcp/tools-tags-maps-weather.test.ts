@@ -447,7 +447,8 @@ describe('Tool: search_pois', () => {
       expect(data.pois[0].name).toBe('Chez Nous');
       expect(data.source).toBe('openstreetmap');
       expect(trekNearbyMock).toHaveBeenCalled();
-      expect(MapsService.prototype.searchOverpassPois).toHaveBeenCalledWith('restaurant', BBOX, 'fr');
+      // The caller's per-category budget rides along on the fallback too.
+      expect(MapsService.prototype.searchOverpassPois).toHaveBeenCalledWith('restaurant', BBOX, 'fr', 60);
     });
   });
 
@@ -497,7 +498,9 @@ describe('Tool: search_pois', () => {
       expect(lat).toBeCloseTo(48.86, 5);
       expect(lng).toBeCloseTo(2.345, 5);
       expect(opts?.category).toBe('restaurant,casual_eatery,fast_food');
-      expect(opts?.limit).toBe(50);
+      // Sixty per category, the same allowance the Overpass path spends, rather
+      // than a number this branch made up for itself.
+      expect(opts?.limit).toBe(60);
       expect(opts?.radius).toBeGreaterThan(300);
       expect(opts?.radius).toBeLessThanOrEqual(20000);
     });
@@ -532,7 +535,7 @@ describe('Tool: search_pois', () => {
 
     await withHarness(user.id, async (h) => {
       await h.client.callTool({ name: 'search_pois', arguments: { category: 'museum', bbox: BBOX } });
-      expect(MapsService.prototype.searchOverpassPois).toHaveBeenCalledWith('museum', BBOX, undefined);
+      expect(MapsService.prototype.searchOverpassPois).toHaveBeenCalledWith('museum', BBOX, undefined, 60);
     });
   });
 

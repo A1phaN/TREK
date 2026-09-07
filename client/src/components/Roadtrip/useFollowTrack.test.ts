@@ -49,6 +49,7 @@ function viasStub(over: Partial<RoadtripVias> = {}): RoadtripVias {
     byDay: {},
     trackByDay: {},
     stale: false,
+    editable: true,
     add: vi.fn(),
     addMany: vi.fn().mockResolvedValue(undefined),
     move: vi.fn(),

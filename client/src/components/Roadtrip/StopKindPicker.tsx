@@ -105,7 +105,7 @@ export default function StopKindPicker({ anchor, current, onPick, onClose }: {
                 // theme-lint-disable — the road-signage palette from `roadtripModel`, the
                 // same one the rail disc and the map pin use, so the choice looks like
                 // what it will become.
-                style={{ background: color, color: '#fff', ...(on ? { boxShadow: `0 0 0 2px ${color}` } : {}) }}
+                style={{ background: color, color: '#fff', ...(on ? { boxShadow: `0 0 0 2px ${color}` } : {}) }} // theme-lint-disable — road-signage palette
               >
                 <Icon size={14} strokeWidth={2.2} aria-hidden />
               </span>

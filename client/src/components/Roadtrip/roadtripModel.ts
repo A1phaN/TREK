@@ -329,7 +329,16 @@ export function sumLegSeconds(legSeconds: (number | undefined)[]): number {
  * schedule abandons its cursor: a distance we do not have cannot be added to one we do.
  */
 export function deriveDriveWarnings(
-  legs: ({ duration?: number; distance?: number } | undefined)[],
+  /**
+   * `mode` decides whether a leg counts at all. A day may legitimately mix
+   * modes — splitIntoRuns exists for exactly that — and a two hour walk to a
+   * viewpoint is not two hours of driving, nor are its kilometres on the tank.
+   * Counting them reported a hike as "over the longest drive allowed" and let a
+   * ferry crossing trip a range warning. Anything that is not a driving profile
+   * is skipped; an absent mode counts, because every leg was a drive before the
+   * field existed.
+   */
+  legs: ({ duration?: number; distance?: number; mode?: string } | undefined)[],
   /** Whether the stop at each index refuels. One entry longer than `legs`. */
   refuelsAt: boolean[],
   limits: DriveLimits,
@@ -345,6 +354,11 @@ export function deriveDriveWarnings(
     const leg = legs[i]
     // The stop this leg arrives at. Both findings are about what is true on arrival.
     const at = i + 1
+    // Not a drive: neither its minutes nor its kilometres belong in findings
+    // about the driving. The budget is left exactly as it was — walking to a
+    // viewpoint and back does not use fuel, and it does not fill the tank
+    // either.
+    if (leg && leg.mode !== undefined && leg.mode !== 'driving') continue
     const seconds = leg?.duration
     if (typeof seconds === 'number') {
       totalSeconds += seconds

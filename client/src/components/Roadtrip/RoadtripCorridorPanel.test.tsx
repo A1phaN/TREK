@@ -31,7 +31,10 @@ const day = (dayId: number, dayNumber: number): RoadtripDay => ({
   legs: [],
   schedule: { entries: [], warnings: [] },
   legVias: [], driveWarnings: [], dayWarning: null,
-  geometry: [],
+  // Routed. Searching before the day has a geometry builds the corridor from the
+  // straight line between the stops, and the routing answer landing a second
+  // later clears the search mid-flight — so the button waits for this.
+  geometry: [[53.55, 9.99], [52.52, 13.4]] as [number, number][],
   distance: 0,
   duration: 0,
 })
@@ -118,6 +121,27 @@ describe('RoadtripCorridorPanel', () => {
     expect(c.search.search).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: /search/i }))
     expect(c.search.search).toHaveBeenCalledTimes(1)
+  })
+
+  it('FE-ROADTRIP-PANEL-004: a day that has not routed yet cannot be searched along', () => {
+    // Until the day routes, the corridor is the straight line between the stops,
+    // so the boxes march across whatever lies between them instead of along the
+    // roads driven. Worse, the routing answer landing a second later changes the
+    // line, which clears the search mid-flight and drops every result with no
+    // error and no explanation. Routing runs one day at a time, about a second
+    // apart, so on a long trip that window is wide open.
+    const unrouted = { ...day(1, 1), geometry: [] as [number, number][] }
+    const c = corridor({ day: unrouted })
+    wrap(<RoadtripCorridorPanel corridor={c} routes={routes([unrouted])} />)
+
+    expect(screen.getByRole('button', { name: /search/i })).toBeDisabled()
+  })
+
+  it('FE-ROADTRIP-PANEL-005: nor while the routing is still running', () => {
+    const c = corridor()
+    wrap(<RoadtripCorridorPanel corridor={c} routes={{ ...routes([day(1, 1)]), loading: true }} />)
+
+    expect(screen.getByRole('button', { name: /search/i })).toBeDisabled()
   })
 
   it('FE-ROADTRIP-PANEL-002: nothing selected means nothing to search for', () => {

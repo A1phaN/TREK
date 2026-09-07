@@ -490,3 +490,58 @@ describe('sectionAnchors', () => {
     expect(sectionAnchors([])).toEqual([])
   })
 })
+
+describe('deriveDriveWarnings — what counts as driving', () => {
+  const drive = (minutes: number, km: number) =>
+    ({ duration: minutes * 60, distance: km * 1000, mode: 'driving' })
+  const onFoot = (minutes: number, km: number) =>
+    ({ duration: minutes * 60, distance: km * 1000, mode: 'walking' })
+
+  it('FE-ROADTRIP-MODEL-085: a walk to a viewpoint is not over the longest drive allowed', () => {
+    // A day may legitimately mix modes — splitIntoRuns exists for exactly that —
+    // and a two hour hike reported as a leg finding reads as a fault in a plan
+    // that has none.
+    const out = deriveDriveWarnings(
+      [drive(60, 80), onFoot(120, 6)],
+      [false, false, false],
+      { legMinutes: 90, dayMinutes: null, rangeKm: null },
+      0,
+    )
+    expect(out.warnings).toEqual([])
+  })
+
+  it('FE-ROADTRIP-MODEL-086: walked kilometres are not on the tank', () => {
+    // Nor does walking fill it: the budget is left exactly as the drive left it.
+    const out = deriveDriveWarnings(
+      [drive(60, 80), onFoot(120, 60), drive(30, 30)],
+      [false, false, false, false],
+      { legMinutes: null, dayMinutes: null, rangeKm: 100 },
+      0,
+    )
+    // 80 then 110 — the 60 walked kilometres never entered the budget.
+    expect(out.warnings).toEqual([{ index: 3, code: 'range', sinceKm: 110 }])
+    expect(out.carryKm).toBe(110)
+  })
+
+  it('FE-ROADTRIP-MODEL-087: a walk does not count toward the driving time of the day', () => {
+    const out = deriveDriveWarnings(
+      [drive(60, 80), onFoot(180, 9)],
+      [false, false, false],
+      { legMinutes: null, dayMinutes: 90, rangeKm: null },
+      0,
+    )
+    expect(out.day).toBeNull()
+  })
+
+  it('FE-ROADTRIP-MODEL-088: a leg with no mode is still a drive', () => {
+    // Every leg was a drive before the field existed, so an absent mode counts.
+    // Reading it the other way round would silently switch the warnings off.
+    const out = deriveDriveWarnings(
+      [{ duration: 120 * 60, distance: 200 * 1000 }],
+      [false, false],
+      { legMinutes: 90, dayMinutes: null, rangeKm: null },
+      0,
+    )
+    expect(out.warnings).toEqual([{ index: 1, code: 'leg', overMinutes: 30 }])
+  })
+})

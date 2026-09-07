@@ -2698,7 +2698,9 @@ describe('controller-facing wrappers delegate to the folded methods', () => {
       // The index answers with an empty page (see the mock above), so what this
       // measures is the wrapper's own delegation.
       await svc.pois('cafe', bbox, 'de');
-      expect(spies.searchOverpassPois).toHaveBeenCalledWith('cafe', bbox, 'de');
+      // The caller's per-category budget rides along, so a corridor search that
+      // falls through to Overpass gets the allowance it asked the index for.
+      expect(spies.searchOverpassPois).toHaveBeenCalledWith('cafe', bbox, 'de', 60);
     } finally {
       Object.values(spies).forEach((s) => s.mockRestore());
     }

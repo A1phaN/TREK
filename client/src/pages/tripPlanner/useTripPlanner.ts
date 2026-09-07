@@ -1034,6 +1034,15 @@ export function useTripPlanner() {
     if (!routeAlternatives.open) setHighlightedAlternative(null)
   }, [routeAlternatives.open])
 
+  // Leaving road trip mode closes it too. The switch sits in the left sidebar and
+  // is reachable while the bar is open over the map, and the overlay depends only
+  // on the picker — so flipping the mode off left pale blue alternatives, their
+  // casings and their drive-time pills drawn on an ordinary planner map, with no
+  // road trip UI left to dismiss them from.
+  useEffect(() => {
+    if (!roadtripActive) routeAlternatives.close()
+  }, [roadtripActive, routeAlternatives])
+
   /**
    * The offered routes as the map draws them: line, colour, and the label that sits on
    * the road. Built here rather than in the page so the page stays a wiring container
@@ -1103,7 +1112,19 @@ export function useTripPlanner() {
       const dayIndex = stop && day ? day.stops.indexOf(stop) : -1
       // Clearing the leg in one write. One delete per via meant a full trip re-route
       // between each of them, so undoing a detour with three vias drew three routes.
-      if (dayIndex >= 0) await roadtripVias.addMany(open.dayId, [], [dayIndex]).catch(() => {})
+      //
+      // Reported like every other write in this hook. Swallowing it closed the
+      // picker on a leg that still carries its via and still routes the old way,
+      // so the traveller believed they had undone the detour — and because the
+      // request failed, not even the reload ran to contradict them.
+      if (dayIndex >= 0) {
+        try {
+          await roadtripVias.addMany(open.dayId, [], [dayIndex])
+        } catch (err: unknown) {
+          toast.error(err instanceof Error ? err.message : t('common.unknownError'))
+          return
+        }
+      }
       routeAlternatives.close()
       return
     }

@@ -173,7 +173,7 @@ function ResultGroup({ category, pois, dayId, insertIndexFor, onAddPoi }: {
         <span
           className="grid h-[22px] w-[22px] shrink-0 place-items-center rounded-[7px]"
           // theme-lint-disable — see ResultBadge.
-          style={{ background: color, color: '#fff' }}
+          style={{ background: color, color: '#fff' }} // theme-lint-disable — road-signage palette
         >
           <Icon size={12} strokeWidth={2} aria-hidden />
         </span>
@@ -244,7 +244,19 @@ export default function RoadtripCorridorPanel({ corridor, routes, onAddPoi }: Ro
 
   const filteredToNothing = search.results.length > 0 && corridor.visible.length === 0
 
-  const canSearch = !search.loading && corridor.categories.length > 0 && (corridor.day?.stops.length ?? 0) > 1
+  // The day has to have routed. Until it does, the corridor is built from the
+  // straight line between the stops, so the boxes march across whatever lies
+  // between them rather than along the roads actually driven — and when the
+  // routing answer lands a second later the line changes, which clears the
+  // search mid-flight and drops every result with no error and no explanation.
+  // The routing runs one day at a time, about a second apart, so on a long trip
+  // that window is wide open for the day somebody picks.
+  const dayRouted = (corridor.day?.geometry.length ?? 0) > 1
+  const canSearch = !search.loading
+    && !routes.loading
+    && dayRouted
+    && corridor.categories.length > 0
+    && (corridor.day?.stops.length ?? 0) > 1
   const progressPct = search.progress.total
     ? Math.round((search.progress.done / search.progress.total) * 100)
     : 0

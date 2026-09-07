@@ -587,10 +587,12 @@ describe('toPlaceRecord', () => {
 describe('POI_CATEGORY_TO_TREK', () => {
   it('covers every pill the planner offers', () => {
     // The keys are the contract with the client's POI_CATEGORIES. A missing one
-    // silently drops that pill back to Overpass, which is the slow path.
+    // silently drops that pill back to Overpass, which is the slow path — and
+    // for the four a drive needs that is the worst path of all, because the
+    // corridor search asks for them sixteen boxes at a time.
     expect(Object.keys(POI_CATEGORY_TO_TREK).sort()).toEqual([
-      'activity', 'bar', 'cafe', 'hotel', 'museum',
-      'nature', 'restaurant', 'shopping', 'sights', 'supermarket',
+      'activity', 'bar', 'cafe', 'campsite', 'charging', 'fuel', 'hotel', 'museum',
+      'nature', 'rest_area', 'restaurant', 'shopping', 'sights', 'supermarket',
     ]);
   });
 

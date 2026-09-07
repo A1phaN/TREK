@@ -66,7 +66,7 @@ export default function RoadtripCategoryPicker({ keys, meta, selected, onToggle 
                 key={k}
                 className="grid h-[18px] w-[18px] place-items-center rounded-md"
                 // theme-lint-disable — the road-signage palette in `roadtripModel`.
-                style={{ background: serviceColor(k), color: '#fff' }}
+                style={{ background: serviceColor(k), color: '#fff' }} // theme-lint-disable — road-signage palette
               >
                 <Icon size={10} strokeWidth={2.2} aria-hidden />
               </span>
@@ -105,8 +105,7 @@ export default function RoadtripCategoryPicker({ keys, meta, selected, onToggle 
               >
                 <span
                   className="grid h-[22px] w-[22px] shrink-0 place-items-center rounded-[7px]"
-                  // theme-lint-disable — see above.
-                  style={on ? { background: serviceColor(key), color: '#fff' } : { background: `${serviceColor(key)}1f`, color: serviceColor(key) }}
+                  style={on ? { background: serviceColor(key), color: '#fff' } : { background: `${serviceColor(key)}1f`, color: serviceColor(key) }} // theme-lint-disable — road-signage palette
                 >
                   <Icon size={12} strokeWidth={2} aria-hidden />
                 </span>
