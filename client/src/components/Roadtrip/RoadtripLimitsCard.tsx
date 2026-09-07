@@ -39,6 +39,20 @@ function LimitRow({ icon: Icon, label, suffix, value, placeholder, onChange }: {
   placeholder: string
   onChange: (next: number) => void
 }): React.ReactElement {
+  // Typed here, saved on blur or Enter. Writing on every keystroke sent one
+  // settings PUT per character — typing "180" produced three, carrying 1, 18 and
+  // 180, unordered and concurrent over HTTP/2. Whichever the server committed
+  // last won, so the limit that decides every over-budget warning could quietly
+  // end up a tenth of what was typed, and only show it after the next reload.
+  const [draft, setDraft] = useState<string | null>(null)
+  const shown = draft ?? (value ? String(value) : '')
+  const commit = () => {
+    if (draft === null) return
+    const next = parseLimit(draft)
+    setDraft(null)
+    if (next !== (value ?? 0)) onChange(next)
+  }
+
   return (
     <label className="flex items-center gap-3">
       <Icon size={16} className="shrink-0 text-content-faint" aria-hidden />
@@ -47,9 +61,14 @@ function LimitRow({ icon: Icon, label, suffix, value, placeholder, onChange }: {
         type="number"
         inputMode="numeric"
         min={0}
-        value={value || ''}
+        value={shown}
         placeholder={placeholder}
-        onChange={e => onChange(parseLimit(e.target.value))}
+        onChange={e => setDraft(e.target.value)}
+        onBlur={commit}
+        // Committed here rather than by blurring and letting onBlur do it: a
+        // second commit is a no-op anyway, and going through blur made Enter
+        // depend on focus handling instead of on the key.
+        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commit(); (e.target as HTMLInputElement).blur() } }}
         className="w-20 rounded-lg border border-edge bg-surface px-2 py-1 text-end text-body tabular-nums text-content focus:border-accent focus:outline-none"
       />
       <span className="w-7 text-caption text-content-faint">{suffix}</span>

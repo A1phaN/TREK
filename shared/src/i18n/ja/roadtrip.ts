@@ -72,6 +72,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.within': '範囲',
   'roadtrip.poi.filter': '名前で絞り込む',
   'roadtrip.poi.noMatch': 'ルート沿いに「{name}」に一致するものはありません。',
+  'roadtrip.poi.noneMatchFilters': 'この条件に合うものは道中にありません。',
   'roadtrip.poi.foundFiltered': 'ルート沿いの {total} 件中 {count} 件',
   'roadtrip.poi.truncated': '{count} 区間で一度に返せる件数を超えました。回廊を狭めると残りを確認できます。',
   'roadtrip.poi.search': '検索',

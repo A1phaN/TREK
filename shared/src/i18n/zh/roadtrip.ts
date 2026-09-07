@@ -72,6 +72,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.within': '范围内',
   'roadtrip.poi.filter': '按名称筛选',
   'roadtrip.poi.noMatch': '沿途没有与“{name}”匹配的地点。',
+  'roadtrip.poi.noneMatchFilters': '沿途没有符合这些筛选条件的地点。',
   'roadtrip.poi.foundFiltered': '沿途 {total} 个中的 {count} 个',
   'roadtrip.poi.truncated': '有 {count} 段的结果超出单次响应上限，缩小走廊宽度可查看其余部分。',
   'roadtrip.poi.search': '搜索',

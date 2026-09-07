@@ -72,6 +72,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.within': 'ضمن',
   'roadtrip.poi.filter': 'تصفية حسب الاسم',
   'roadtrip.poi.noMatch': 'لا يوجد على الطريق ما يطابق «{name}».',
+  'roadtrip.poi.noneMatchFilters': 'لا يوجد شيء على الطريق يطابق عوامل التصفية هذه.',
   'roadtrip.poi.foundFiltered': '{count} من {total} على الطريق',
   'roadtrip.poi.truncated': 'في {count} من المقاطع كان هناك أكثر مما تتسع له استجابة واحدة — قلّص الممر لرؤية البقية.',
   'roadtrip.poi.search': 'بحث',

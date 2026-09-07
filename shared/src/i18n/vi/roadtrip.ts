@@ -72,6 +72,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.within': 'Trong vòng',
   'roadtrip.poi.filter': 'Lọc theo tên',
   'roadtrip.poi.noMatch': 'Không có gì trên đường khớp với “{name}”.',
+  'roadtrip.poi.noneMatchFilters': 'Không có gì trên đường phù hợp với các bộ lọc này.',
   'roadtrip.poi.foundFiltered': '{count} trong {total} trên đường',
   'roadtrip.poi.truncated': 'Có {count} đoạn nhiều hơn mức một phản hồi chứa được — thu hẹp hành lang để xem phần còn lại.',
   'roadtrip.poi.search': 'Tìm kiếm',

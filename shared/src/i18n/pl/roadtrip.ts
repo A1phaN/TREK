@@ -72,6 +72,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.within': 'W promieniu',
   'roadtrip.poi.filter': 'Filtruj wedug nazwy',
   'roadtrip.poi.noMatch': 'Nic po drodze nie pasuje do „{name}”.',
+  'roadtrip.poi.noneMatchFilters': 'Nic po drodze nie pasuje do tych filtrów.',
   'roadtrip.poi.foundFiltered': '{count} z {total} po drodze',
   'roadtrip.poi.truncated': 'Na {count} odcinkach było więcej, niż mieści się w jednej odpowiedzi — zawęź korytarz, aby zobaczyć resztę.',
   'roadtrip.poi.search': 'Szukaj',

@@ -72,6 +72,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.within': 'Ezen belül',
   'roadtrip.poi.filter': 'Szűrés név szerint',
   'roadtrip.poi.noMatch': 'Az útvonalon semmi sem egyezik ezzel: „{name}”.',
+  'roadtrip.poi.noneMatchFilters': 'Az útvonalon semmi sem felel meg ezeknek a szűrőknek.',
   'roadtrip.poi.foundFiltered': '{count} / {total} az útvonalon',
   'roadtrip.poi.truncated': '{count} szakaszon több volt, mint amennyi egy válaszba fér — szűkítse a folyosót a többi megtekintéséhez.',
   'roadtrip.poi.search': 'Keresés',

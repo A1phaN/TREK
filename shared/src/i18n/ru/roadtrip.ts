@@ -72,6 +72,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.within': 'В радиусе',
   'roadtrip.poi.filter': 'Фильтр по названию',
   'roadtrip.poi.noMatch': 'По пути ничего не соответствует «{name}».',
+  'roadtrip.poi.noneMatchFilters': 'На маршруте нет ничего, что подходит под эти фильтры.',
   'roadtrip.poi.foundFiltered': '{count} из {total} по пути',
   'roadtrip.poi.truncated': 'На {count} участках нашлось больше, чем помещается в один ответ — сузьте коридор, чтобы увидеть остальное.',
   'roadtrip.poi.search': 'Искать',

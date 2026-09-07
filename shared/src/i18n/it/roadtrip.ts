@@ -72,6 +72,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.within': 'Entro',
   'roadtrip.poi.filter': 'Filtra per nome',
   'roadtrip.poi.noMatch': 'Lungo il percorso non c’è nulla che corrisponda a “{name}”.',
+  'roadtrip.poi.noneMatchFilters': 'Niente lungo il percorso corrisponde a questi filtri.',
   'roadtrip.poi.foundFiltered': '{count} di {total} lungo il percorso',
   'roadtrip.poi.truncated': 'Su {count} tratti ce n’erano più di quanti ne stiano in una risposta: restringi il corridoio per vedere il resto.',
   'roadtrip.poi.search': 'Cerca',

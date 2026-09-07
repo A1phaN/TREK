@@ -72,6 +72,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.within': 'Dalam',
   'roadtrip.poi.filter': 'Saring menurut nama',
   'roadtrip.poi.noMatch': 'Tidak ada di rute yang cocok dengan “{name}”.',
+  'roadtrip.poi.noneMatchFilters': 'Tidak ada di sepanjang rute yang cocok dengan filter ini.',
   'roadtrip.poi.foundFiltered': '{count} dari {total} di rute',
   'roadtrip.poi.truncated': 'Di {count} ruas ada lebih banyak daripada yang muat dalam satu jawaban — persempit koridor untuk melihat sisanya.',
   'roadtrip.poi.search': 'Cari',

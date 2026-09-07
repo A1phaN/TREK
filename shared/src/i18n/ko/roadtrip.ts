@@ -72,6 +72,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.within': '반경',
   'roadtrip.poi.filter': '이름으로 필터',
   'roadtrip.poi.noMatch': '경로상에 “{name}”와(과) 일치하는 곳이 없습니다.',
+  'roadtrip.poi.noneMatchFilters': '이 필터에 맞는 곳이 경로에 없습니다.',
   'roadtrip.poi.foundFiltered': '경로상 {total}곳 중 {count}곳',
   'roadtrip.poi.truncated': '{count}개 구간에서 한 번에 반환할 수 있는 수를 넘었습니다. 회랑을 좁히면 나머지를 볼 수 있습니다.',
   'roadtrip.poi.search': '검색',

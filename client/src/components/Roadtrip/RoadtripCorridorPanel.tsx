@@ -515,13 +515,23 @@ export default function RoadtripCorridorPanel({ corridor, routes, onAddPoi }: Ro
                 search.loading
                   ? t('roadtrip.poi.searchingHint')
                   : filteredToNothing
-                    ? t('roadtrip.poi.noMatch', { name: corridor.nameFilter.trim() })
+                    // Four controls narrow this list and only one of them is the
+                    // name box. Blaming it regardless produced `Nothing on the
+                    // way matches ""` — empty quotes naming a filter the reader
+                    // never set — when a section, a plug type or a minimum power
+                    // was what emptied it.
+                    ? corridor.nameFilter.trim()
+                      ? t('roadtrip.poi.noMatch', { name: corridor.nameFilter.trim() })
+                      : t('roadtrip.poi.noneMatchFilters')
                     : t('roadtrip.poi.empty')
               }
             />
           ) : (
             <>
-              {corridor.nameFilter.trim() ? (
+              {/* Shown whenever anything narrowed the list, not only the name
+                  box: a section or a plug filter hides hits just as much, and
+                  the reader is owed the same "x of y" either way. */}
+              {corridor.visible.length !== search.results.length ? (
                 <p className="px-2 pt-2.5 text-content-faint" style={{ fontSize: FS.meta }}>
                   {t('roadtrip.poi.foundFiltered', { count: corridor.visible.length, total: search.results.length })}
                 </p>

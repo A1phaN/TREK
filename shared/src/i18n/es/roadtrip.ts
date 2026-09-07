@@ -72,6 +72,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.within': 'En un radio de',
   'roadtrip.poi.filter': 'Filtrar por nombre',
   'roadtrip.poi.noMatch': 'Nada en la ruta coincide con «{name}».',
+  'roadtrip.poi.noneMatchFilters': 'Nada en el camino coincide con estos filtros.',
   'roadtrip.poi.foundFiltered': '{count} de {total} en la ruta',
   'roadtrip.poi.truncated': 'En {count} tramos había más de lo que cabe en una respuesta: reduce el corredor para ver el resto.',
   'roadtrip.poi.search': 'Buscar',

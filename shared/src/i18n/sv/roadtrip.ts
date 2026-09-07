@@ -72,6 +72,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.within': 'Inom',
   'roadtrip.poi.filter': 'Filtrera på namn',
   'roadtrip.poi.noMatch': 'Inget längs vägen matchar ”{name}”.',
+  'roadtrip.poi.noneMatchFilters': 'Inget längs vägen matchar de här filtren.',
   'roadtrip.poi.foundFiltered': '{count} av {total} längs vägen',
   'roadtrip.poi.truncated': 'På {count} sträckor fanns fler än vad som får plats i ett svar – gör korridoren smalare för att se resten.',
   'roadtrip.poi.search': 'Sök',

@@ -72,6 +72,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.within': 'Εντός',
   'roadtrip.poi.filter': 'Φιλτράρισμα κατά όνομα',
   'roadtrip.poi.noMatch': 'Τίποτα στη διαδρομή δεν ταιριάζει με «{name}».',
+  'roadtrip.poi.noneMatchFilters': 'Τίποτα στη διαδρομή δεν ταιριάζει με αυτά τα φίλτρα.',
   'roadtrip.poi.foundFiltered': '{count} από {total} στη διαδρομή',
   'roadtrip.poi.truncated': 'Σε {count} τμήματα υπήρχαν περισσότερα από όσα χωρούν σε μία απάντηση — στενέψτε τον διάδρομο για να δείτε τα υπόλοιπα.',
   'roadtrip.poi.search': 'Αναζήτηση',
