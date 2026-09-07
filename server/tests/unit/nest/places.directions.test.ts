@@ -71,7 +71,19 @@ function svc(searchNominatim: MapsService['searchNominatim']): PlacesService {
     new RealtimeService(),
     // The address backfill runs fire-and-forget after every import, so the stub answers
     // it too — otherwise every passing test prints a rejected promise.
-    { searchNominatim, reverseGeocode: vi.fn(async () => null) } as unknown as MapsService,
+    // geocodeQuery is what the importer calls now: it asks the TREK index first
+    // and falls through to Nominatim on the background lane. Stubbed in terms of
+    // the searchNominatim each case already provides, so the cases keep driving
+    // one seam while the code under test uses the real one.
+    {
+      searchNominatim,
+      geocodeQuery: async (query: string) => {
+        const hit = (await searchNominatim(query, undefined, 'background'))
+          .find((h: { lat: number | null; lng: number | null }) => h.lat !== null && h.lng !== null);
+        return hit ? { lat: hit.lat as number, lng: hit.lng as number } : null;
+      },
+      reverseGeocode: vi.fn(async () => null),
+    } as unknown as MapsService,
     new QueryHelpersService(dbs),
     new UnsplashService(dbs, new RuntimeEnvService(), storageFx.storage),
     photoCacheStub,
@@ -202,19 +214,26 @@ describe('PlacesService.importGoogleDirections', () => {
     expect((result as { error: string }).error).toMatch(/Share button/);
   });
 
-  it('PLACES-DIR-012: the bulk geocoding yields to whoever is typing', async () => {
-    // searchNominatim's own contract asks a bulk caller for the background
-    // lane, naming this exact shape: up to thirty sequential lookups, each
-    // taking the next slot on a 1.1 s process-wide throttle. On the interactive
-    // lane every other member of the instance typing in the place search box
-    // queues behind the whole import.
-    const search = vi.fn(async () => [{ lat: 52.52, lng: 13.405 }]) as unknown as MapsService['searchNominatim'];
-    await svc(search).importGoogleDirections(tripId, 'https://www.google.com/maps/dir/Berlin/Dresden');
+  it('PLACES-DIR-012: the bulk geocoding goes through the index, not straight at Nominatim', async () => {
+    // geocodeQuery asks the TREK index first and only falls through to
+    // Nominatim for what it does not know, on the BACKGROUND lane. That matters
+    // more here than anywhere: this loop runs up to thirty times in one request,
+    // each Nominatim call taking the next slot on a 1.1 s process-wide throttle,
+    // so on the interactive lane one pasted link made everybody else's place
+    // search queue behind it for half a minute. An index hit costs no slot.
+    const nominatim = vi.fn(async () => [{ lat: 52.52, lng: 13.405 }]) as unknown as MapsService['searchNominatim'];
+    const geocode = vi.fn(async () => ({ lat: 52.52, lng: 13.405 }));
+    const service = svc(nominatim);
+    (service as unknown as { maps: Partial<MapsService> }).maps.geocodeQuery =
+      geocode as unknown as MapsService['geocodeQuery'];
 
-    expect(search).toHaveBeenCalled();
-    for (const call of (search as unknown as { mock: { calls: unknown[][] } }).mock.calls) {
-      expect(call[2]).toBe('background');
-    }
+    await service.importGoogleDirections(tripId, 'https://www.google.com/maps/dir/Berlin/Dresden');
+
+    expect(geocode).toHaveBeenCalledWith('Berlin');
+    expect(geocode).toHaveBeenCalledWith('Dresden');
+    // Not reached directly: whether Nominatim is asked at all, and on which
+    // lane, is geocodeQuery's business and is pinned in maps.geocode.test.ts.
+    expect(nominatim).not.toHaveBeenCalled();
   });
 
   it('PLACES-DIR-011: a route shared as a short link is imported as a route', async () => {

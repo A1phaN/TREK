@@ -261,6 +261,14 @@ export const POI_CATEGORY_TO_TREK: Record<string, string[]> = {
   activity: ['amusement_park', 'zoo', 'aquarium', 'water_park', 'theme_park'],
   shopping: ['shopping', 'shopping_center', 'department_store', 'market'],
   supermarket: ['grocery_store', 'food_and_beverage_store', 'convenience_store', 'supermarket'],
+  // What a drive needs rather than what a city visit does (#1797). The corridor
+  // search asks for these by name, and without them every corridor query fell
+  // through to Overpass — the one path where that hurts most, because a single
+  // search fans out over sixteen boxes.
+  fuel: ['gas_station', 'fueling_station'],
+  charging: ['ev_charging_station'],
+  rest_area: ['rest_stop'],
+  campsite: ['campground', 'rv_park'],
 };
 
 export interface TrekNearbyPlace extends TrekPlace {

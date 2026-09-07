@@ -1167,16 +1167,17 @@ export class PlacesService {
       }
       if (!wp.name) continue;
       try {
-        // Background lane, which is what this method's own contract asks of a
-        // bulk caller: up to thirty sequential lookups, each taking the next
-        // slot on a 1.1 s process-wide throttle. On the interactive lane every
-        // other member of the instance typing in the place search box waits
-        // behind the whole import.
-        const hits = await this.maps.searchNominatim(wp.name, undefined, 'background');
-        const hit = hits.find((h) => h.lat !== null && h.lng !== null);
+        // Through geocodeQuery, which asks the TREK index first and only falls
+        // through to Nominatim for what it does not know — and does so on the
+        // BACKGROUND lane. That matters here more than anywhere: this loop runs
+        // up to thirty times in one request, each Nominatim call taking the next
+        // slot on a 1.1 s process-wide throttle, so on the interactive lane one
+        // pasted link made everybody else's place search queue behind it for
+        // half a minute. An index hit costs no slot at all.
+        const hit = await this.maps.geocodeQuery(wp.name);
         // The name from the link, not the one the geocoder answers with: somebody who
         // typed a nickname into Google should not find a street address on their trip.
-        if (hit) places.push({ name: wp.name, lat: hit.lat!, lng: hit.lng!, notes: null, googleFtid: null });
+        if (hit) places.push({ name: wp.name, lat: hit.lat, lng: hit.lng, notes: null, googleFtid: null });
         else unplaceable++;
       } catch {
         // A geocoder that is down or rate-limited costs this one stop, not the import.

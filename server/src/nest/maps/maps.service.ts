@@ -820,24 +820,45 @@ export class MapsService {
     category: string,
     bbox: { south: number; west: number; north: number; east: number },
     lang?: string,
+    limit = 60,
   ): Promise<PoiSearchResult> {
-    const terms = POI_CATEGORY_TO_TREK[category];
-    if (this.trekPlacesEnabled() && terms) {
+    // One or several categories, the way searchOverpassPois reads them. The
+    // corridor search sends a comma-separated list, and looking the whole string
+    // up as one key missed every time — so every corridor query fell through to
+    // Overpass, on the one path where that hurts most: a single search fans out
+    // over sixteen boxes, and each of those races four public mirrors.
+    const wanted = parsePoiCategories(category);
+    // Which category each Overture term belongs to, so a hit can be labelled
+    // with the category that actually produced it rather than with the whole
+    // list. The client colours and groups its markers by that field.
+    const categoryOfTerm = new Map<string, string>();
+    for (const key of wanted) {
+      for (const term of POI_CATEGORY_TO_TREK[key] ?? []) categoryOfTerm.set(term, key);
+    }
+    // All or nothing: a category the index has no terms for has to be answered
+    // by Overpass, and a mixed answer would silently drop it.
+    const indexKnowsAll = wanted.length > 0 && wanted.every(key => POI_CATEGORY_TO_TREK[key]?.length);
+    const terms = [...categoryOfTerm.keys()];
+    if (this.trekPlacesEnabled() && indexKnowsAll) {
       try {
         const lat = (bbox.south + bbox.north) / 2;
         const lng = (bbox.west + bbox.east) / 2;
         // Half the diagonal, so the circle covers the viewport corners rather
         // than leaving the edges of the map empty.
-        const wanted = Math.round(
+        const reach = Math.round(
           Math.hypot(
             (bbox.north - bbox.south) * 111_320,
             (bbox.east - bbox.west) * 111_320 * Math.cos((lat * Math.PI) / 180),
           ) / 2,
         );
-        const radius = Math.min(20000, Math.max(300, wanted));
+        const radius = Math.min(20000, Math.max(300, reach));
+        // The same budget the Overpass path spends: per category, capped, so a
+        // mixed search does not spend the whole allowance on whichever kind
+        // happens to be densest.
+        const cap = Math.min(limit * wanted.length, POI_RESULT_CAP);
         const found = await trekPlacesNearby(lat, lng, {
           radius,
-          limit: 50,
+          limit: cap,
           category: terms.join(','),
         });
         if (found.length > 0) {
@@ -859,8 +880,11 @@ export class MapsService {
               name: p.name,
               lat: p.lat,
               lng: p.lng,
-              category,
-              poi_type: p.category ?? category,
+              // The category that produced the hit, not the list that was
+              // asked for: a mixed search must not label a petrol station as
+              // "fuel,charging,restaurant".
+              category: categoryOfTerm.get(p.category ?? '') ?? wanted[0],
+              poi_type: p.category ?? wanted[0],
               address: p.address?.freeform ?? null,
               website: p.contact?.website ?? null,
               phone: p.contact?.phone ?? null,
@@ -880,17 +904,17 @@ export class MapsService {
               source: 'trek-places' as const,
             })),
             source: 'trek-places' as const,
-            truncated: found.length >= 50,
+            truncated: found.length >= cap,
             // A wide viewport is narrowed here too, and the caller is told so
             // for the same reason the Overpass path tells it.
-            clamped: radius < wanted,
+            clamped: radius < reach,
           };
         }
       } catch (err: unknown) {
         console.warn('TREK Places nearby failed, falling back:', (err as Error).message);
       }
     }
-    return this.searchOverpassPois(category, bbox, lang);
+    return this.searchOverpassPois(category, bbox, lang, limit);
   }
 
   // ── API key retrieval ──────────────────────────────────────────────────────

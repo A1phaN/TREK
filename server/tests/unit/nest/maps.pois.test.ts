@@ -83,6 +83,9 @@ const OVERPASS_ANSWER = {
       website: null,
       phone: null,
       opening_hours: null,
+      brand: null,
+      brand_wikidata: null,
+      charging: null,
       cuisine: null,
       source: 'openstreetmap' as const,
     },
@@ -141,6 +144,9 @@ describe('MapsService.pois answered from the index', () => {
         website: 'https://cafecentral.wien/',
         phone: '+43 1 5333763',
         opening_hours: 'Mo-Sa 07:30-22:00',
+        brand: null,
+        brand_wikidata: null,
+        charging: null,
         cuisine: null,
         // Named as what it is. Overture is not OpenStreetMap — it carries OSM
         // among other sources under other licences — and this branch argues
@@ -171,6 +177,11 @@ describe('MapsService.pois answered from the index', () => {
       website: null,
       phone: null,
       opening_hours: null,
+      brand: null,
+      brand_wikidata: null,
+      // Sockets are an OSM thing; a station answered from the index reports
+      // "not stated" rather than claiming it offers nothing.
+      charging: null,
       cuisine: null,
       source: 'trek-places',
     });
@@ -205,6 +216,11 @@ describe('MapsService.pois answered from the index', () => {
       website: null,
       phone: null,
       opening_hours: 'Mo-Sa 07:30-22:00',
+      brand: null,
+      brand_wikidata: null,
+      // Sockets are an OSM thing; a station answered from the index reports
+      // "not stated" rather than claiming it offers nothing.
+      charging: null,
       cuisine: null,
       source: 'trek-places',
     });
@@ -222,27 +238,68 @@ describe('MapsService.pois answered from the index', () => {
     // a place in a corner of the viewport is still inside the circle.
     expect(mockNearby).toHaveBeenCalledWith(0, 0, {
       radius: 7872,
-      limit: 50,
+      // The caller's budget, per category, the way the Overpass path spends it.
+      limit: 60,
       category: 'cafe,coffee_shop',
     });
     expect(out.clamped).toBe(false);
   });
 
-  it('MAPS-POIS-005: a full page of 50 is reported as truncated', async () => {
-    mockNearby.mockResolvedValue(rows(50));
+  it('MAPS-POIS-013: a corridor search asks the index once for all its categories', async () => {
+    // The corridor sends a comma-separated list. Looking the whole string up as
+    // one key missed every time, so every corridor query fell through to
+    // Overpass — on the one path where that hurts most, because a single search
+    // fans out over sixteen boxes and each races four public mirrors.
+    mockNearby.mockResolvedValue([
+      { ...FULL, gers: 'f-1', name: 'Aral', category: 'gas_station' },
+      { ...FULL, gers: 'c-1', name: 'Ionity', category: 'ev_charging_station' },
+    ]);
+    const svc = make();
+    const overpass = stubOverpass(svc);
+
+    const out = await svc.pois('fuel,charging', BOX);
+
+    expect(overpass).not.toHaveBeenCalled();
+    // One request carrying every term the two categories map to.
+    expect(mockNearby).toHaveBeenCalledWith(0, 0, expect.objectContaining({
+      category: 'gas_station,fueling_station,ev_charging_station',
+      // Per category, so a mixed search does not spend the whole allowance on
+      // whichever kind happens to be densest.
+      limit: 120,
+    }));
+    // Each hit carries the category that produced it, not the list that was
+    // asked for: the client colours and groups its markers by that field, and
+    // "fuel,charging" is not a category.
+    expect(out.pois.map(p => p.category)).toEqual(['fuel', 'charging']);
+  });
+
+  it('MAPS-POIS-014: a category the index has no terms for sends the whole query to Overpass', async () => {
+    // All or nothing. Answering the half it knows would silently drop the rest,
+    // and the caller counts a finished search either way.
+    const svc = make();
+    const overpass = stubOverpass(svc);
+
+    await svc.pois('fuel,something-new', BOX, 'de');
+
+    expect(mockNearby).not.toHaveBeenCalled();
+    expect(overpass).toHaveBeenCalledWith('fuel,something-new', BOX, 'de', 60);
+  });
+
+  it('MAPS-POIS-005: a full page is reported as truncated', async () => {
+    mockNearby.mockResolvedValue(rows(60));
     const svc = make();
     stubOverpass(svc);
 
     const out = await svc.pois('cafe', BOX);
 
-    expect(out.pois).toHaveLength(50);
+    expect(out.pois).toHaveLength(60);
     // The page asked for is the page compared against — a caller told nothing
     // was cut off will not offer to zoom in for the rest.
     expect(out.truncated).toBe(true);
   });
 
   it('MAPS-POIS-006: a page short of the limit is the whole answer', async () => {
-    mockNearby.mockResolvedValue(rows(49));
+    mockNearby.mockResolvedValue(rows(59));
     const svc = make();
     const overpass = stubOverpass(svc);
 
@@ -251,7 +308,7 @@ describe('MapsService.pois answered from the index', () => {
     // The Overpass answer is untruncated as well, so the count and the untouched
     // spy are what tell an index answer from a fallback.
     expect(overpass).not.toHaveBeenCalled();
-    expect(out.pois).toHaveLength(49);
+    expect(out.pois).toHaveLength(59);
     expect(out.truncated).toBe(false);
   });
 
@@ -301,7 +358,7 @@ describe('MapsService.pois falls back to Overpass', () => {
 
     expect(await svc.pois('cafe', BOX, 'de')).toEqual(OVERPASS_ANSWER);
     expect(mockNearby).not.toHaveBeenCalled();
-    expect(overpass).toHaveBeenCalledWith('cafe', BOX, 'de');
+    expect(overpass).toHaveBeenCalledWith('cafe', BOX, 'de', 60);
   });
 
   it('MAPS-POIS-011: an empty index page is a miss, not an empty answer', async () => {
@@ -310,7 +367,7 @@ describe('MapsService.pois falls back to Overpass', () => {
     const overpass = stubOverpass(svc);
 
     expect(await svc.pois('cafe', BOX, 'de')).toEqual(OVERPASS_ANSWER);
-    expect(overpass).toHaveBeenCalledWith('cafe', BOX, 'de');
+    expect(overpass).toHaveBeenCalledWith('cafe', BOX, 'de', 60);
   });
 
   it('MAPS-POIS-012: an index failure is logged and dropped through, never surfaced', async () => {
@@ -319,7 +376,7 @@ describe('MapsService.pois falls back to Overpass', () => {
     const overpass = stubOverpass(svc);
 
     expect(await svc.pois('cafe', BOX, 'de')).toEqual(OVERPASS_ANSWER);
-    expect(overpass).toHaveBeenCalledWith('cafe', BOX, 'de');
+    expect(overpass).toHaveBeenCalledWith('cafe', BOX, 'de', 60);
     expect(warn).toHaveBeenCalledWith('TREK Places nearby failed, falling back:', 'places api down');
   });
 });
