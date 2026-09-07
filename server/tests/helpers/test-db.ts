@@ -34,6 +34,11 @@ const RESET_TABLES = [
   'collab_messages',
   'collab_polls',
   'collab_notes',
+  // Road trip (#1797). Both hang off days, so they go before it like the rest
+  // of the day content; a new domain's tables belong here or its rows leak from
+  // one case into the next.
+  'roadtrip_day_tracks',
+  'roadtrip_vias',
   // Day content
   'day_notes',
   'todo_category_assignees',

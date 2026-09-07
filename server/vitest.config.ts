@@ -118,6 +118,14 @@ export default defineConfig({
         'src/nest/realtime/**/*.ts': { statements: 99, branches: 100, functions: 99, lines: 99 },
         'src/nest/reservation-import/**/*.ts': { statements: 61, branches: 55, functions: 41, lines: 61 },
         'src/nest/reservations/**/*.ts': { statements: 92, branches: 83, functions: 96, lines: 96 },
+        // New domain in this change. Measured over its own suites at
+        // 94.0/81.1/100/99.1 and pinned under that: the subset run does not
+        // load the controller the way the full run does, so the real figure is
+        // not this one. Regenerate with scripts/coverage-thresholds.mjs after a
+        // full run. What matters now is that it carries its own floor instead of
+        // hiding in the 80 catch-all, where 557 new lines could shed twenty
+        // points against the headroom of the domains beside them.
+        'src/nest/roadtrip/**/*.ts': { statements: 88, branches: 80, functions: 95, lines: 95 },
         'src/nest/settings/**/*.ts': { statements: 87, branches: 71, functions: 99, lines: 88 },
         'src/nest/share/**/*.ts': { statements: 97, branches: 87, functions: 99, lines: 99 },
         'src/nest/storage/**/*.ts': { statements: 94, branches: 84, functions: 97, lines: 94 },
