@@ -474,12 +474,49 @@ describe('PlaceDetailsColumn — hours and rating', () => {
  * same thing in the shape every other empty state in TREK uses, and whose key is
  * missing is not this panel's business.
  */
-describe('PlaceDetailsColumn — nothing found', () => {
-  it('FE-PDC-027: shows the empty state once, and no advice about API keys', async () => {
-    placeEnrichment.mockResolvedValue({ photos: [], facts: [], description: null })
-    renderColumn()
+describe('PlaceDetailsColumn — no key behind place search', () => {
+  const empty = () => placeEnrichment.mockResolvedValue({ photos: [], facts: [], description: null })
 
-    expect(await screen.findByText('places.details.nothing')).toBeInTheDocument()
+  it('FE-PDC-027: suggests a key when nothing was found and none is set', async () => {
+    empty()
+    renderColumn({ keySuggestion: 'google' })
+
+    expect(await screen.findByText('places.details.noKeyTitle')).toBeInTheDocument()
+    expect(screen.getByText('places.details.noKeyHint')).toBeInTheDocument()
+  })
+
+  it('FE-PDC-027b: suggests the Amap key when that is the one the admin chose', async () => {
+    // An install on Amap is not "missing a Google key" — the hint has to name
+    // the key that would actually move search off OpenStreetMap.
+    empty()
+    renderColumn({ keySuggestion: 'amap' })
+
+    expect(await screen.findByText('places.details.noKeyTitle')).toBeInTheDocument()
+    expect(screen.getByText('places.details.noKeyHintAmap')).toBeInTheDocument()
+  })
+
+  it('FE-PDC-027c: names both keys when the choice is automatic and neither is set', async () => {
+    empty()
+    renderColumn({ keySuggestion: 'any' })
+
+    expect(await screen.findByText('places.details.noKeyTitle')).toBeInTheDocument()
+    expect(screen.getByText('places.details.noKeyHintAny')).toBeInTheDocument()
+  })
+
+  it('FE-PDC-027d: stays quiet when OpenStreetMap was chosen on purpose', async () => {
+    // The null suggestion: an explicit admin decision, not a gap to fill.
+    empty()
+    renderColumn({ keySuggestion: null })
+
+    await screen.findByText('places.details.nothing')
+    expect(screen.queryByText('places.details.noKeyTitle')).not.toBeInTheDocument()
+  })
+
+  it('FE-PDC-028: stays quiet when a key is already configured', async () => {
+    empty()
+    renderColumn({ keySuggestion: null })
+
+    await screen.findByText('places.details.nothing')
     expect(screen.queryByText('places.details.noKeyTitle')).not.toBeInTheDocument()
     expect(screen.queryByText('places.details.noKeyHint')).not.toBeInTheDocument()
   })
@@ -490,7 +527,7 @@ describe('PlaceDetailsColumn — nothing found', () => {
       facts: [],
       description: { text: 'Ein Museum.', source: 'wikipedia', sourceUrl: null, license: 'CC BY-SA 4.0' },
     })
-    renderColumn()
+    renderColumn({ keySuggestion: 'google' })
 
     await screen.findByText('Ein Museum.')
     expect(screen.queryByText('places.details.nothing')).not.toBeInTheDocument()

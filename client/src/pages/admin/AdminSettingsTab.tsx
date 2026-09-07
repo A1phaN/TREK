@@ -35,7 +35,8 @@ export default function AdminSettingsTab({ admin, t }: AdminSettingsTabProps): R
     passkeyLogin, setPasskeyLogin, passkeyConfigured,
     webauthnRpId, setWebauthnRpId, webauthnOrigins, setWebauthnOrigins, savingWebauthn, handleSaveWebauthn,
     allowedFileTypes, setAllowedFileTypes, savingFileTypes, setSavingFileTypes,
-    mapsKey, setMapsKey, unsplashKey, setUnsplashKey, showKeys, savingKeys, validating, validation,
+    mapsKey, setMapsKey, unsplashKey, setUnsplashKey, amapKey, setAmapKey, showKeys, savingKeys, validating, validation,
+    placesProvider, savingPlacesProvider, handleSavePlacesProvider,
     managed,
     setShowRotateJwtModal,
     handleToggleAuthSetting, handleToggleRequireMfa,
@@ -546,6 +547,32 @@ export default function AdminSettingsTab({ admin, t }: AdminSettingsTabProps): R
               <p className="text-xs text-content-faint mt-1.5">{t('admin.unsplashKeyHint')}</p>
             </div>
           </ProviderBlock>
+
+          {/* Amap Key. No Test button: /auth/validate-keys only knows how to
+              probe Google Places and OpenWeatherMap, and a button that silently
+              tests something else is worse than no button. */}
+          <ProviderBlock title={t('admin.amapKey')}>
+            <div>
+              <div className="relative">
+                <input
+                  type={showKeys.amap ? 'text' : 'password'}
+                  value={amapKey}
+                  onChange={e => setAmapKey(e.target.value)}
+                  placeholder={t('settings.keyPlaceholder')}
+                  className="w-full pr-10 px-3 py-2 border border-edge rounded-lg text-sm bg-surface-input text-content focus:ring-2 focus:ring-accent focus:border-transparent"
+                />
+                <button
+                  type="button"
+                  onClick={() => toggleKey('amap')}
+                  aria-label={t('admin.amapKey')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-content-faint hover:text-content"
+                >
+                  {showKeys.amap ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-content-faint mt-1.5">{t('admin.amapKeyHint')}</p>
+            </div>
+          </ProviderBlock>
           {/* Transit Backend (#1699) — Transitous has no GTFS for much of Asia,
               so an install can point transit search at Google instead, on the
               same key. Falls back to Transitous when no key resolves. A block of
@@ -604,6 +631,40 @@ export default function AdminSettingsTab({ admin, t }: AdminSettingsTabProps): R
             </div>
           </ProviderBlock>
           </>)}
+
+          {/* Which keyed provider answers place search. Outside the managed guard
+              on purpose: the operator owns the credentials, but what their users
+              search against is still the admin's call (see server managed.ts). */}
+          <ProviderBlock title={t('admin.placesProvider.title')}>
+            <div>
+              <p className="text-xs text-content-faint">{t('admin.placesProvider.subtitle')}</p>
+              <CustomSelect
+                value={placesProvider}
+                disabled={savingPlacesProvider}
+                onChange={value => {
+                  if (value === placesProvider) return
+                  void handleSavePlacesProvider(String(value))
+                }}
+                options={[
+                  { value: 'auto', label: t('admin.placesProvider.auto') },
+                  { value: 'google', label: t('admin.placesProvider.google') },
+                  { value: 'amap', label: t('admin.placesProvider.amap') },
+                  { value: 'openstreetmap', label: t('admin.placesProvider.openstreetmap') },
+                ]}
+                size="sm"
+                style={{ marginTop: 8 }}
+              />
+              {/* A provider chosen without a key behind it answers with
+                  OpenStreetMap rather than failing, which is quiet enough to be
+                  mistaken for the provider working. Say so. */}
+              {((placesProvider === 'google' && !mapsKey) || (placesProvider === 'amap' && !amapKey)) && (
+                <p className="flex items-start gap-2 text-xs text-warning bg-warning-soft border border-warning/30 rounded-lg px-3 py-2 mt-2">
+                  <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
+                  {t('admin.placesProvider.missingKey')}
+                </p>
+              )}
+            </div>
+          </ProviderBlock>
 
           {/* The search log sits with the index rather than with a provider:
               it records which result somebody picked, so a candidate index can

@@ -15,6 +15,7 @@ import {
   Loader2,
   ScrollText,
   ShoppingBag,
+  Sparkles,
   Sprout,
   Star,
   Sun,
@@ -26,7 +27,18 @@ import { resolveOpenNow, resolvePlaceTimeZone, placeWeekdayIndex } from './place
 import { convertHoursLine, isUnknownHoursLine, splitHoursLine } from './placeHoursFormat'
 import { safeHttpUrl } from '../../utils/safeUrl'
 import EmptyState from '../shared/EmptyState'
+import type { KeySuggestion } from '../../utils/placesProvider'
 import type { TranslationFn } from '../../types'
+
+/**
+ * The "add a key" hint line, per which key would move search off OpenStreetMap.
+ * The Google variant reuses the long-standing key every locale already carries.
+ */
+const NO_KEY_HINT_KEY: Record<Exclude<KeySuggestion, never>, string> = {
+  google: 'places.details.noKeyHint',
+  amap: 'places.details.noKeyHintAmap',
+  any: 'places.details.noKeyHintAny',
+}
 
 /** The place the column is describing. Null while nothing is selected. */
 export interface PlaceDetailsSelection {
@@ -51,7 +63,12 @@ interface PlaceDetailsColumnProps {
   timeFormat?: string
   /** For grouping the rating count's digits. */
   locale?: string
-  /** False on an instance with no Google key, which is most of them. */
+  /**
+   * Which API key the "more detail available" hint should suggest, or null when
+   * there is nothing to suggest — a configured provider answers, or the admin
+   * chose OpenStreetMap on purpose and the hint would be a nag.
+   */
+  keySuggestion?: KeySuggestion | null
   t: TranslationFn
 }
 
@@ -117,6 +134,7 @@ export default function PlaceDetailsColumn({
   language,
   timeFormat = '24h',
   locale = 'en-US',
+  keySuggestion = null,
   t,
 }: PlaceDetailsColumnProps): React.ReactElement {
   const [data, setData] = useState<MapsPlaceEnrichmentResult | null>(null)
@@ -236,14 +254,20 @@ export default function PlaceDetailsColumn({
             plainly; whose key is missing is not this panel's business, and on a
             place the free sources describe fine it read as an advert. */}
         {isEmpty && (
-          <EmptyState
-            scene="search"
-            mood="sad"
-            title={t('places.details.nothing')}
-            size={92}
-            fill
-            surface="var(--bg-secondary)"
-          />
+          <div className="space-y-2">
+            <EmptyState
+              scene="search"
+              mood="sad"
+              title={t('places.details.nothing')}
+              size={92}
+              fill
+              surface="var(--bg-secondary)"
+            />
+            {/* Only when both are true. With a key behind the search there is
+                nothing to suggest, and on a place the free sources DID describe
+                the suggestion would be an advert. */}
+            {keySuggestion && <NoKeyHint t={t} suggestion={keySuggestion} />}
+          </div>
         )}
 
         {selection && state === 'ready' && !data?.disabled && !isEmpty && (
@@ -472,6 +496,19 @@ function PhotoCredit({ photo }: { photo: PlacePhotoCandidate }): React.ReactElem
  * It also names who to ask: the key is an instance-wide setting, so on most
  * installs the person reading this cannot act on it themselves.
  */
+function NoKeyHint({ t, suggestion }: { t: TranslationFn; suggestion: KeySuggestion }): React.ReactElement {
+  return (
+    <div className="rounded-xl border border-accent/25 bg-accent-subtle p-3">
+      <div className="flex items-center gap-2">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text">
+          <Sparkles className="h-3 w-3" />
+        </span>
+        <p className="text-caption font-semibold text-content">{t('places.details.noKeyTitle')}</p>
+      </div>
+      <p className="mt-2 text-caption leading-relaxed text-content-secondary">{t(NO_KEY_HINT_KEY[suggestion])}</p>
+    </div>
+  )
+}
 
 /**
  * The star rating, as stars.
