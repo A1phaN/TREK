@@ -234,6 +234,38 @@ describe('RoadtripStopPopup', () => {
     expect(onSave).toHaveBeenCalled()
   })
 
+  it('FE-ROADTRIP-STOPPOPUP-026: a scheme-less OSM website still leaves the app', () => {
+    // OSM `website` tags are routinely written without a scheme. As a raw href
+    // `www.hotel.de` is a RELATIVE url, so the click navigated the planner to
+    // /trips/<id>/www.hotel.de and the user lost the page they were on.
+    wrap(
+      <RoadtripStopPopup
+        draft={draft({ poi: poi({ category: 'hotel', website: 'www.hotel-adlon.de' }), overnight })}
+        {...noop}
+        onSaveNight={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('link', { name: 'Website' })).toHaveAttribute('href', 'https://www.hotel-adlon.de')
+  })
+
+  it('FE-ROADTRIP-STOPPOPUP-027: a website that is not a link is not rendered as one', () => {
+    // Anything that is not http(s) loses the link rather than being handed to
+    // the browser. The CSP stops a javascript: navigation on a stock deployment,
+    // but this is defended everywhere else in the app and belongs here too.
+    for (const bad of ['javascript:alert(1)', 'data:text/html,<script>', 'tel:+49301234']) {
+      const { unmount } = wrap(
+        <RoadtripStopPopup
+          draft={draft({ poi: poi({ category: 'hotel', website: bad }), overnight })}
+          {...noop}
+          onSaveNight={vi.fn()}
+        />,
+      )
+      expect(screen.queryByRole('link', { name: 'Website' }), bad).not.toBeInTheDocument()
+      unmount()
+    }
+  })
+
   it('FE-ROADTRIP-STOPPOPUP-025: without a way to book a night the switch stays away', () => {
     // An onSaveNight-less caller gets the dialog it always had, rather than a mode that
     // leads nowhere.

@@ -202,6 +202,42 @@ describe('PlacesService.importGoogleDirections', () => {
     expect((result as { error: string }).error).toMatch(/Share button/);
   });
 
+  it('PLACES-DIR-012: the bulk geocoding yields to whoever is typing', async () => {
+    // searchNominatim's own contract asks a bulk caller for the background
+    // lane, naming this exact shape: up to thirty sequential lookups, each
+    // taking the next slot on a 1.1 s process-wide throttle. On the interactive
+    // lane every other member of the instance typing in the place search box
+    // queues behind the whole import.
+    const search = vi.fn(async () => [{ lat: 52.52, lng: 13.405 }]) as unknown as MapsService['searchNominatim'];
+    await svc(search).importGoogleDirections(tripId, 'https://www.google.com/maps/dir/Berlin/Dresden');
+
+    expect(search).toHaveBeenCalled();
+    for (const call of (search as unknown as { mock: { calls: unknown[][] } }).mock.calls) {
+      expect(call[2]).toBe('background');
+    }
+  });
+
+  it('PLACES-DIR-011: a route shared as a short link is imported as a route', async () => {
+    // The path of a short link is `/<code>`: nothing in it says route or list,
+    // so the dispatch upstream cannot tell and sent every one of them to the
+    // list importer, which answered "could not extract list ID" — the complaint
+    // this whole import was written to remove. The Share sheet in the Google
+    // Maps phone app produces exactly this shape, and the box beside it says a
+    // directions link works.
+    safeFetchFollow.mockResolvedValue({
+      url: 'https://www.google.com/maps/dir/52.52,13.405/51.05,13.74',
+    } as never);
+
+    const result = await svc(geocoder()).importGoogleList(tripId, 'https://maps.app.goo.gl/aBcDeF12345');
+
+    expect('error' in result).toBe(false);
+    if ('error' in result) return;
+    expect(result.places).toHaveLength(2);
+    // Resolved once, not once per importer: the route is handed on with the URL
+    // the redirect already produced.
+    expect(safeFetchFollow).toHaveBeenCalledTimes(1);
+  });
+
   it('PLACES-DIR-010: a route where only one stop can be placed is not half an import', async () => {
     const search = vi.fn(async () => []) as unknown as MapsService['searchNominatim'];
     const url = 'https://www.google.com/maps/dir/52.52,13.405/Nowhere/Nowhere+Else';

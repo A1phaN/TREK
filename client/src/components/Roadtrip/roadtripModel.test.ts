@@ -116,6 +116,55 @@ describe('computeSchedule', () => {
     expect(entries[2].arrival).toBe('13:00')
   })
 
+  it('ROADTRIP-MODEL-082: a night drive onto a pinned time after midnight is on time', () => {
+    // Leave at 20:00, drive six hours, check in at 02:00. The anchor used to be
+    // placed on the day the cascade had reached so far — and that only advances
+    // once a computed arrival crosses midnight, which is read before this stop's
+    // arrival is known. So the stop that does the crossing had its own pin put a
+    // whole day early: the rail drew a warning-coloured "+24 h" on a plan that
+    // was exactly on time, and dropped the overnight marker with it.
+    const { entries, warnings } = computeSchedule(
+      [
+        { anchor: '20:00', dwellMinutes: 0 },
+        { anchor: '02:00', dwellMinutes: 0 },
+      ],
+      [hours(6)],
+    )
+
+    expect(warnings.filter(w => w.code === 'late')).toEqual([])
+    expect(entries[1]).toMatchObject({ arrival: '02:00', dayOffset: 1, anchored: true })
+    // The day still turned over, so the rail keeps its carry badge.
+    expect(warnings.some(w => w.code === 'overnight' && w.index === 1)).toBe(true)
+  })
+
+  it('ROADTRIP-MODEL-083: a ferry that really is missed is still reported late', () => {
+    // The other half: picking the nearest occurrence must not swallow a genuine
+    // delay. Leaving at 21:00 and driving five hours arrives at 02:00, half an
+    // hour after the 01:30 ferry, and that is what it says.
+    const { warnings } = computeSchedule(
+      [
+        { anchor: '21:00', dwellMinutes: 0 },
+        { anchor: '01:30', dwellMinutes: 0 },
+      ],
+      [hours(5)],
+    )
+    expect(warnings.find(w => w.code === 'late')).toMatchObject({ index: 1, minutes: 30 })
+  })
+
+  it('ROADTRIP-MODEL-084: a pinned stop after an untimed leg keeps the day it is on', () => {
+    // Nothing to be late against, but the day carried so far still applies —
+    // otherwise the stop prints under a day-1 stop as though it happened first.
+    const { entries } = computeSchedule(
+      [
+        { anchor: '20:00', dwellMinutes: 0 },
+        { anchor: '02:00', dwellMinutes: 0 },
+        { anchor: '09:00', dwellMinutes: 0 },
+      ],
+      [hours(6), undefined],
+    )
+    expect(entries[2]).toMatchObject({ arrival: '09:00', dayOffset: 1 })
+  })
+
   it('reports a stop the drive cannot reach in time', () => {
     const { warnings } = computeSchedule(
       [

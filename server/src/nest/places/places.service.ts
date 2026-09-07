@@ -7,7 +7,7 @@ import { DatabaseService, type TripAccess } from '../database/database.service';
 import type { PlaceWithTags } from '../database/database.service';
 import { PermissionsService } from '../permissions/permissions.service';
 import { MapsService, GOOGLE_SHORT_HOSTS, isGoogleMapsHost } from '../maps/maps.service';
-import { parseDirectionsUrl } from './maps-dir.helpers';
+import { isDirectionsUrl, parseDirectionsUrl } from './maps-dir.helpers';
 import type { Place, User } from '../../types';
 import { QueryHelpersService } from '../query-helpers/query-helpers.service';
 import { ratingAggregate } from '../common/rowShape';
@@ -948,6 +948,18 @@ export class PlacesService {
       }
     }
 
+    // A route, once the redirect is followed. The dispatch upstream decides on
+    // the raw URL, and a short link's path is `/<code>` — it matches nothing, so
+    // every route shared from the Google Maps app arrived here and was answered
+    // with "could not extract list ID", which is the complaint the directions
+    // import was written to remove. The Share sheet on a phone produces exactly
+    // this shape, and the box says a directions link works.
+    //
+    // Handed on with the resolved URL, so the hop is not made twice.
+    if (isDirectionsUrl(resolvedUrl)) {
+      return this.importGoogleDirections(tripId, resolvedUrl, opts);
+    }
+
     // Pattern: /placelists/list/{ID}
     const plMatch = resolvedUrl.match(/placelists\/list\/([A-Za-z0-9_-]+)/);
     if (plMatch) listId = plMatch[1];
@@ -1155,7 +1167,12 @@ export class PlacesService {
       }
       if (!wp.name) continue;
       try {
-        const hits = await this.maps.searchNominatim(wp.name);
+        // Background lane, which is what this method's own contract asks of a
+        // bulk caller: up to thirty sequential lookups, each taking the next
+        // slot on a 1.1 s process-wide throttle. On the interactive lane every
+        // other member of the instance typing in the place search box waits
+        // behind the whole import.
+        const hits = await this.maps.searchNominatim(wp.name, undefined, 'background');
         const hit = hits.find((h) => h.lat !== null && h.lng !== null);
         // The name from the link, not the one the geocoder answers with: somebody who
         // typed a nickname into Google should not find a street address on their trip.

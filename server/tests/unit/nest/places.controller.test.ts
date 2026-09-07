@@ -204,7 +204,12 @@ describe('PlacesController (parity with the legacy /api/trips/:tripId/places rou
       expect(importGoogleDirections).toHaveBeenCalledWith('5', url, { enrich: false, userId: 1 });
       expect(importGoogleList).not.toHaveBeenCalled();
     });
-    it('leaves a list link with the list importer', async () => {
+    it('sends a short link to the list importer, which knows where it really goes', async () => {
+      // A short link's path is `/<code>`, so nothing about the raw URL says
+      // whether it is a route or a list. The dispatch cannot know before the
+      // redirect is followed, and the list importer already follows it — so it
+      // is the one that hands a route on. Deciding here would mean a second
+      // network hop and a second copy of the SSRF handling.
       const importGoogleDirections = vi.fn();
       const importGoogleList = vi.fn().mockResolvedValue({ places: [], listName: 'L', skipped: 0 });
       const s = svc({ importGoogleDirections, importGoogleList, broadcast: vi.fn() } as Partial<PlacesService>);

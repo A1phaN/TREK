@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   reanchorAfterInsert,
   reanchorAfterRemove,
+  reanchorByStopOrder,
   reanchorAfterReorder,
   isEmptyReanchoring,
   type AnchoredVia,
@@ -122,5 +123,55 @@ describe('reanchorAfterReorder', () => {
 
   it('FE-REANCHOR-016: no vias means no request', () => {
     expect(isEmptyReanchoring(reanchorAfterReorder([], 0, 2, 4))).toBe(true)
+  })
+
+  it('FE-REANCHOR-017: swapping the only two stops keeps every via', () => {
+    // A reorder removes nothing. Leg 0 is still leg 0 after the swap, merely
+    // driven the other way round, so the anchors are already right. Routing this
+    // through the removal half asked the server to delete every via of the day —
+    // and two stops is exactly the shape "follow this track" produces, up to
+    // nine vias on that one leg, gone to a single drag with no prompt and no
+    // undo.
+    const vias = [via(11, 0), via(12, 0), via(13, 0)]
+
+    for (const [from, to] of [[0, 1], [1, 0]] as const) {
+      const plan = reanchorAfterReorder(vias, from, to, 2)
+      expect(plan.remove, `${from}->${to}`).toEqual([])
+      expect(isEmptyReanchoring(plan), `${from}->${to}`).toBe(true)
+    }
+  })
+
+  it('FE-REANCHOR-019: a wholesale reorder follows the stop, not the number', () => {
+    // The plan-mode drag hands a whole new ordering rather than one move, so the
+    // anchors are mapped by the stop they were pinned behind. Stops A,B,C,D with
+    // a via on the C->D leg (anchor 2): move A to the end and C is now at index
+    // 1, so the via belongs on leg 1.
+    const plan = reanchorByStopOrder([via(1, 2)], [10, 20, 30, 40], [20, 30, 40, 10])
+    expect(plan.vias).toEqual([{ id: 1, after_order_index: 1 }])
+    expect(plan.remove).toEqual([])
+  })
+
+  it('FE-REANCHOR-020: a via whose stop became the last one has no leg left', () => {
+    // Nothing follows the final stop, so there is no drive for the via to bend.
+    const plan = reanchorByStopOrder([via(1, 0)], [10, 20, 30], [20, 30, 10])
+    expect(plan.remove).toEqual([1])
+  })
+
+  it('FE-REANCHOR-021: a stop that is gone takes its vias with it', () => {
+    const plan = reanchorByStopOrder([via(1, 1)], [10, 20, 30], [10, 30])
+    expect(plan.remove).toEqual([1])
+  })
+
+  it('FE-REANCHOR-022: an ordering that did not actually change asks for nothing', () => {
+    expect(isEmptyReanchoring(reanchorByStopOrder([via(1, 0)], [10, 20, 30], [10, 20, 30]))).toBe(true)
+  })
+
+  it('FE-REANCHOR-018: removing a stop from a two-stop day still clears the leg', () => {
+    // The other half of the same rule, and the reason the short-circuit exists:
+    // take a stop away from a two-stop day and there is no drive left, so a via
+    // has nowhere to sit.
+    const plan = reanchorAfterRemove([via(11, 0), via(12, 0)], 1, 2)
+    expect(plan.remove).toEqual([11, 12])
+    expect(plan.vias).toEqual([])
   })
 })

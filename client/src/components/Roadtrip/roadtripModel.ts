@@ -184,17 +184,30 @@ export interface Schedule {
  * cascade from there. When it sits before the arrival the drive implies, the plan does
  * not fit: the caller is told by how much rather than the pinned time being moved.
  */
+const DAY_MINUTES = 24 * 60
+
 function resolveArrival(
   anchor: number | null,
   cursor: number | null,
   dayOffset: number,
 ): { arrival: number | null; lateBy: number | null } {
   if (anchor === null) return { arrival: cursor, lateBy: null }
-  if (cursor === null) return { arrival: anchor, lateBy: null }
-  const anchorToday = anchor + dayOffset * 24 * 60
+  // No drive has been timed yet, so there is nothing to be late against — but the
+  // day carried so far still applies, or a pinned stop after an untimed leg
+  // prints under a day-1 stop as though it happened first.
+  if (cursor === null) return { arrival: anchor + dayOffset * DAY_MINUTES, lateBy: null }
+  // The occurrence of that wall-clock time nearest the cursor, not the one on the
+  // day the cascade has reached so far. `dayOffset` only advances once a computed
+  // arrival crosses midnight, and it is read before this stop's arrival is known —
+  // so when the stop that crosses midnight is the pinned one, its anchor was
+  // placed a whole day early and the plan was reported as 24 hours late while
+  // being exactly on time. Rounding also keeps the ordinary case: 08:00, a three
+  // hour leg, a 09:00 pin still picks the same day and is two hours late.
+  const k = Math.round((cursor - anchor) / DAY_MINUTES)
+  const anchorAt = anchor + k * DAY_MINUTES
   return {
-    arrival: anchorToday,
-    lateBy: cursor > anchorToday + 1 ? Math.round(cursor - anchorToday) : null,
+    arrival: anchorAt,
+    lateBy: cursor > anchorAt + 1 ? Math.round(cursor - anchorAt) : null,
   }
 }
 
@@ -535,6 +548,40 @@ export function reanchorAfterRemove(vias: AnchoredVia[], position: number, stopC
  * `stopCount` is the number of stops BEFORE the move. `to` is the index in the list as
  * it looks AFTER the stop has been taken out.
  */
+/**
+ * Re-pin a day's vias after its stops were reordered wholesale.
+ *
+ * The single-move helpers above take a from/to pair, which is what the rail
+ * hands them. The plan-mode drag hands a whole new ordering instead, and any
+ * permutation is possible — so this maps by the stop each anchor refers to
+ * rather than by arithmetic on the index. A via anchored after a stop stays
+ * anchored after that same stop, wherever it ended up.
+ *
+ * Both lists are in the rail's index space, i.e. only stops that can be routed.
+ * A via whose stop is gone, or which lands on the last stop and so has no leg
+ * left to bend, is reported for removal.
+ */
+export function reanchorByStopOrder(
+  vias: AnchoredVia[],
+  previousIds: number[],
+  nextIds: number[],
+): Reanchoring {
+  if (!vias.length) return EMPTY_REANCHORING
+  const moved: ReanchoredVia[] = []
+  const remove: number[] = []
+  for (const via of vias) {
+    const stopId = previousIds[via.after_order_index]
+    const next = stopId === undefined ? -1 : nextIds.indexOf(stopId)
+    // Gone, or now the last stop of the day: either way there is no leg for it.
+    if (next === -1 || next >= nextIds.length - 1) {
+      remove.push(via.id)
+      continue
+    }
+    if (next !== via.after_order_index) moved.push({ id: via.id, after_order_index: next })
+  }
+  return { vias: moved, remove }
+}
+
 export function reanchorAfterReorder(
   vias: AnchoredVia[],
   from: number,
@@ -542,6 +589,17 @@ export function reanchorAfterReorder(
   stopCount: number,
 ): Reanchoring {
   if (!vias.length || from === to) return EMPTY_REANCHORING
+  // A reorder is modelled as remove-then-insert, and the removal half refuses to
+  // treat a two-stop day as still having a drive: below three stops it reports
+  // every via for deletion, which is right when a stop really goes away and
+  // catastrophic here. Nothing is removed by a reorder — swapping the only two
+  // stops leaves leg 0 exactly where it was, merely driven the other way round —
+  // so the anchors are already correct and there is nothing to re-pin.
+  //
+  // Two stops is the shape "follow this track" produces: it lays up to nine vias
+  // on the single leg between one pair, and one drag in the rail deleted all of
+  // them, with no prompt and no undo.
+  if (stopCount <= 2) return EMPTY_REANCHORING
   const afterRemove = reanchorAfterRemove(vias, from, stopCount)
   const dropped = new Set(afterRemove.remove)
   const movedTo = new Map(afterRemove.vias.map(v => [v.id, v.after_order_index] as const))

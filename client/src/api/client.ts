@@ -472,8 +472,15 @@ export const placesApi = {
     if (opts?.paths !== undefined) fd.append('importPaths', String(opts.paths))
     return postMultipart(`/trips/${tripId}/places/import/map`, fd)
   },
+  // A longer timeout than the shared 8 s, like the other routes here that wait
+  // on somebody else's service. A directions link whose stops are only named
+  // has to be geocoded one at a time behind a 1.1 s throttle, so a route with
+  // eight stops needs about ten seconds. Giving up at eight left the server
+  // finishing the import and writing the places while the browser reported a
+  // failure, and a retry then spent the whole geocoding budget again only to
+  // have the dedupe skip every stop.
   importGoogleList: (tripId: number | string, url: string, enrich?: boolean) =>
-      apiClient.post(`/trips/${tripId}/places/import/google-list`, { url, enrich } satisfies PlaceImportListRequest).then(r => r.data),
+      apiClient.post(`/trips/${tripId}/places/import/google-list`, { url, enrich } satisfies PlaceImportListRequest, { timeout: 60000 }).then(r => r.data),
   importNaverList: (tripId: number | string, url: string, enrich?: boolean) =>
       apiClient.post(`/trips/${tripId}/places/import/naver-list`, { url, enrich } satisfies PlaceImportListRequest).then(r => r.data),
   bulkDelete: (tripId: number | string, ids: number[]) =>

@@ -182,8 +182,20 @@ export class RoadtripService {
     input: { vias: { id: number; after_order_index: number }[]; remove?: number[] },
   ): RoadtripVia[] {
     return this.db.transaction(() => {
+      // Read before writing: the OLD anchor is what says which of two merged
+      // legs came first, and after the updates that information is gone.
+      const before = new Map(
+        this.db
+          .all<{ id: number; after_order_index: number; sequence: number }>(
+            'SELECT id, after_order_index, sequence FROM roadtrip_vias WHERE day_id = ?',
+            dayId,
+          )
+          .map((v) => [v.id, v]),
+      );
+
       for (const id of input.remove ?? []) {
         this.db.run('DELETE FROM roadtrip_vias WHERE id = ? AND day_id = ?', id, dayId);
+        before.delete(id);
       }
       for (const via of input.vias) {
         this.db.run(
@@ -193,6 +205,44 @@ export class RoadtripService {
           dayId,
         );
       }
+
+      // Renumber, because `sequence` is allocated per leg and starts at 0 in
+      // each. Re-anchoring MERGES two legs whenever a stop between them goes
+      // away, and their two independent series then sit side by side: leg A's
+      // 0,1 next to leg B's 0,1. Everything that draws the route orders by
+      // sequence, so the drive ran through A0, B0, A1, B1 — forward, back, and
+      // forward again — and the wrong order was persisted, survived a reload
+      // and could not be repaired except by deleting the vias.
+      //
+      // The old anchor is the primary key of the sort: the vias of the earlier
+      // leg belong ahead of the ones from the leg that merged into it. Old
+      // sequence orders within a leg, and the id settles the rest so the result
+      // never depends on row order.
+      const rows = this.db.all<{ id: number; after_order_index: number }>(
+        'SELECT id, after_order_index FROM roadtrip_vias WHERE day_id = ?',
+        dayId,
+      );
+      const byLeg = new Map<number, { id: number }[]>();
+      for (const row of rows) {
+        const list = byLeg.get(row.after_order_index) ?? [];
+        list.push(row);
+        byLeg.set(row.after_order_index, list);
+      }
+      for (const list of byLeg.values()) {
+        list.sort((a, b) => {
+          const pa = before.get(a.id);
+          const pb = before.get(b.id);
+          return (
+            (pa?.after_order_index ?? 0) - (pb?.after_order_index ?? 0) ||
+            (pa?.sequence ?? 0) - (pb?.sequence ?? 0) ||
+            a.id - b.id
+          );
+        });
+        list.forEach((row, index) => {
+          this.db.run('UPDATE roadtrip_vias SET sequence = ? WHERE id = ? AND day_id = ?', index, row.id, dayId);
+        });
+      }
+
       return this.listForDay(dayId);
     });
   }

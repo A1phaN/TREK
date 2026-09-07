@@ -14,6 +14,16 @@ export interface RoadtripVias {
    * with the place, so nothing here can name a line that no longer exists.
    */
   trackByDay: Record<number, RoadtripDayTrack>
+  /**
+   * True when the last read failed for a reason other than "there is nothing
+   * here", so what is drawn may be older than what the server holds.
+   *
+   * The read runs after every write, and the via list feeds the routing key, so
+   * emptying on a transient failure re-routed the whole trip along the roads the
+   * traveller had steered away from — indistinguishable from having deleted
+   * them. The list is kept and the staleness is said instead.
+   */
+  stale: boolean
   add: (dayId: number, afterOrderIndex: number, lat: number, lng: number) => Promise<void>
   /**
    * Lay a chain of vias on one day, optionally clearing the legs it fills first.
@@ -58,6 +68,14 @@ const EMPTY_TRACKS: Record<number, RoadtripDayTrack> = {}
 export function useRoadtripVias(tripId: number | string | null, active: boolean): RoadtripVias {
   const [byDay, setByDay] = useState<Record<number, RoadtripVia[]>>(EMPTY)
   const [trackByDay, setTrackByDay] = useState<Record<number, RoadtripDayTrack>>(EMPTY_TRACKS)
+  /**
+   * The list on screen may be older than the server's.
+   *
+   * Set when a read fails for a reason that is not "there is nothing here", so
+   * the rail can say the shaping it is drawing might be out of date rather than
+   * quietly showing a trip that has lost its detours.
+   */
+  const [stale, setStale] = useState(false)
 
   const group = useCallback((vias: RoadtripVia[]) => {
     const next: Record<number, RoadtripVia[]> = {}
@@ -73,11 +91,26 @@ export function useRoadtripVias(tripId: number | string | null, active: boolean)
       const byId: Record<number, RoadtripDayTrack> = {}
       for (const track of tracks ?? []) byId[track.day_id] = track
       setTrackByDay(byId)
-    } catch {
-      // An instance with the addon off answers 404 here, which is not an error worth
-      // reporting — it just means there are no vias to draw.
-      setByDay(EMPTY)
-      setTrackByDay(EMPTY_TRACKS)
+      setStale(false)
+    } catch (err) {
+      // An instance with the addon off answers 404 here, and a caller without
+      // the permission 403. Neither is worth reporting: it just means there are
+      // no vias to draw, and emptying is the truthful answer.
+      //
+      // Anything else is not. This read runs after every write, so a 502 from a
+      // proxy, a dropped connection or a tab that has just gone offline used to
+      // empty the map — and because the via list feeds the routing key, the whole
+      // trip was then re-routed along the roads the traveller had steered away
+      // from. Nothing said so, nothing retried, and it looked exactly like
+      // having deleted them. The last known list is kept instead.
+      const status = (err as { response?: { status?: number } } | null)?.response?.status
+      if (status === 404 || status === 403) {
+        setByDay(EMPTY)
+        setTrackByDay(EMPTY_TRACKS)
+        setStale(false)
+        return
+      }
+      setStale(true)
     }
   }, [tripId, active, group])
 
@@ -126,5 +159,5 @@ export function useRoadtripVias(tripId: number | string | null, active: boolean)
     await reload()
   }, [tripId, reload])
 
-  return { byDay, trackByDay, add, addMany, move, remove, reanchor }
+  return { byDay, trackByDay, stale, add, addMany, move, remove, reanchor }
 }

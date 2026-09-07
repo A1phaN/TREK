@@ -33,6 +33,7 @@ import {
   insertIndexForAlong,
   reanchorAfterInsert,
   reanchorAfterRemove,
+  reanchorByStopOrder,
   reanchorAfterReorder,
 } from '../../components/Roadtrip/roadtripModel'
 import type { RoadtripStopDraft } from '../../components/Roadtrip/RoadtripStopPopup'
@@ -775,7 +776,7 @@ export function useTripPlanner() {
     try {
       await updateSettings({ [key]: value } as Partial<Settings>)
     } catch {
-      toast.error(t('settings.saveFailed'))
+      toast.error(t('places.saveError'))
     }
   }, [updateSettings, toast, t])
 
@@ -1395,9 +1396,25 @@ export function useTripPlanner() {
   const handleAssignToDay = useCallback(async (placeId: number, dayId?: number, position?: number) => {
     const target = dayId || selectedDayId
     if (!target) { toast.error(t('trip.toast.selectDay')); return }
+    // Worked out before the stop lands, the same way the road-trip popup does it:
+    // once the list has shifted there is no record of which leg each via was
+    // drawn for. Appending to the end moves nothing, so only a real insert needs
+    // the correction — and the predicate decides which side of the new stop a
+    // via falls on when it is dropped into the middle of a leg.
+    const stopsBefore = roadtripStopsOf(target)
+    const insertAt = position === undefined ? stopsBefore.length : position
+    const place = places.find(p => p.id === placeId)
+    const plan = insertAt >= stopsBefore.length || typeof place?.lat !== 'number' || typeof place?.lng !== 'number'
+      ? null
+      : reanchorAfterInsert(
+        roadtripVias.byDay[target] ?? [],
+        insertAt,
+        viaLiesBefore(target, { lat: place.lat, lng: place.lng }),
+      )
     try {
       const assignment = await tripActions.assignPlaceToDay(tripId, target, placeId, position)
       toast.success(t('trip.toast.assignedToDay'))
+      if (plan) await roadtripVias.reanchor(target, plan)
       updateRouteForDay(target)
       if (assignment?.id) {
         const capturedAssignmentId = assignment.id
@@ -1407,15 +1424,28 @@ export function useTripPlanner() {
         })
       }
     } catch (err: unknown) { toast.error(err instanceof Error ? err.message : t('common.unknownError')) }
-  }, [selectedDayId, tripId, toast, updateRouteForDay, pushUndo])
+  }, [selectedDayId, tripId, toast, updateRouteForDay, pushUndo, t, places, roadtripVias, roadtripStopsOf, viaLiesBefore])
 
   const handleRemoveAssignment = useCallback(async (dayId: number, assignmentId: number) => {
     const state = useTripStore.getState()
     const capturedAssignment = (state.assignments[String(dayId)] || []).find(a => a.id === assignmentId)
     const capturedPlaceId = capturedAssignment?.place?.id
     const capturedOrderIndex = capturedAssignment?.order_index ?? 0
+    // Worked out before the delete, while the day still has the stop the vias
+    // were measured against. `after_order_index` is a POSITION, so taking a stop
+    // away moves the ground under every via that follows it: the anchors keep
+    // their old numbers and the drive silently reverts to the road the traveller
+    // steered it off, or bends a leg they never chose. This control is reachable
+    // from the place inspector in both modes, and it was the one mutating path
+    // that never corrected them.
+    const stopsBefore = roadtripStopsOf(dayId)
+    const removedAt = stopsBefore.findIndex(a => a.id === assignmentId)
+    const plan = removedAt === -1
+      ? null
+      : reanchorAfterRemove(roadtripVias.byDay[dayId] ?? [], removedAt, stopsBefore.length)
     try {
       await tripActions.removeAssignment(tripId, dayId, assignmentId)
+      if (plan) await roadtripVias.reanchor(dayId, plan)
       updateRouteForDay(dayId)
       if (capturedPlaceId != null) {
         const capturedDayId = dayId
@@ -1426,14 +1456,24 @@ export function useTripPlanner() {
       }
     }
     catch (err: unknown) { toast.error(err instanceof Error ? err.message : t('common.unknownError')) }
-  }, [tripId, toast, updateRouteForDay, pushUndo])
+  }, [tripId, toast, updateRouteForDay, pushUndo, t, roadtripVias, roadtripStopsOf])
 
   const handleReorder = useCallback((dayId: number, orderedIds: number[]) => {
     const prevIds = (useTripStore.getState().assignments[String(dayId)] || [])
       .slice().sort((a, b) => a.order_index - b.order_index).map(a => a.id)
+    // The rail counts anchors over routable stops only, so the plan is built in
+    // that space. A drag here hands a whole new ordering rather than one move,
+    // and any permutation is possible — so the anchors follow the stop they were
+    // pinned behind instead of being shifted arithmetically. Without this the
+    // day's detours stayed on their old numbers and the drive quietly took a
+    // different road, persisted and visible to every collaborator.
+    const stopIdsBefore = roadtripStopsOf(dayId).map(a => a.id)
+    const stopIdsAfter = orderedIds.filter(id => stopIdsBefore.includes(id))
+    const plan = reanchorByStopOrder(roadtripVias.byDay[dayId] ?? [], stopIdsBefore, stopIdsAfter)
     try {
       tripActions.reorderAssignments(tripId, dayId, orderedIds)
-        .then(() => {
+        .then(async () => {
+          if (plan.vias.length || plan.remove.length) await roadtripVias.reanchor(dayId, plan)
           const capturedDayId = dayId
           const capturedPrevIds = prevIds
           pushUndo(t('undo.reorder'), async () => {
@@ -1444,7 +1484,7 @@ export function useTripPlanner() {
       updateRouteForDay(dayId)
     }
     catch { toast.error(t('trip.toast.reorderError')) }
-  }, [tripId, toast, pushUndo, updateRouteForDay])
+  }, [tripId, toast, pushUndo, updateRouteForDay, t, roadtripVias, roadtripStopsOf])
 
   const handleUpdateDayTitle = useCallback(async (dayId, title) => {
     try { await tripActions.updateDayTitle(tripId, dayId, title) }

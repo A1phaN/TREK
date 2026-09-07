@@ -3,6 +3,7 @@ import { ParkingSquare, Hourglass, AlertTriangle, BedDouble } from 'lucide-react
 import Modal from '../shared/Modal'
 import CustomSelect from '../shared/CustomSelect'
 import { useTranslation } from '../../i18n/TranslationContext'
+import { safeExternalHref } from '../../utils/safeUrl'
 import { formatDurationShort, SERVICE_COLORS } from './roadtripModel'
 import { STOP_KINDS, STOP_KIND_BY_KEY } from './stopKinds'
 import type { CorridorPoi } from './useCorridorPois'
@@ -71,6 +72,13 @@ export default function RoadtripStopPopup({
   draft, duplicateName, onClose, onSave, onSaveNight, onMoreDetails,
 }: RoadtripStopPopupProps): React.ReactElement | null {
   const { t } = useTranslation()
+  // Through the same guard every other external link in the app goes through.
+  // This value is an unvalidated OpenStreetMap tag, and OSM `website` tags are
+  // routinely written without a scheme — `www.hotel.de` as a raw href is a
+  // RELATIVE url, so the click navigated the planner to
+  // /trips/<id>/www.hotel.de instead of leaving the app. The helper adds the
+  // scheme for a bare host and drops anything that is not http(s).
+  const websiteHref = safeExternalHref(draft?.poi.website)
   const suggested = STOP_KINDS.find(k => k.key === draft?.poi.category)
   const [stopType, setStopType] = useState<RoadtripStopType | null>(suggested?.key ?? null)
   const [dwell, setDwell] = useState<number>(suggested?.defaultMinutes ?? 30)
@@ -210,16 +218,16 @@ export default function RoadtripStopPopup({
             {/* What OSM knows about the house, which is the whole of what we offer: no
                 price, no availability, no link into a booking portal. TREK links to maps
                 and to the place's own site, never to a vendor. */}
-            {draft.poi.website || draft.poi.phone ? (
+            {websiteHref || draft.poi.phone ? (
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-caption">
-                {draft.poi.website ? (
+                {websiteHref ? (
                   <a
-                    href={draft.poi.website}
+                    href={websiteHref}
                     target="_blank"
                     rel="noreferrer noopener"
                     className="text-accent hover:underline"
                   >
-                    {t('places.website')}
+                    {t('places.formWebsite')}
                   </a>
                 ) : null}
                 {draft.poi.phone ? (

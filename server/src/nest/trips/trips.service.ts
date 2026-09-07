@@ -552,15 +552,48 @@ export class TripsService {
         INSERT INTO places (trip_id, name, description, lat, lng, address, category_id, price, currency,
           reservation_status, reservation_notes, reservation_datetime, place_time, end_time,
           duration_minutes, notes, image_url, google_place_id, google_ftid, website, phone, transport_mode, osm_id,
-          route_geometry, route_color)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          route_geometry, route_color, stop_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       for (const p of oldPlaces) {
         const r = insertPlace.run(newTripId, p.name, p.description, p.lat, p.lng, p.address, p.category_id,
           p.price, p.currency, p.reservation_status, p.reservation_notes, p.reservation_datetime,
           p.place_time, p.end_time, p.duration_minutes, p.notes, p.image_url, p.google_place_id,
-          p.google_ftid, p.website, p.phone, p.transport_mode, p.osm_id, p.route_geometry, p.route_color);
+          p.google_ftid, p.website, p.phone, p.transport_mode, p.osm_id, p.route_geometry, p.route_color,
+          p.stop_type);
         placeMap.set(p.id, r.lastInsertRowid);
+      }
+
+      // The road-trip shaping goes with the copy. A via is not decoration: it is
+      // the road the traveller chose over the one the router prefers, and a day
+      // track is the line a day was fitted to. Leaving them behind gave back a
+      // trip that looks complete and quietly drives somewhere else — visible
+      // only once somebody starts editing the copy, with nothing to recover
+      // from. Both tables are keyed by day, so they ride on `dayMap`.
+      const oldVias = this.db.prepare(`
+        SELECT v.* FROM roadtrip_vias v JOIN days d ON d.id = v.day_id WHERE d.trip_id = ?
+      `).all(sourceTripId) as any[];
+      const insertVia = this.db.prepare(
+        'INSERT INTO roadtrip_vias (day_id, after_order_index, sequence, lat, lng) VALUES (?, ?, ?, ?, ?)',
+      );
+      for (const v of oldVias) {
+        const newDayId = dayMap.get(v.day_id);
+        if (newDayId) insertVia.run(newDayId, v.after_order_index, v.sequence, v.lat, v.lng);
+      }
+
+      const oldTracks = this.db.prepare(`
+        SELECT t.* FROM roadtrip_day_tracks t JOIN days d ON d.id = t.day_id WHERE d.trip_id = ?
+      `).all(sourceTripId) as any[];
+      const insertTrack = this.db.prepare(
+        'INSERT INTO roadtrip_day_tracks (day_id, place_id, stray_km) VALUES (?, ?, ?)',
+      );
+      for (const t of oldTracks) {
+        const newDayId = dayMap.get(t.day_id);
+        // The track is a place of the trip, so it has been copied too — but skip
+        // the row rather than point it at the original, the way the assignment
+        // and accommodation loops below skip an id they cannot map.
+        const newPlaceId = placeMap.get(t.place_id);
+        if (newDayId && newPlaceId) insertTrack.run(newDayId, newPlaceId, t.stray_km);
       }
 
       const oldTags = this.db.prepare(`

@@ -167,9 +167,21 @@ export function corridorTiles(line: LatLng[], widthKm: number, maxSpanDeg = 0.45
     }
   }
 
+  // The point the open box last swallowed. When a box closes, the next one starts
+  // from it rather than from `p` alone, so the two overlap by exactly one step of
+  // the walk. Starting at `p` left the stretch between them covered only by the
+  // padding on either side — and the walk steps in up to maxSpanDeg/2 while the
+  // padding is widthKm, so at the offered widths a band of several kilometres of
+  // route fell into no box at all. Nothing downstream noticed: the panel counts
+  // tiles asked and tiles answered, so it reported a finished, uncapped,
+  // error-free search of a drive it had never fully looked at. "Find fuel along
+  // the route" is the whole feature.
+  let previous: LatLng | null = null
+
   for (const p of densify(line, maxSpanDeg / 2)) {
     if (!current) {
       current = { south: p.lat, north: p.lat, west: p.lng, east: p.lng }
+      previous = p
       continue
     }
     const next: Bbox = {
@@ -181,10 +193,17 @@ export function corridorTiles(line: LatLng[], widthKm: number, maxSpanDeg = 0.45
     const grown = padded(next)
     if (grown.north - grown.south > maxSpanDeg || grown.east - grown.west > maxSpanDeg) {
       tiles.push(padded(current))
-      current = { south: p.lat, north: p.lat, west: p.lng, east: p.lng }
+      const from = previous ?? p
+      current = {
+        south: Math.min(from.lat, p.lat),
+        north: Math.max(from.lat, p.lat),
+        west: Math.min(from.lng, p.lng),
+        east: Math.max(from.lng, p.lng),
+      }
     } else {
       current = next
     }
+    previous = p
   }
   if (current) tiles.push(padded(current))
   return tiles

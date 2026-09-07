@@ -151,6 +151,47 @@ describe('RoadtripService', () => {
     expect(after.map(v => v.after_order_index)).toEqual([1]);
   });
 
+  it('ROADTRIP-SVC-016: merging two populated legs keeps the drive going one way', () => {
+    // The case none of the four above reach: they all re-anchor onto legs that
+    // are empty. `sequence` is allocated per leg and starts at 0 in each, so
+    // merging two populated legs put leg A's 0,1 beside leg B's 0,1 — and
+    // everything that draws the route orders by sequence, so the drive ran A0,
+    // B0, A1, B1: forward, back, and forward again. Persisted, surviving a
+    // reload, and unrepairable except by deleting the vias.
+    const a0 = service.create(1, { after_order_index: 1, lat: 50.0, lng: 10 });
+    const a1 = service.create(1, { after_order_index: 1, lat: 50.1, lng: 10 });
+    const b0 = service.create(1, { after_order_index: 2, lat: 50.2, lng: 10 });
+    const b1 = service.create(1, { after_order_index: 2, lat: 50.3, lng: 10 });
+    expect([a0.sequence, a1.sequence, b0.sequence, b1.sequence]).toEqual([0, 1, 0, 1]);
+
+    // The stop between the two legs is removed, so leg 2 merges into leg 1 —
+    // exactly what reanchorAfterRemove computes on the client.
+    const after = service.reanchor(1, {
+      vias: [{ id: b0.id, after_order_index: 1 }, { id: b1.id, after_order_index: 1 }],
+    });
+
+    const onLeg = after.filter(v => v.after_order_index === 1).sort((x, y) => x.sequence - y.sequence);
+    expect(onLeg.map(v => v.id)).toEqual([a0.id, a1.id, b0.id, b1.id]);
+    // Strictly increasing across the whole leg, with no value used twice.
+    expect(onLeg.map(v => v.sequence)).toEqual([0, 1, 2, 3]);
+    // Which is the geographic order the day is actually driven in.
+    expect(onLeg.map(v => v.lat)).toEqual([50.0, 50.1, 50.2, 50.3]);
+  });
+
+  it('ROADTRIP-SVC-017: a leg nothing merged into keeps the order it had', () => {
+    const first = service.create(1, { after_order_index: 0, lat: 53, lng: 10 });
+    const second = service.create(1, { after_order_index: 0, lat: 54, lng: 11 });
+    const elsewhere = service.create(1, { after_order_index: 3, lat: 55, lng: 12 });
+
+    const after = service.reanchor(1, { vias: [{ id: elsewhere.id, after_order_index: 2 }] });
+
+    const leg0 = after.filter(v => v.after_order_index === 0).sort((x, y) => x.sequence - y.sequence);
+    expect(leg0.map(v => v.id)).toEqual([first.id, second.id]);
+    expect(leg0.map(v => v.sequence)).toEqual([0, 1]);
+    // And the one that moved is alone on its new leg, numbered from zero.
+    expect(after.find(v => v.id === elsewhere.id)?.sequence).toBe(0);
+  });
+
   it('ROADTRIP-SVC-012: a chain lands in the order it was sent, per leg', () => {
     const vias = service.createMany(1, { vias: [
       { after_order_index: 0, lat: 53.0, lng: 10.0 },
