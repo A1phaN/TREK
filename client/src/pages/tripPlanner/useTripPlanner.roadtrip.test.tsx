@@ -516,6 +516,62 @@ describe('useTripPlanner road trip: saving a hit', () => {
     expect(result.current.stopDraftDuplicate).toBe('Aral A1')
   })
 
+  it('FE-TP-ROAD-057: which side of the new stop a via falls on is measured on the road driven', async () => {
+    // Both the via and the new stop are projected onto the day's current routed line,
+    // so the comparison is "which one does the car reach first" rather than a
+    // straight-line guess.
+    seedTrip({ days: [buildDay({ id: 5, day_number: 1 })] })
+    rt.corridor.day = { dayId: 5, dayNumber: 1 }
+    rt.corridor.insertIndexFor.mockReturnValue(1)
+    rt.routes.days = [{
+      dayId: 5,
+      stops: [{ lat: 53.55, lng: 9.99 }, { lat: 52.52, lng: 13.4 }],
+      geometry: [[53.55, 9.99], [53.2, 10.9], [52.9, 12.0], [52.52, 13.4]],
+    }]
+    // One via before the hit on the road, one after it.
+    rt.vias.byDay = { 5: [via(1, 5, 0, 0, 53.2, 10.9), via(2, 5, 0, 1, 52.9, 12.0)] }
+
+    const { result } = await renderRoadtrip()
+    // The hit sits between them, at the second shape point of the drive.
+    act(() => { result.current.handlePoiClick(poi({ lat: 53.05, lng: 11.45 }) as never) })
+    await act(async () => { await result.current.saveStopDraft({ stopType: 'fuel', dwellMinutes: 10 }) })
+
+    const [, plan] = rt.vias.reanchor.mock.calls[0] as unknown as [number, { vias: Array<{ id: number; after_order_index: number }> }]
+    const moved = new Map(plan.vias.map(v => [v.id, v.after_order_index]))
+    // The one the car passes first keeps its leg; the one past the new stop moves on.
+    expect(moved.get(1)).not.toBe(moved.get(2))
+  })
+
+  it('FE-TP-ROAD-058: saving through the full form still lands the stop where it will be driven past', async () => {
+    // The slice has taken a position all along and nothing ever passed it, so a place
+    // added by way of the full form went to the end of the day.
+    seedTrip({ days: [buildDay({ id: 5, day_number: 1 })] })
+    rt.corridor.day = { dayId: 5, dayNumber: 1 }
+    rt.corridor.insertIndexFor.mockReturnValue(2)
+    const { result } = await renderRoadtrip()
+
+    act(() => { result.current.handlePoiClick(poi() as never) })
+    act(() => { result.current.stopDraftToForm({ stopType: 'fuel', dwellMinutes: 5 }) })
+    await act(async () => { await result.current.handleSavePlace({ name: 'Rasthof' }) })
+
+    expect(actions.assignPlaceToDay).toHaveBeenCalledWith(42, 5, 900, 2)
+    expect(updateRouteForDay).toHaveBeenCalledWith(5)
+  })
+
+  it('FE-TP-ROAD-059: a day link that fails is said out loud, and the place itself stands', async () => {
+    seedTrip({ days: [buildDay({ id: 5, day_number: 1 })] })
+    rt.corridor.day = { dayId: 5, dayNumber: 1 }
+    const { result } = await renderRoadtrip()
+    actions.assignPlaceToDay.mockRejectedValue(new Error('day gone'))
+
+    act(() => { result.current.handlePoiClick(poi() as never) })
+    act(() => { result.current.stopDraftToForm() })
+    await act(async () => { await result.current.handleSavePlace({ name: 'Rasthof' }) })
+
+    expect(actions.addPlace).toHaveBeenCalled()
+    expect(toasts.some(t => t.type === 'error' && t.message === 'day gone')).toBe(true)
+  })
+
   it('FE-TP-ROAD-016: with nothing open there is nothing to warn about', async () => {
     seedTrip({ days: [buildDay({ id: 5, day_number: 1 })] })
     rt.corridor.day = { dayId: 5, dayNumber: 1 }
@@ -718,6 +774,10 @@ describe('useTripPlanner road trip: one stop at a time', () => {
     await act(async () => { await result.current.setRoadtripStay(1011, 0) })
 
     expect(actions.updatePlace).toHaveBeenCalledWith(42, 1011, { duration_minutes: 0 })
+
+    actions.updatePlace.mockRejectedValue(new Error('read only'))
+    await act(async () => { await result.current.setRoadtripStay(1011, 45) })
+    expect(toasts.some(t => t.type === 'error' && t.message === 'read only')).toBe(true)
   })
 
   it('FE-TP-ROAD-032: a reader may not set a stay', async () => {
