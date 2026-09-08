@@ -14,6 +14,7 @@ const collab: TranslationStrings = {
   'collab.tabs.polls': 'Anketler',
   'collab.tabs.links': 'Bağlantılar',
   'collab.links.add': 'Bağlantı ekle',
+  'collab.chat.imageRejected': 'Yalnızca 10 MB boyutuna kadar JPEG, PNG, GIF ve WebP görselleri kabul edilir',
   'collab.links.cancel': 'İptal',
   'collab.links.save': 'Bağlantıyı kaydet',
   'collab.links.titlePlaceholder': 'Bağlantı başlığı',

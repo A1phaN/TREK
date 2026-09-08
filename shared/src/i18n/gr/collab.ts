@@ -14,6 +14,7 @@ const collab: TranslationStrings = {
   'collab.tabs.polls': 'Δημοσκοπήσεις',
   'collab.tabs.links': 'Σύνδεσμοι',
   'collab.links.add': 'Προσθήκη συνδέσμου',
+  'collab.chat.imageRejected': 'Επιτρέπονται μόνο εικόνες JPEG, PNG, GIF και WebP έως 10 MB',
   'collab.links.cancel': 'Ακύρωση',
   'collab.links.save': 'Αποθήκευση συνδέσμου',
   'collab.links.titlePlaceholder': 'Τίτλος συνδέσμου',

@@ -14,6 +14,7 @@ const collab: TranslationStrings = {
   'collab.tabs.polls': 'Hlasování',
   'collab.tabs.links': 'Odkazy',
   'collab.links.add': 'Přidat odkaz',
+  'collab.chat.imageRejected': 'Povoleny jsou pouze obrázky JPEG, PNG, GIF a WebP do 10 MB',
   'collab.links.cancel': 'Zrušit',
   'collab.links.save': 'Uložit odkaz',
   'collab.links.titlePlaceholder': 'Název odkazu',

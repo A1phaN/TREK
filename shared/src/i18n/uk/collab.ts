@@ -14,6 +14,7 @@ const collab: TranslationStrings = {
   'collab.tabs.polls': 'Опитування',
   'collab.tabs.links': 'Посилання',
   'collab.links.add': 'Додати посилання',
+  'collab.chat.imageRejected': 'Дозволено лише зображення JPEG, PNG, GIF і WebP розміром до 10 МБ',
   'collab.links.cancel': 'Скасувати',
   'collab.links.save': 'Зберегти посилання',
   'collab.links.titlePlaceholder': 'Назва посилання',

@@ -5,6 +5,7 @@ import { useCanDo } from '../../store/permissionsStore'
 import { useTripStore } from '../../store/tripStore'
 import { addListener, removeListener } from '../../api/websocket'
 import { useTranslation } from '../../i18n'
+import { useChatImages } from './useChatImages'
 import { useToast } from '../shared/Toast'
 
 export function useCollabChat(tripId: any, currentUser: any) {
@@ -23,8 +24,7 @@ export function useCollabChat(tripId: any, currentUser: any) {
   const [replyTo, setReplyTo] = useState(null)
   const [hoveredId, setHoveredId] = useState(null)
   const [sending, setSending] = useState(false)
-  const [imageFiles, setImageFiles] = useState<File[]>([])
-  const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const images = useChatImages()
   const [uploadProgress, setUploadProgress] = useState(0)
   const [showEmoji, setShowEmoji] = useState(false)
   const [reactMenu, setReactMenu] = useState(null) // { msgId, x, y }
@@ -122,28 +122,20 @@ export function useCollabChat(tripId: any, currentUser: any) {
 
   /* ── send ── */
   const addImageFiles = useCallback((incoming: File[] | FileList) => {
-    const valid = Array.from(incoming).filter(f => ['image/jpeg','image/png','image/gif','image/webp'].includes(f.type) && f.size <= 10 * 1024 * 1024)
-    if (valid.length !== Array.from(incoming).length) toast.error('Only JPEG, PNG, GIF, and WebP images up to 10 MB are allowed')
-    setImageFiles(prev => {
-      const next = [...prev, ...valid].slice(0, 4)
-      setImagePreviews(next.map(f => URL.createObjectURL(f)))
-      return next
-    })
-  }, [toast])
-  const removeImage = useCallback((index: number) => {
-    setImageFiles(prev => { const next = prev.filter((_, i) => i !== index); setImagePreviews(urls => { if (urls[index]) URL.revokeObjectURL(urls[index]); return next.map(f => URL.createObjectURL(f)) }); return next })
-  }, [])
+    if (!images.add(incoming)) toast.error(t('collab.chat.imageRejected'))
+  }, [images, toast, t])
+  const removeImage = images.remove
   const handlePaste = useCallback((e: ClipboardEvent) => { if (e.clipboardData.files.length) addImageFiles(e.clipboardData.files) }, [addImageFiles])
   const handleDrop = useCallback((e: DragEvent) => { e.preventDefault(); addImageFiles(e.dataTransfer.files) }, [addImageFiles])
 
   const handleSend = useCallback(async () => {
     const body = text.trim()
-    if ((!body && !imageFiles.length) || sending) return
+    if ((!body && !images.files.length) || sending) return
     setSending(true)
     try {
       let data
-      if (imageFiles.length) {
-        const form = new FormData(); if (body) form.append('text', body); if (replyTo) form.append('reply_to', String(replyTo.id)); imageFiles.forEach(file => form.append('images', file))
+      if (images.files.length) {
+        const form = new FormData(); if (body) form.append('text', body); if (replyTo) form.append('reply_to', String(replyTo.id)); images.files.forEach(file => form.append('images', file))
         data = await collabApi.sendMessage(tripId, form, { onUploadProgress: e => setUploadProgress(e.total ? Math.round((e.loaded / e.total) * 100) : 0) })
       } else {
         const payload: { text: string; reply_to?: number } = { text: body }; if (replyTo) payload.reply_to = replyTo.id
@@ -152,12 +144,12 @@ export function useCollabChat(tripId: any, currentUser: any) {
       if (data?.message) {
         setMessages(prev => prev.some(m => m.id === data.message.id) ? prev : [...prev, data.message])
       }
-      setText(''); setReplyTo(null); setShowEmoji(false); imagePreviews.forEach(URL.revokeObjectURL); setImageFiles([]); setImagePreviews([]); setUploadProgress(0)
+      setText(''); setReplyTo(null); setShowEmoji(false); images.clear()
       if (textareaRef.current) textareaRef.current.style.height = 'auto'
       isAtBottom.current = true
       setTimeout(() => scrollToBottom('smooth'), 50)
-    } catch { toast.error(t('common.error')) } finally { setSending(false) }
-  }, [text, sending, replyTo, tripId, scrollToBottom, toast, t, imageFiles, imagePreviews])
+    } catch { toast.error(t('common.error')) } finally { setSending(false); setUploadProgress(0) }
+  }, [text, sending, replyTo, tripId, scrollToBottom, toast, t, images])
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
@@ -199,5 +191,5 @@ export function useCollabChat(tripId: any, currentUser: any) {
     return emojiRegex.test(text.trim())
   }
 
-  return { currentUser, tripId, t, is12h, can, trip, canEdit, messages, setMessages, loading, setLoading, hasMore, setHasMore, loadingMore, setLoadingMore, text, setText, replyTo, setReplyTo, hoveredId, setHoveredId, sending, setSending, showEmoji, setShowEmoji, reactMenu, setReactMenu, deletingIds, setDeletingIds, deleteTimersRef, containerRef, messagesRef, scrollRef, textareaRef, emojiBtnRef, imageInputRef, imageFiles, imagePreviews, uploadProgress, addImageFiles, removeImage, handlePaste, handleDrop, isAtBottom, scrollToBottom, checkAtBottom, handleLoadMore, handleTextChange, handleSend, handleKeyDown, handleDelete, handleReact, handleEmojiSelect, isOwn, isEmojiOnly }
+  return { currentUser, tripId, t, is12h, can, trip, canEdit, messages, setMessages, loading, setLoading, hasMore, setHasMore, loadingMore, setLoadingMore, text, setText, replyTo, setReplyTo, hoveredId, setHoveredId, sending, setSending, showEmoji, setShowEmoji, reactMenu, setReactMenu, deletingIds, setDeletingIds, deleteTimersRef, containerRef, messagesRef, scrollRef, textareaRef, emojiBtnRef, imageInputRef, imageFiles: images.files, imagePreviews: images.previews, uploadProgress, addImageFiles, removeImage, handlePaste, handleDrop, isAtBottom, scrollToBottom, checkAtBottom, handleLoadMore, handleTextChange, handleSend, handleKeyDown, handleDelete, handleReact, handleEmojiSelect, isOwn, isEmojiOnly }
 }

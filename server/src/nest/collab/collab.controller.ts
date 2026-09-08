@@ -36,6 +36,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { RequirePermission, TripAccessGuard } from '../permissions/trip-access.guard';
 import { BLOCKED_EXTENSIONS } from '../files/files.constants';
+import { SpoolCleanupInterceptor } from '../common/spool-cleanup.interceptor';
 
 export const MAX_NOTE_FILE_SIZE = 50 * 1024 * 1024;
 const MAX_CHAT_IMAGES = 4;
@@ -330,14 +331,17 @@ export class CollabController {
   // client is still streaming the body and the socket dies as ECONNRESET
   // instead of carrying the error envelope. Both checks happen in the handler.
   @Post('messages')
-  @UseInterceptors(FilesInterceptor('images', MAX_CHAT_IMAGES, { fileFilter: collabChatImageFilter, limits: { files: MAX_CHAT_IMAGES, fileSize: 10 * 1024 * 1024 } }))
+  // SpoolCleanupInterceptor sits after the file one on purpose: the Zod pipe
+  // runs when the handler's parameters are resolved, which is after both have
+  // been entered, so a rejected body would otherwise leave up to four spooled
+  // images on disk with nothing to sweep them.
+  @UseInterceptors(
+    FilesInterceptor('images', MAX_CHAT_IMAGES, { fileFilter: collabChatImageFilter, limits: { files: MAX_CHAT_IMAGES, fileSize: 10 * 1024 * 1024 } }),
+    SpoolCleanupInterceptor,
+  )
   async createMessage(@CurrentUser() user: User, @Param('tripId') tripId: string, @Body() body: CollabMessageCreateDto, @UploadedFiles() files: Express.Multer.File[] | undefined, @Headers('x-socket-id') socketId?: string) {
     const uploaded = files || [];
     const cleanupSpool = () => uploaded.forEach(file => { if (file.path) { try { fs.unlinkSync(file.path); } catch { /* best-effort */ } } });
-    if (body.text && body.text.length > 5000) {
-      cleanupSpool();
-      throw new HttpException({ error: 'text must be 5000 characters or less' }, 400);
-    }
     let trip;
     try {
       trip = this.requireTrip(tripId, user);

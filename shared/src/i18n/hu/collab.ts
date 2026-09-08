@@ -14,6 +14,7 @@ const collab: TranslationStrings = {
   'collab.tabs.polls': 'Szavazások',
   'collab.tabs.links': 'Linkek',
   'collab.links.add': 'Link hozzáadása',
+  'collab.chat.imageRejected': 'Csak legfeljebb 10 MB méretű JPEG, PNG, GIF és WebP képek engedélyezettek',
   'collab.links.cancel': 'Mégse',
   'collab.links.save': 'Link mentése',
   'collab.links.titlePlaceholder': 'Link címe',

@@ -4,7 +4,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { CollabController } from '../../../src/nest/collab/collab.controller';
+import { CollabController, collabChatImageFilter } from '../../../src/nest/collab/collab.controller';
 import { TripAccessGuard, TRIP_PERMISSION_KEY } from '../../../src/nest/permissions/trip-access.guard';
 import { JwtAuthGuard } from '../../../src/nest/auth/jwt-auth.guard';
 import type { CollabService } from '../../../src/nest/collab/collab.service';
@@ -202,6 +202,35 @@ describe('CollabController (parity with the legacy /api/trips/:tripId/collab rou
   // The decorators, not the handler body. Constructing the controller directly,
   // which every test above does, runs no guard at all — so removing the trip check
   // again would leave this file green. It shipped without one once.
+  describe('chat image filter', () => {
+    const run = (originalname: string, mimetype: string) => {
+      let outcome: { err: Error | null; ok?: boolean } = { err: null };
+      collabChatImageFilter!({} as never, { originalname, mimetype } as never, ((err: Error | null, ok?: boolean) => { outcome = { err, ok }; }) as never);
+      return outcome;
+    };
+
+    it('accepts a real image', () => {
+      expect(run('holiday.jpg', 'image/jpeg').ok).toBe(true);
+      expect(run('map.PNG', 'image/png').ok).toBe(true);
+    });
+
+    it('refuses a type it does not serve', () => {
+      expect(run('notes.pdf', 'application/pdf').err).toBeInstanceOf(Error);
+    });
+
+    it('refuses a name whose extension disagrees with the type it claims', () => {
+      // The mimetype is the header the client wrote. The stored name keeps the
+      // extension of the name the client sent, and the download route decides
+      // what to serve from that extension and sends it inline, so believing the
+      // header alone served attacker HTML on our own origin.
+      for (const name of ['pwn.html', 'pwn.svg', 'pwn.js', 'pwn.htm', 'pwn']) {
+        const out = run(name, 'image/png');
+        expect(out.err, name).toBeInstanceOf(Error);
+        expect((out.err as Error & { statusCode?: number }).statusCode).toBe(400);
+      }
+    });
+  });
+
   describe('link preview guard chain', () => {
     const guardsOn = (target: object): unknown[] => (Reflect.getMetadata('__guards__', target) as unknown[]) ?? [];
 

@@ -14,6 +14,7 @@ const collab: TranslationStrings = {
   'collab.tabs.polls': '投票',
   'collab.tabs.links': 'リンク',
   'collab.links.add': 'リンクを追加',
+  'collab.chat.imageRejected': 'JPEG、PNG、GIF、WebP の画像のみ、10 MB までです',
   'collab.links.cancel': 'キャンセル',
   'collab.links.save': 'リンクを保存',
   'collab.links.titlePlaceholder': 'リンクのタイトル',

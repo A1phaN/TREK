@@ -14,6 +14,7 @@ const collab: TranslationStrings = {
   'collab.tabs.polls': 'الاستطلاعات',
   'collab.tabs.links': 'الروابط',
   'collab.links.add': 'إضافة رابط',
+  'collab.chat.imageRejected': 'يُسمح فقط بصور JPEG وPNG وGIF وWebP حتى 10 ميغابايت',
   'collab.links.cancel': 'إلغاء',
   'collab.links.save': 'حفظ الرابط',
   'collab.links.titlePlaceholder': 'عنوان الرابط',

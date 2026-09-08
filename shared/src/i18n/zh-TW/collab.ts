@@ -14,6 +14,7 @@ const collab: TranslationStrings = {
   'collab.tabs.polls': '投票',
   'collab.tabs.links': '連結',
   'collab.links.add': '新增連結',
+  'collab.chat.imageRejected': '僅支援 10 MB 以內的 JPEG、PNG、GIF 和 WebP 圖片',
   'collab.links.cancel': '取消',
   'collab.links.save': '儲存連結',
   'collab.links.titlePlaceholder': '連結標題',

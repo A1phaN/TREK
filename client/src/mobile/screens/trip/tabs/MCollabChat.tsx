@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowUp, ChevronUp, ImagePlus, Loader2, Reply, Trash2 } from 'lucide-react'
 import MDancingTrek from '../../../components/MDancingTrek'
+import { useChatImages } from '../../../../components/Collab/useChatImages'
 import { collabApi } from '../../../../api/client'
 import { addListener, removeListener } from '../../../../api/websocket'
 import { useAuthStore } from '../../../../store/authStore'
@@ -63,8 +64,7 @@ export default function MCollabChat({ planner }: MCollabChatProps) {
   const [text, setText] = useState('')
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null)
   const [sending, setSending] = useState(false)
-  const [imageFiles, setImageFiles] = useState<File[]>([])
-  const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const images = useChatImages()
   const [popover, setPopover] = useState<{ msg: ChatMessage; x: number; y: number } | null>(null)
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -160,25 +160,20 @@ export default function MCollabChat({ planner }: MCollabChatProps) {
   }
 
   const addImageFiles = (incoming: FileList | File[]) => {
-    const valid = Array.from(incoming).filter(f => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(f.type) && f.size <= 10 * 1024 * 1024)
-    setImageFiles(prev => {
-      const next = [...prev, ...valid].slice(0, 4)
-      setImagePreviews(next.map(f => URL.createObjectURL(f)))
-      return next
-    })
+    if (!images.add(incoming)) toast.error(t('collab.chat.imageRejected'))
   }
 
   const handleSend = useCallback(async () => {
     const body = text.trim()
-    if ((!body && !imageFiles.length) || sending || !canEdit) return
+    if ((!body && !images.files.length) || sending || !canEdit) return
     setSending(true)
     try {
       let data: SendMessageResponse
-      if (imageFiles.length) {
+      if (images.files.length) {
         const form = new FormData()
         if (body) form.append('text', body)
         if (replyTo) form.append('reply_to', String(replyTo.id))
-        imageFiles.forEach(file => form.append('images', file))
+        images.files.forEach(file => form.append('images', file))
         data = (await collabApi.sendMessage(tripId, form)) as SendMessageResponse
       } else {
         const payload: { text: string; reply_to?: number } = { text: body }
@@ -190,9 +185,7 @@ export default function MCollabChat({ planner }: MCollabChatProps) {
       }
       setText('')
       setReplyTo(null)
-      imagePreviews.forEach(URL.revokeObjectURL)
-      setImageFiles([])
-      setImagePreviews([])
+      images.clear()
       if (textareaRef.current) textareaRef.current.style.height = 'auto'
       isAtBottomRef.current = true
       setTimeout(() => scrollToBottom('smooth'), 50)
@@ -201,7 +194,7 @@ export default function MCollabChat({ planner }: MCollabChatProps) {
     } finally {
       setSending(false)
     }
-  }, [text, sending, canEdit, replyTo, tripId, scrollToBottom, toast, t, imageFiles, imagePreviews])
+  }, [text, sending, canEdit, replyTo, tripId, scrollToBottom, toast, t, images])
 
   const handleDelete = useCallback(async (msgId: number) => {
     setPopover(null)
@@ -318,12 +311,12 @@ export default function MCollabChat({ planner }: MCollabChatProps) {
 
         {canEdit ? (
           <>
-            {imagePreviews.length > 0 && (
+            {images.previews.length > 0 && (
               <div className="flex gap-2 overflow-x-auto">
-                {imagePreviews.map((url, i) => (
+                {images.previews.map((url, i) => (
                   <div key={url} className="relative">
                     <img src={url} alt="" className="h-14 w-14 rounded-lg object-cover" />
-                    <button type="button" aria-label="Remove image" onClick={() => { setImageFiles(prev => prev.filter((_, idx) => idx !== i)); setImagePreviews(prev => prev.filter((_, idx) => idx !== i)) }} className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-m-ink text-[10px] text-m-bg">×</button>
+                    <button type="button" aria-label="Remove image" onClick={() => images.remove(i)} className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-m-ink text-[10px] text-m-bg">×</button>
                   </div>
                 ))}
               </div>
@@ -346,7 +339,7 @@ export default function MCollabChat({ planner }: MCollabChatProps) {
             <button
               type="button"
               onClick={handleSend}
-              disabled={(!text.trim() && !imageFiles.length) || sending}
+              disabled={(!text.trim() && !images.files.length) || sending}
               aria-label={t('collab.chat.send')}
               className="flex h-[42px] w-[42px] flex-none items-center justify-center rounded-full bg-m-act text-m-actfg disabled:opacity-40"
             >

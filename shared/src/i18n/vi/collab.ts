@@ -14,6 +14,7 @@ const collab: TranslationStrings = {
   'collab.tabs.polls': 'Thăm dò ý kiến',
   'collab.tabs.links': 'Liên kết',
   'collab.links.add': 'Thêm liên kết',
+  'collab.chat.imageRejected': 'Chỉ chấp nhận ảnh JPEG, PNG, GIF và WebP tối đa 10 MB',
   'collab.links.cancel': 'Hủy',
   'collab.links.save': 'Lưu liên kết',
   'collab.links.titlePlaceholder': 'Tiêu đề liên kết',

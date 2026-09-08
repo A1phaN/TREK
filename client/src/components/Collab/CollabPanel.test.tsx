@@ -264,6 +264,42 @@ describe('CollabPanel feature combinations', () => {
     expect(screen.queryByTestId('collab-notes')).not.toBeInTheDocument()
   })
 
+  // The three-or-more branch used to render notes and links as a pair and drop
+  // whichever of the two was on its own, so these walk every shape of it.
+  it('FE-W5CPN-014: three right panels including notes but not links keeps notes', () => {
+    setViewport(1280)
+    render(<CollabPanel tripId={1} collabFeatures={{ chat: true, notes: true, links: false, polls: true, whatsnext: true }} />)
+    expect(screen.getByTestId('collab-notes')).toBeInTheDocument()
+    expect(screen.getByTestId('collab-polls')).toBeInTheDocument()
+    expect(screen.getByTestId('whats-next')).toBeInTheDocument()
+    expect(screen.queryByTestId('collab-links')).not.toBeInTheDocument()
+  })
+
+  it('FE-W5CPN-015: three right panels including links but not notes keeps links', () => {
+    setViewport(1280)
+    render(<CollabPanel tripId={1} collabFeatures={{ chat: true, notes: false, links: true, polls: true, whatsnext: true }} />)
+    expect(screen.getByTestId('collab-links')).toBeInTheDocument()
+    expect(screen.getByTestId('collab-polls')).toBeInTheDocument()
+    expect(screen.getByTestId('whats-next')).toBeInTheDocument()
+    expect(screen.queryByTestId('collab-notes')).not.toBeInTheDocument()
+  })
+
+  it('FE-W5CPN-016: all four right panels render, notes and links above the other two', () => {
+    setViewport(1280)
+    render(<CollabPanel tripId={1} collabFeatures={{ chat: true, notes: true, links: true, polls: true, whatsnext: true }} />)
+    for (const id of ['collab-chat', 'collab-notes', 'collab-links', 'collab-polls', 'whats-next']) {
+      expect(screen.getByTestId(id)).toBeInTheDocument()
+    }
+  })
+
+  it('FE-W5CPN-017: notes and links alone with a third panel and no chat all render', () => {
+    setViewport(1280)
+    render(<CollabPanel tripId={1} collabFeatures={{ ...allOff, notes: true, links: true, polls: true }} />)
+    expect(screen.getByTestId('collab-notes')).toBeInTheDocument()
+    expect(screen.getByTestId('collab-links')).toBeInTheDocument()
+    expect(screen.getByTestId('collab-polls')).toBeInTheDocument()
+  })
+
   it('FE-W5CPN-013: mobile falls back to the first tab when the active one gets disabled', () => {
     setViewport(375)
     const { rerender } = render(<CollabPanel tripId={1} />)

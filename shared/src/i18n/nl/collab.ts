@@ -14,6 +14,7 @@ const collab: TranslationStrings = {
   'collab.tabs.polls': 'Polls',
   'collab.tabs.links': 'Links',
   'collab.links.add': 'Link toevoegen',
+  'collab.chat.imageRejected': 'Alleen JPEG-, PNG-, GIF- en WebP-afbeeldingen tot 10 MB zijn toegestaan',
   'collab.links.cancel': 'Annuleren',
   'collab.links.save': 'Link opslaan',
   'collab.links.titlePlaceholder': 'Linktitel',

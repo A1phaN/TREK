@@ -14,6 +14,7 @@ const collab: TranslationStrings = {
   'collab.tabs.polls': 'Polling',
   'collab.tabs.links': 'Tautan',
   'collab.links.add': 'Tambah tautan',
+  'collab.chat.imageRejected': 'Hanya gambar JPEG, PNG, GIF, dan WebP hingga 10 MB yang diizinkan',
   'collab.links.cancel': 'Batal',
   'collab.links.save': 'Simpan tautan',
   'collab.links.titlePlaceholder': 'Judul tautan',

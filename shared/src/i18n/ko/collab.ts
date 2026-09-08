@@ -14,6 +14,7 @@ const collab: TranslationStrings = {
   'collab.tabs.polls': '투표',
   'collab.tabs.links': '링크',
   'collab.links.add': '링크 추가',
+  'collab.chat.imageRejected': 'JPEG, PNG, GIF, WebP 이미지만 최대 10 MB까지 허용됩니다',
   'collab.links.cancel': '취소',
   'collab.links.save': '링크 저장',
   'collab.links.titlePlaceholder': '링크 제목',
