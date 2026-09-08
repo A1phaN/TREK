@@ -78,7 +78,7 @@ describe('AddonsService.list', () => {
     feedReads([], [], [], [{ key: 'collab_chat_enabled', value: 'false' }], { value: 'true' });
 
     const res = svc().list();
-    expect(res.collabFeatures).toEqual({ chat: false, notes: true, polls: true, whatsnext: true });
+    expect(res.collabFeatures).toEqual({ chat: false, notes: true, links: true, polls: true, whatsnext: true });
     expect(res.bagTracking).toBe(true);
     expect(res.addons).toEqual([]);
   });
@@ -311,7 +311,7 @@ describe('AddonsService addon/feature flags', () => {
       { key: 'collab_chat_enabled', value: 'false' },
       { key: 'collab_polls_enabled', value: 'true' },
     ]);
-    expect(svc().getCollabFeatures()).toEqual({ chat: false, notes: true, polls: true, whatsnext: true });
+    expect(svc().getCollabFeatures()).toEqual({ chat: false, notes: true, links: true, polls: true, whatsnext: true });
   });
 
   it('updateCollabFeatures writes only the provided flags and reports changed (#1414, ADMIN-SVC-070)', () => {

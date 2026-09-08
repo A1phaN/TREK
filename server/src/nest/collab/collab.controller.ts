@@ -40,11 +40,30 @@ import { BLOCKED_EXTENSIONS } from '../files/files.constants';
 export const MAX_NOTE_FILE_SIZE = 50 * 1024 * 1024;
 const MAX_CHAT_IMAGES = 4;
 const CHAT_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+const CHAT_IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp']);
+/**
+ * The extension is checked as well as the type, and both have to agree.
+ *
+ * `file.mimetype` is the Content-Type the client put on the part, so it is a
+ * claim, not a fact. The stored name keeps the extension of the name the client
+ * sent (`storage-upload.factory.ts`), and the download route derives the served
+ * Content-Type from that extension and sends it inline. Believing the header
+ * alone therefore lets `pwn.html` through as `image/png` and serves it back as
+ * HTML on our own origin. This filter also fully replaces the module-level one
+ * on this route, so the blocked-extension list has to be applied here too.
+ */
 export const collabChatImageFilter: Options['fileFilter'] = (_req, file, cb) => {
-  if (!CHAT_IMAGE_TYPES.has(file.mimetype)) {
-    const err: Error & { statusCode?: number } = new Error('Only JPEG, PNG, GIF, and WebP images are allowed');
+  const reject = (message: string) => {
+    const err: Error & { statusCode?: number } = new Error(message);
     err.statusCode = 400;
     return cb(err);
+  };
+  if (!CHAT_IMAGE_TYPES.has(file.mimetype)) {
+    return reject('Only JPEG, PNG, GIF, and WebP images are allowed');
+  }
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (BLOCKED_EXTENSIONS.includes(ext) || !CHAT_IMAGE_EXTENSIONS.has(ext)) {
+    return reject('Only JPEG, PNG, GIF, and WebP images are allowed');
   }
   cb(null, true);
 };
@@ -306,8 +325,10 @@ export class CollabController {
     return { messages: this.collab.listMessages(tripId, before) };
   }
 
-  @UseGuards(TripAccessGuard)
-  @RequirePermission('collab_edit')
+  // No guard decorators, deliberately, like every other upload route in this
+  // file: guards run before the interceptor, so a 403 or 404 goes out while the
+  // client is still streaming the body and the socket dies as ECONNRESET
+  // instead of carrying the error envelope. Both checks happen in the handler.
   @Post('messages')
   @UseInterceptors(FilesInterceptor('images', MAX_CHAT_IMAGES, { fileFilter: collabChatImageFilter, limits: { files: MAX_CHAT_IMAGES, fileSize: 10 * 1024 * 1024 } }))
   async createMessage(@CurrentUser() user: User, @Param('tripId') tripId: string, @Body() body: CollabMessageCreateDto, @UploadedFiles() files: Express.Multer.File[] | undefined, @Headers('x-socket-id') socketId?: string) {
@@ -317,7 +338,14 @@ export class CollabController {
       cleanupSpool();
       throw new HttpException({ error: 'text must be 5000 characters or less' }, 400);
     }
-    const trip = this.requireTrip(tripId, user);
+    let trip;
+    try {
+      trip = this.requireTrip(tripId, user);
+      this.requireEdit(trip, user);
+    } catch (err) {
+      cleanupSpool();
+      throw err;
+    }
     if (uploaded.length && !this.collab.canUploadFiles(trip, user)) {
       cleanupSpool();
       throw new HttpException({ error: 'No permission to upload files' }, 403);
@@ -325,7 +353,12 @@ export class CollabController {
     const text = (body.text || '').trim();
     if (!text && !uploaded.length) {
       cleanupSpool();
-      throw new HttpException({ error: 'Message text or image is required' }, 400);
+      // The old wording is kept for a request that carried no file part at all,
+      // because that is exactly what a client from before this route took
+      // images sends, and parity is on the bespoke strings too. A multipart
+      // request gets the wording that actually describes its options.
+      const wasMultipart = files !== undefined;
+      throw new HttpException({ error: wasMultipart ? 'Message text or image is required' : 'Message text is required' }, 400);
     }
     const committed: string[] = [];
     try {

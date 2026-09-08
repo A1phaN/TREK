@@ -154,15 +154,31 @@ describe('CollabController (parity with the legacy /api/trips/:tripId/collab rou
   });
 
   describe('messages', () => {
-    it('POST 400 whitespace-only, 400 reply_not_found, else creates + notifies (length checks now in the Zod pipe)', () => {
-      expect(thrown(() => new CollabController(svc(), storageStub).createMessage(user, '5', { text: '   ' }))).toEqual({ status: 400, body: { error: 'Message text is required' } });
-      expect(thrown(() => new CollabController(svc({ createMessage: vi.fn().mockReturnValue({ error: 'reply_not_found' }) } as Partial<CollabService>), storageStub).createMessage(user, '5', { text: 'hi', reply_to: 99 }))).toEqual({ status: 400, body: { error: 'Reply target message not found' } });
+    // Async since the route took its multipart form: it awaits the storage
+    // commit, so every case here goes through thrownAsync.
+    it('POST 400 whitespace-only, 400 reply_not_found, else creates + notifies (length checks now in the Zod pipe)', async () => {
+      // A request with no file part keeps the wording it always had.
+      expect(await thrownAsync(() => new CollabController(svc(), storageStub).createMessage(user, '5', { text: '   ' }, undefined)))
+        .toEqual({ status: 400, body: { error: 'Message text is required' } });
+      expect(await thrownAsync(() => new CollabController(svc(), storageStub).createMessage(user, '5', { text: '   ' }, [])))
+        .toEqual({ status: 400, body: { error: 'Message text or image is required' } });
+      expect(await thrownAsync(() => new CollabController(svc({ createMessage: vi.fn().mockReturnValue({ error: 'reply_not_found' }) } as Partial<CollabService>), storageStub).createMessage(user, '5', { text: 'hi', reply_to: 99 }, undefined)))
+        .toEqual({ status: 400, body: { error: 'Reply target message not found' } });
       const broadcast = vi.fn();
       const notifyCollab = vi.fn();
       const s = svc({ createMessage: vi.fn().mockReturnValue({ message: { id: 3 } }), broadcast, notifyCollab } as Partial<CollabService>);
-      expect(new CollabController(s, storageStub).createMessage(user, '5', { text: 'hello' }, 'sock')).toEqual({ message: { id: 3 } });
+      expect(await new CollabController(s, storageStub).createMessage(user, '5', { text: 'hello' }, undefined, 'sock')).toEqual({ message: { id: 3 } });
       expect(broadcast).toHaveBeenCalledWith('5', 'collab:message:created', { message: { id: 3 } }, 'sock');
       expect(notifyCollab).toHaveBeenCalledWith('5', user, 'hello');
+    });
+
+    it('refuses a caller who cannot reach the trip or cannot write, from inside the handler', async () => {
+      // The decorators had to go because of the multipart body, so these two
+      // refusals are the only thing standing in front of the route now.
+      expect(await thrownAsync(() => new CollabController(svc({ verifyTripAccess: vi.fn().mockReturnValue(null) } as Partial<CollabService>), storageStub).createMessage(user, '5', { text: 'hi' }, undefined)))
+        .toEqual({ status: 404, body: { error: 'Trip not found' } });
+      expect(await thrownAsync(() => new CollabController(svc({ canEdit: vi.fn().mockReturnValue(false) } as Partial<CollabService>), storageStub).createMessage(user, '5', { text: 'hi' }, undefined)))
+        .toEqual({ status: 403, body: { error: 'No permission' } });
     });
 
     it('react 404 unknown, else broadcasts reactions (empty emoji now 400s in the Zod pipe)', () => {
@@ -205,7 +221,19 @@ describe('CollabController (parity with the legacy /api/trips/:tripId/collab rou
         expect(Reflect.getMetadata(TRIP_PERMISSION_KEY, handler)).toBeUndefined();
       }
       // The write siblings do demand it, so this is a deliberate split, not an omission.
-      expect(Reflect.getMetadata(TRIP_PERMISSION_KEY, CollabController.prototype.createMessage)).toBe('collab_edit');
+      expect(Reflect.getMetadata(TRIP_PERMISSION_KEY, CollabController.prototype.createNote)).toBe('collab_edit');
+    });
+
+    it('the multipart write routes carry no guard decorators, and check inside instead', () => {
+      // Guards run before the interceptor, so a refusal goes out while the client
+      // is still streaming the body and the socket dies as ECONNRESET rather than
+      // carrying the error envelope. Both of these therefore look unguarded here
+      // and do requireTrip plus the permission check in the handler; the test
+      // below proves createMessage actually refuses.
+      for (const handler of [CollabController.prototype.createMessage, CollabController.prototype.addNoteFile]) {
+        expect(Reflect.getMetadata(TRIP_PERMISSION_KEY, handler)).toBeUndefined();
+        expect(guardsOn(handler)).not.toContain(TripAccessGuard);
+      }
     });
   });
 

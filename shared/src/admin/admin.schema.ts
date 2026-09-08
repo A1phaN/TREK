@@ -84,6 +84,7 @@ export type AdminAddonUpdateRequest = z.infer<typeof adminAddonUpdateRequestSche
 export const adminCollabFeaturesRequestSchema = z.object({
   chat: z.boolean().optional(),
   notes: z.boolean().optional(),
+  links: z.boolean().optional(),
   polls: z.boolean().optional(),
   whatsnext: z.boolean().optional(),
 });
