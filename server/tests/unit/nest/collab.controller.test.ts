@@ -4,7 +4,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { CollabController, collabChatImageFilter } from '../../../src/nest/collab/collab.controller';
+import { CollabController, collabChatImageFilter, collabNoteFileFilter } from '../../../src/nest/collab/collab.controller';
 import { TripAccessGuard, TRIP_PERMISSION_KEY } from '../../../src/nest/permissions/trip-access.guard';
 import { JwtAuthGuard } from '../../../src/nest/auth/jwt-auth.guard';
 import type { CollabService } from '../../../src/nest/collab/collab.service';
@@ -202,6 +202,73 @@ describe('CollabController (parity with the legacy /api/trips/:tripId/collab rou
   // The decorators, not the handler body. Constructing the controller directly,
   // which every test above does, runs no guard at all — so removing the trip check
   // again would leave this file green. It shipped without one once.
+  describe('chat images on a message', () => {
+    const img = (name: string) => ({ filename: `stored-${name}`, originalname: name, size: 10, mimetype: 'image/png', path: `/tmp/${name}` }) as never;
+
+    it('commits every image to storage and hands the service what it needs to row them', async () => {
+      const put = vi.fn().mockResolvedValue(undefined);
+      const createMessage = vi.fn().mockReturnValue({ message: { id: 3 } });
+      const s = svc({ createMessage, broadcast: vi.fn(), notifyCollab: vi.fn() } as Partial<CollabService>);
+      await new CollabController(s, { put, delete: vi.fn() } as never).createMessage(user, '5', { text: 'look' }, [img('a.png'), img('b.png')]);
+
+      expect(put.mock.calls.map(c => c[1])).toEqual(['stored-a.png', 'stored-b.png']);
+      expect(createMessage.mock.calls[0][4]).toEqual([
+        { filename: 'stored-a.png', originalname: 'a.png', size: 10, mimetype: 'image/png' },
+        { filename: 'stored-b.png', originalname: 'b.png', size: 10, mimetype: 'image/png' },
+      ]);
+    });
+
+    it('takes back what it already committed when a later image fails to store', async () => {
+      const del = vi.fn().mockResolvedValue(undefined);
+      const put = vi.fn().mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('disk full'));
+      const createMessage = vi.fn();
+      const s = svc({ createMessage } as Partial<CollabService>);
+
+      await expect(new CollabController(s, { put, delete: del } as never).createMessage(user, '5', { text: 'x' }, [img('a.png'), img('b.png')]))
+        .rejects.toThrow('disk full');
+      // The first one is already in storage and has to come back out; the
+      // message row was never written, so nothing would point at it.
+      expect(del.mock.calls.map(c => c[1])).toEqual(['stored-a.png']);
+      expect(createMessage).not.toHaveBeenCalled();
+    });
+
+    it('drops the stored images again when the reply target turns out to be gone', async () => {
+      const del = vi.fn().mockResolvedValue(undefined);
+      const s = svc({ createMessage: vi.fn().mockReturnValue({ error: 'reply_not_found' }) } as Partial<CollabService>);
+
+      expect(await thrownAsync(() => new CollabController(s, { put: vi.fn().mockResolvedValue(undefined), delete: del } as never)
+        .createMessage(user, '5', { text: 'x', reply_to: 99 }, [img('a.png')])))
+        .toEqual({ status: 400, body: { error: 'Reply target message not found' } });
+      expect(del.mock.calls.map(c => c[1])).toEqual(['stored-a.png']);
+    });
+
+    it('refuses an image from someone who may write but may not upload', async () => {
+      const put = vi.fn();
+      const s = svc({ canUploadFiles: vi.fn().mockReturnValue(false) } as Partial<CollabService>);
+      expect(await thrownAsync(() => new CollabController(s, { put, delete: vi.fn() } as never).createMessage(user, '5', { text: 'x' }, [img('a.png')])))
+        .toEqual({ status: 403, body: { error: 'No permission to upload files' } });
+      expect(put).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('note file filter', () => {
+    const run = (originalname: string, mimetype: string) => {
+      let outcome: { err: Error | null; ok?: boolean } = { err: null };
+      collabNoteFileFilter!({} as never, { originalname, mimetype } as never, ((err: Error | null, ok?: boolean) => { outcome = { err, ok }; }) as never);
+      return outcome;
+    };
+
+    it('takes an ordinary attachment', () => {
+      expect(run('itinerary.pdf', 'application/pdf').ok).toBe(true);
+    });
+
+    it('refuses the spellings the download route would serve as a document', () => {
+      expect(run('pwn.html', 'text/html').err).toBeInstanceOf(Error);
+      expect(run('pwn.txt', 'image/svg+xml').err).toBeInstanceOf(Error);
+      expect(run('pwn.txt', 'application/javascript').err).toBeInstanceOf(Error);
+    });
+  });
+
   describe('chat image filter', () => {
     const run = (originalname: string, mimetype: string) => {
       let outcome: { err: Error | null; ok?: boolean } = { err: null };
