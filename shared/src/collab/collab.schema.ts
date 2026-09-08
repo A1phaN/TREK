@@ -48,14 +48,11 @@ export const collabPollVoteRequestSchema = z.object({
 });
 export type CollabPollVoteRequest = z.infer<typeof collabPollVoteRequestSchema>;
 
-const httpUrl = z.string().trim().min(1).refine((value) => {
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}, 'A valid http(s) URL is required');
+// `z.url()` rather than `new URL(...)`: this package compiles against lib
+// ES2022 only, deliberately, so it stays free of both DOM and Node globals and
+// `URL` is not one of the names it has. The protocol check stays, because
+// z.url() alone would accept mailto: and javascript:.
+const httpUrl = z.url().refine((value) => /^https?:\/\//i.test(value.trim()), 'A valid http(s) URL is required');
 
 export const collabLinkCreateRequestSchema = z.object({
   title: z.string().trim().min(1),

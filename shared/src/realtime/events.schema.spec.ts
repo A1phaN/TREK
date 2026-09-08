@@ -73,6 +73,9 @@ const FIXTURES: Record<TrekWsEventName, Record<string, unknown>> = {
   'collab:note:created': { note: { id: 3 } },
   'collab:note:updated': { note: { id: 3 } },
   'collab:note:deleted': { noteId: 3 },
+  'collab:link:created': { link: { id: 4, title: 'Ferry', url: 'https://example.com' } },
+  'collab:link:updated': { link: { id: 4, title: 'Ferry', url: 'https://example.com' } },
+  'collab:link:deleted': { linkId: 4 },
   'collab:poll:created': { poll: { id: 2 } },
   'collab:poll:voted': { poll: { id: 2 } },
   'collab:poll:closed': { poll: { id: 2 } },
@@ -135,11 +138,11 @@ const DRIFT_VARIANTS: Partial<Record<TrekWsEventName, Record<string, unknown>[]>
 };
 
 describe('@trek/shared realtime event registry', () => {
-  it('WSEVT-REG-001: pins the authoritative inventory counts (66 trip + 32 user = 98)', () => {
-    // 66th trip event: packing:bag-totals (#2191).
-    expect(TREK_WS_TRIP_EVENT_NAMES).toHaveLength(66);
+  it('WSEVT-REG-001: pins the authoritative inventory counts (69 trip + 32 user = 101)', () => {
+    // 67th to 69th trip event: the three collab:link:* a shared link emits.
+    expect(TREK_WS_TRIP_EVENT_NAMES).toHaveLength(69);
     expect(TREK_WS_USER_EVENT_NAMES).toHaveLength(32);
-    expect(TREK_WS_EVENT_NAMES).toHaveLength(98);
+    expect(TREK_WS_EVENT_NAMES).toHaveLength(101);
   });
 
   it('WSEVT-REG-002: every name is domain:action shaped and outside the reserved plugin: namespace', () => {
