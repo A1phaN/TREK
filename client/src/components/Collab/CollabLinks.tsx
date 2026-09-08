@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { ExternalLink, Link2, Pin, Plus, Trash2, X } from 'lucide-react'
 import { collabApi } from '../../api/client'
+import { addListener, removeListener } from '../../api/websocket'
 import { useTranslation } from '../../i18n'
 import { useCanDo } from '../../store/permissionsStore'
 import { useTripStore } from '../../store/tripStore'
@@ -43,6 +44,31 @@ export default function CollabLinks({ tripId }: { tripId: number }) {
       })
     return () => { cancelled = true }
   }, [tripId, toast, t])
+
+  // Live sync, the same shape the notes panel uses. Without it the three
+  // collab:link events the server broadcasts would arrive nowhere and a link
+  // somebody else added would only appear on the next reload.
+  useEffect(() => {
+    if (!tripId) return
+    const handler = (msg: { type?: string; tripId?: number | string; link?: CollabLink; linkId?: number }) => {
+      // The panel is not remounted on a trip change, so an event still in
+      // flight from the trip we just left must not land in this list.
+      if (String(msg?.tripId) !== String(tripId)) return
+      if (msg.type === 'collab:link:created' && msg.link) {
+        setLinks(prev => prev.some(l => l.id === msg.link!.id) ? prev : [msg.link!, ...prev])
+      }
+      if (msg.type === 'collab:link:updated' && msg.link) {
+        setLinks(prev => prev
+          .map(l => l.id === msg.link!.id ? { ...l, ...msg.link! } : l)
+          .sort((a, b) => Number(b.pinned) - Number(a.pinned)))
+      }
+      if (msg.type === 'collab:link:deleted' && msg.linkId) {
+        setLinks(prev => prev.filter(l => l.id !== msg.linkId))
+      }
+    }
+    addListener(handler)
+    return () => removeListener(handler)
+  }, [tripId])
 
   // Every write says something when it fails. Silence left the pin looking
   // unchanged and the delete looking ignored, with an unhandled rejection in
