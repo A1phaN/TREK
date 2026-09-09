@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { firstValueFrom, of, throwError } from 'rxjs';
+import type { Observable } from 'rxjs';
 import type { CallHandler, ExecutionContext } from '@nestjs/common';
 
 const fsMock = vi.hoisted(() => ({ unlinkSync: vi.fn() }));
@@ -11,7 +12,7 @@ function context(req: Record<string, unknown>): ExecutionContext {
   return { switchToHttp: () => ({ getRequest: () => req }) } as unknown as ExecutionContext;
 }
 
-function handler(observable: ReturnType<typeof of>): CallHandler {
+function handler(observable: Observable<unknown>): CallHandler {
   return { handle: () => observable } as CallHandler;
 }
 
