@@ -1540,6 +1540,19 @@ describe('MapViewGL', () => {
     expect(features[0].geometry.coordinates).toEqual([[2, 48], [3, 49]])
   })
 
+  it('FE-COMP-MAPVIEWGL-048b: the whole-trip overview colours each line on the feature', async () => {
+    const routeSource = geoSource()
+    glMap.getSource.mockImplementation((id: string) => (id === 'trip-route' ? routeSource : null))
+
+    render(<MapViewGL places={[]} fitKey={1} route={[[[48, 2], [49, 3]], [[50, 4], [51, 5]]]} routeColors={['#1d4ed8', null]} />)
+    await act(async () => {})
+
+    const { features } = lastData(routeSource)
+    expect(features[0].properties.color).toBe('#1d4ed8')
+    // No colour means the day route's own blue, which the layer paint falls back to.
+    expect(features[1].properties.color).toBeUndefined()
+  })
+
   it('FE-COMP-MAPVIEWGL-049: unusable GPX geometry is skipped instead of breaking the layer', async () => {
     const gpxSource = geoSource()
     glMap.getSource.mockImplementation((id: string) => (id === 'trip-gpx' ? gpxSource : null))

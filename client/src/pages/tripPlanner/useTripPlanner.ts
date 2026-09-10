@@ -21,6 +21,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useResizablePanels } from '../../hooks/useResizablePanels'
 import { useTripWebSocket } from '../../hooks/useTripWebSocket'
 import { useRouteCalculation } from '../../hooks/useRouteCalculation'
+import { useTripRouteOverview } from '../../components/Map/useTripRouteOverview'
 import { useRoadtripRoutes } from '../../components/Roadtrip/useRoadtripRoutes'
 import { useRoadtripCorridor } from '../../components/Roadtrip/useRoadtripCorridor'
 import { useRoadtripVias } from '../../components/Roadtrip/useRoadtripVias'
@@ -364,6 +365,17 @@ export function useTripPlanner() {
   // transport in the trip (#2019).
   const transitRoutesShown = routeShown && selectedDayId != null
   const [routeProfile, setRouteProfile] = useState<string>('driving')
+  // Whole-trip route overview (#1736): every day's route at once, each in its own
+  // colour. Per trip and per session like road trip mode — it answers "what does the
+  // whole thing look like", which is a question you ask of one trip, not a preference.
+  const [overviewShown, setOverviewShown] = useState<boolean>(() => sessionStorage.getItem(`trip-overview-${tripId}`) === '1')
+  const toggleOverview = useCallback(() => {
+    setOverviewShown(prev => {
+      const next = !prev
+      sessionStorage.setItem(`trip-overview-${tripId}`, next ? '1' : '0')
+      return next
+    })
+  }, [tripId])
   const [fitKey, setFitKey] = useState<number>(0)
   const initialFitTripId = useRef<number | null>(null)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<'left' | 'right' | null>(null)
@@ -534,6 +546,10 @@ export function useTripPlanner() {
   }, [places, placesCategoryFilter, placesFilter, assignments, expandedDayIds, selectedDayId, days, tripAccommodations, reservations])
 
   const { route, routeSegments, routeVias, routeInfo, setRoute, setRouteInfo, updateRouteForDay } = useRouteCalculation({ assignments } as any, selectedDayId, routeShown, routeProfile, tripAccommodations)
+  // Road trip mode already draws the whole trip its own way, so the overview stands
+  // down there rather than drawing a second set of lines over it.
+  const overviewActive = overviewShown && !roadtripMode
+  const tripOverview = useTripRouteOverview(tripId, days, assignments, reservations, tripAccommodations, routeProfile, overviewActive)
 
   // Road trip mode reads the whole trip, not the selected day, so it owns its own legs.
   // Passing no days while the mode is off keeps it inert — no routing requests, no state.
@@ -1785,6 +1801,7 @@ export function useTripPlanner() {
     pushUndo, undo, canUndo, lastActionLabel, handleUndo,
     enabledAddons, collabFeatures, tripAccommodations, setTripAccommodations,
     roadtripMode, toggleRoadtripMode, roadtripActive, roadtripRoutes, roadtripCorridor,
+    overviewShown, toggleOverview, overviewActive, tripOverview,
     followTrack, roadtripViaCounts,
     allowedFileTypes, tripMembers, setTripMembers, refreshMembers, loadAccommodations,
     TRANSPORT_TYPES, TRIP_TABS, activeTab, setActiveTab, handleTabChange,

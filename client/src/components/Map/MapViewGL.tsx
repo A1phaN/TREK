@@ -108,6 +108,8 @@ interface Props {
   accessLines?: { line: [[number, number], [number, number]]; meters: number }[]
   route?: [number, number][][] | null
   routeSegments?: RouteSegment[]
+  /** Line colour per entry of `route`, same index — the whole-trip overview (#1736). */
+  routeColors?: (string | null)[]
   selectedPlaceId?: number | null
   onMarkerClick?: (id: number) => void
   hoverDisabled?: boolean
@@ -553,6 +555,7 @@ export function MapViewGL({
   accessLines = NO_ACCESS_LINES,
   route = null,
   routeSegments = NO_ROUTE_SEGMENTS,
+  routeColors,
   selectedPlaceId = null,
   hoverDisabled = false,
   onMarkerClick,
@@ -1115,7 +1118,7 @@ export function MapViewGL({
           id: 'trip-route-casing',
           type: 'line',
           source: 'trip-route',
-          paint: { 'line-color': '#0a5cc2', 'line-width': 8 },
+          paint: { 'line-color': ['case', ['has', 'color'], '#ffffff', '#0a5cc2'], 'line-width': 8 },
           layout: { 'line-cap': 'round', 'line-join': 'round' },
         })
         // An invisible band over the route, purely to be clicked. The drawn line is 8px
@@ -1132,7 +1135,7 @@ export function MapViewGL({
           id: 'trip-route-line',
           type: 'line',
           source: 'trip-route',
-          paint: { 'line-color': '#0a84ff', 'line-width': 5 },
+          paint: { 'line-color': ['coalesce', ['get', 'color'], '#0a84ff'], 'line-width': 5 },
           layout: { 'line-cap': 'round', 'line-join': 'round' },
         })
       }
@@ -1822,13 +1825,15 @@ export function MapViewGL({
     if (!map) return
     const src = map.getSource('trip-route') as mapboxgl.GeoJSONSource | undefined
     if (!src) return
-    const features = (route || []).filter(seg => seg && seg.length > 1).map(seg => ({
+    // The colour rides on the feature rather than the layer so one source can hold a
+    // whole trip of differently-coloured days (#1736), the way trip-gpx already does.
+    const features = (route || []).flatMap((seg, i) => seg && seg.length > 1 ? [{
       type: 'Feature' as const,
-      properties: {},
+      properties: routeColors?.[i] ? { color: routeColors[i] } : {},
       geometry: { type: 'LineString' as const, coordinates: seg.map(([lat, lng]) => [lng, lat]) },
-    }))
+    }] : [])
     src.setData({ type: 'FeatureCollection', features })
-  }, [route, mapReady])
+  }, [route, routeColors, mapReady])
 
   // Update access-spur geojson
   useEffect(() => {

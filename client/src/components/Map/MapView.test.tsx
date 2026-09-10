@@ -221,6 +221,17 @@ describe('MapView', () => {
     expect(screen.getAllByTestId('polyline').length).toBeGreaterThan(0)
   })
 
+  it('FE-COMP-MAPVIEW-006b: the whole-trip overview colours each line, on a white casing', () => {
+    render(<MapView route={[[[48.0, 2.0], [49.0, 3.0]]]} routeColors={['#ea580c']} />)
+
+    const [casing, core] = screen.getAllByTestId('polyline')
+      .map(el => JSON.parse(el.getAttribute('data-path-options') as string))
+    // White under the colour, the same trick the coloured GPX tracks use to stay
+    // readable on satellite and dark basemaps.
+    expect(casing.color).toBe('#ffffff')
+    expect(core.color).toBe('#ea580c')
+  })
+
   it('FE-COMP-MAPVIEW-007: does not render polyline when route is null', () => {
     render(<MapView route={null} />)
     expect(screen.queryByTestId('polyline')).toBeNull()
