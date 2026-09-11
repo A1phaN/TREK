@@ -13,6 +13,8 @@ import { getOfflinePrefs } from './offlinePrefs'
 import { randomId } from '../utils/randomId'
 import type { QueuedMutation } from '../db/offlineDb'
 import type { Table } from 'dexie'
+import { assignmentSchema } from '@trek/shared'
+import { cacheAssignment } from '../db/cacheAssignment'
 
 // Map Dexie table names used in `resource` field → actual Dexie tables.
 function getTable(resource: string): Table | undefined {
@@ -194,6 +196,9 @@ export const mutationQueue = {
           })
 
           // Apply canonical server response to Dexie
+          if (mutation.resource === 'assignments') {
+            await cacheAssignment(assignmentSchema.parse(response.data.assignment))
+          }
           if (mutation.method !== 'DELETE' && mutation.resource) {
             const table = getTable(mutation.resource)
             if (table && response.data && typeof response.data === 'object') {

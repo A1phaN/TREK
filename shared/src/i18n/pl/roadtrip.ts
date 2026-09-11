@@ -1,6 +1,34 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "Online przeciągnij koniec dnia wzdłuż trasy lub na miejsce; kliknij prawym przyciskiem, aby przywrócić automatyczny koniec.",
+  'roadtrip.window.resetBoundaries': "Przywróć automatyczne końce dni",
+  'roadtrip.window.endHere': 'Zakończ dzień tutaj',
+  'roadtrip.window.endHereHint':
+    'Możesz wybrać przystanek jako koniec dnia w szczegółach miejsca, gdy tryb Roadtrip i dzienne godziny podróży są aktywne.',
+  'roadtrip.window.endAt': 'Koniec dnia',
+  'roadtrip.window.onRoute': 'Na trasie',
+  'roadtrip.window.atStop': 'W ostatnim miejscu',
+  'roadtrip.window.routeHint': 'Zatrzymaj się na trasie o godzinie zakończenia dnia.',
+  'roadtrip.window.stopHint': 'Zostań w ostatnim miejscu, jeśli nie można dotrzeć do następnego przed końcem dnia.',
+  'roadtrip.window.legTooLong':
+    'Jeden odcinek przekracza dzienny przedział czasu. Dodaj miejsce po drodze lub wybierz postój na trasie.',
+  'roadtrip.window.pointLabel': 'Koniec dnia {day} o {time}',
+  'roadtrip.window.title': 'Dzienne godziny podróży',
+  'roadtrip.window.start': 'Początek dnia',
+  'roadtrip.window.end': 'Koniec dnia',
+  'roadtrip.window.hint':
+    'Ustaw obie godziny, aby planować codzienne przerwy. Wyczyść jedną, aby wyłączyć automatykę. Ręczne godziny mają pierwszeństwo. Dni są łączone automatycznie.',
+  'roadtrip.window.invalid': 'Godzina końca musi być późniejsza niż godzina początku.',
+  'roadtrip.window.stop': 'Koniec dnia',
+  'roadtrip.window.resume': 'Kontynuuj podróż',
+  'roadtrip.window.pointHint': 'To przewidywane miejsce nocnej przerwy w podróży.',
+  'roadtrip.window.departure': 'Dalsza podróż po pozostałej części wizyty o {time}',
+  'roadtrip.window.showPoint': 'Pokaż na mapie',
+  'roadtrip.window.incomplete': 'Obliczenie codziennych przerw wymaga wszystkich tras łączących.',
+  'roadtrip.window.conflict':
+    'Stała godzina koliduje z jazdą i przerwami. Ręczne godziny pozostają bez zmian; automatyczne planowanie jest wstrzymane.',
+  'roadtrip.window.tooLong': 'Te godziny wymagają ponad 365 dodatkowych dni. Wybierz dłuższy dzienny przedział.',
   'roadtrip.mode.roadtrip': 'Podróż samochodowa',
   'roadtrip.mode.days': 'Dni',
   'roadtrip.mode.label': 'Widok planu',

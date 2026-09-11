@@ -1,6 +1,34 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "Online můžete konec dne přetáhnout po trase nebo na místo; pravým tlačítkem obnovíte automatický konec.",
+  'roadtrip.window.resetBoundaries': "Obnovit automatické konce dnů",
+  'roadtrip.window.endHere': 'Ukončit den zde',
+  'roadtrip.window.endHereHint':
+    'V podrobnostech místa můžete určit zastávku jako konec dne, když je aktivní režim Roadtrip a denní časy cestování.',
+  'roadtrip.window.endAt': 'Ukončení dne',
+  'roadtrip.window.onRoute': 'Na trase',
+  'roadtrip.window.atStop': 'Na posledním místě',
+  'roadtrip.window.routeHint': 'Zastavit na trase při dosažení času konce dne.',
+  'roadtrip.window.stopHint': 'Zůstat na posledním místě, pokud další nelze dosáhnout před koncem dne.',
+  'roadtrip.window.legTooLong':
+    'Jeden úsek přesahuje denní časové okno. Přidejte místo po cestě nebo zvolte zastávku na trase.',
+  'roadtrip.window.pointLabel': 'Konec dne {day} v {time}',
+  'roadtrip.window.title': 'Denní časy cestování',
+  'roadtrip.window.start': 'Začátek dne',
+  'roadtrip.window.end': 'Konec dne',
+  'roadtrip.window.hint':
+    'Pro denní přestávky nastavte oba časy. Vymazáním jednoho automatiku vypnete. Ruční časy mají přednost. Dny se automaticky propojí.',
+  'roadtrip.window.invalid': 'Konec dne musí být později než začátek.',
+  'roadtrip.window.stop': 'Konec dne',
+  'roadtrip.window.resume': 'Pokračovat v cestě',
+  'roadtrip.window.pointHint': 'Zde je odhadované místo noční přestávky.',
+  'roadtrip.window.departure': 'Pokračovat po zbytku návštěvy v {time}',
+  'roadtrip.window.showPoint': 'Zobrazit na mapě',
+  'roadtrip.window.incomplete': 'Denní přestávky lze spočítat až po získání všech navazujících tras.',
+  'roadtrip.window.conflict':
+    'Pevný čas je v rozporu s jízdou a přestávkami. Ruční časy zůstávají zachovány; automatické plánování je pozastaveno.',
+  'roadtrip.window.tooLong': 'Tyto časy vyžadují více než 365 dalších dní. Zvolte delší denní interval.',
   'roadtrip.mode.roadtrip': 'Cesta autem',
   'roadtrip.mode.days': 'Dny',
   'roadtrip.mode.label': 'Zobrazení plánu',

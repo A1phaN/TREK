@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import {
-  Clock, Fuel, CalendarClock, SlidersHorizontal, ChevronRight, Coins, Signpost, Ship,
+  Clock, Fuel, CalendarClock, SlidersHorizontal, ChevronRight, Coins, Signpost, Ship, Check,
   Car, Zap, BatteryCharging, BatteryFull, BatteryWarning, Gauge, Route, Sparkles, Link2, Palette,
 } from 'lucide-react'
 import Modal from '../shared/Modal'
@@ -14,6 +14,8 @@ import { valhallaAvailable } from '../Map/valhallaRoute'
 import ToggleSwitch from '../Settings/ToggleSwitch'
 import type { DistanceUnit, RouteAvoidClass } from '../../types'
 import { FS } from './typeScale'
+import DayWindowFields from './DayWindowFields'
+import { dayWindow } from './dayWindow'
 
 /**
  * Everything that decides when the rail speaks up about the driving.
@@ -248,7 +250,8 @@ const SPEC_ROWS: Record<VehicleKind, { key: SpecKey; setting: string; Icon: type
  */
 const SPEC_SETTINGS = ['roadtrip_tank_litres', 'roadtrip_litres_per_100', 'roadtrip_battery_kwh', 'roadtrip_kwh_per_100', 'roadtrip_battery_degradation'] as const
 
-export default function RoadtripLimitsCard({ onSave }: {
+export default function RoadtripLimitsCard({ onSave, onResetDayBoundaries }: {
+  onResetDayBoundaries?: () => Promise<void>
   /**
    * Persists one setting. Absent leaves the dialog read-only.
    *
@@ -265,6 +268,7 @@ export default function RoadtripLimitsCard({ onSave }: {
 
   const legMinutes = settings.roadtrip_leg_minutes
   const dayMinutes = settings.roadtrip_day_minutes
+  const automaticWindow = dayWindow(settings.roadtrip_day_start, settings.roadtrip_day_end)
   const rangeKm = settings.roadtrip_range_km
 
   // Parsed rather than trusted: a per-user setting gets no server-side validation, and
@@ -335,7 +339,8 @@ export default function RoadtripLimitsCard({ onSave }: {
   // imperial user types 400 meaning miles, 400 km gets stored, and the warnings arrive a
   // third too early for ever after. The same rule runs through the vehicle's own figures,
   // where showSpec and storeSpec do it per field.
-  const rangeShown = planningKm ? Math.round(convertDistance(planningKm, distanceUnit)) : undefined
+  const rangeValue = computedKm ?? rangeKm
+  const rangeShown = rangeValue ? Math.round(convertDistance(rangeValue, distanceUnit)) : undefined
   const setRange = (shown: number) => {
     const km = imperial ? shown / 0.621371 : shown
     onSave?.('roadtrip_range_km', Math.round(km))
@@ -347,6 +352,7 @@ export default function RoadtripLimitsCard({ onSave }: {
   // imperial traveller reads miles here and types miles in the dialog, while what is
   // stored stays kilometres either way.
   const badges = [
+    automaticWindow ? { key: 'window', Icon: CalendarClock, text: `${settings.roadtrip_day_start} · ${settings.roadtrip_day_end}` } : null,
     legMinutes ? { key: 'leg', Icon: Clock, text: formatDurationShort(legMinutes * 60) } : null,
     dayMinutes ? { key: 'day', Icon: CalendarClock, text: formatDurationShort(dayMinutes * 60) } : null,
     // The planning range, not the typed one: when the vehicle's figures win, the badge
@@ -426,7 +432,7 @@ export default function RoadtripLimitsCard({ onSave }: {
                 What answers the seam is not the count of columns but what is in them: each
                 section is now a panel of its own with a visible edge, every row inside it
                 ends on the same right edge, and the panels are stacked to one rhythm. The
-                left column is the trip, the right one is the car. */}
+                left column holds trip settings, the right holds the car and route appearance. */}
             <div className="grid items-start gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-4">
                 <Panel icon={Clock} title={t('roadtrip.limit.sectionDriving')} note={t('roadtrip.limit.hint')}>
@@ -450,6 +456,11 @@ export default function RoadtripLimitsCard({ onSave }: {
                   />
                 </Panel>
 
+                <Panel icon={CalendarClock} title={t('roadtrip.window.title')}>
+                  <DayWindowFields start={settings.roadtrip_day_start} end={settings.roadtrip_day_end} endMode={settings.roadtrip_day_end_mode} onSave={onSave} />
+                  {onResetDayBoundaries && <button type="button" onClick={() => void onResetDayBoundaries()} className="text-start text-caption font-medium text-accent-on hover:underline">{t('roadtrip.window.resetBoundaries')}</button>}
+                </Panel>
+
                 <Panel
                   icon={Signpost}
                   title={t('roadtrip.avoid.section')}
@@ -466,19 +477,155 @@ export default function RoadtripLimitsCard({ onSave }: {
                     />
                   ))}
                 </Panel>
+              </div>
 
-                <Panel icon={Route} title={t('roadtrip.line.section')} note={t('roadtrip.line.hint')}>
+              <div className="flex flex-col gap-4">
+                <Panel
+                  icon={Car}
+                  title={t('roadtrip.limit.sectionVehicle')}
+                  note={vehicleKind ? t('roadtrip.limit.specHint') : t('roadtrip.limit.vehicleHint')}
+                >
+                  {/* First, because it decides what everything under it means: with no
+                      vehicle named, a petrol station and a charger both fill the tank, which
+                      is arithmetic that is wrong for everybody who drives just one of them.
+
+                      Radios in a segmented shell rather than a dropdown: three options that
+                      change the meaning of everything below them should be readable without
+                      being opened, and the arrow keys, the names and the roles then come
+                      from the browser instead of from a rebuilt listbox. */}
+                  <fieldset className="min-w-0">
+                    <legend className="sr-only">{t('roadtrip.limit.vehicleLabel')}</legend>
+                    <div className="grid grid-cols-3 gap-1 rounded-xl border border-edge bg-surface-tertiary p-1">
+                      {VEHICLES.map(({ key, labelKey, Icon }) => (
+                        <label key={key ?? 'unset'} className="min-w-0">
+                          <input
+                            type="radio"
+                            name="roadtrip-vehicle"
+                            className="peer sr-only"
+                            checked={(settings.roadtrip_vehicle || '') === (key ?? '')}
+                            onChange={() => {
+                              // Never writes the car's figures away: switching kind leaves
+                              // both sets stored, `rangeFromSpec` simply returns null for
+                              // the other one, and the typed range comes back as an editable
+                              // field. Deleting the other kind's values here would lose data
+                              // on a mis-click.
+                              setPreview(null)
+                              onSave?.('roadtrip_vehicle', key ?? '')
+                            }}
+                          />
+                          <span className="flex min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-center text-body text-content-secondary transition-colors hover:bg-surface-hover peer-checked:bg-accent peer-checked:text-accent-text peer-focus-visible:ring-2 peer-focus-visible:ring-accent">
+                            <Icon size={14} className="shrink-0" aria-hidden />
+                            {t(labelKey)}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+
+                  <RangeStrip
+                    rangeKm={planningKm}
+                    fillPercent={shownFill}
+                    wearPercent={vehicleKind === 'electric' ? spec.degradationPercent ?? null : null}
+                    unit={distanceUnit}
+                    electric={vehicleKind === 'electric'}
+                  />
+
+                  {/* Read-only once the parts add up, because then it IS the parts. Leaving
+                      it editable would offer a second answer to a question that already has
+                      one, and the traveller would have no way of telling which the warnings
+                      were using. Clearing a field above hands the row straight back. */}
+                  <LimitRow
+                    icon={Route}
+                    // "on one tank" is the wrong noun for half the travellers who set this.
+                    label={t(vehicleKind === 'electric' ? 'roadtrip.limit.rangeLabelCharge' : 'roadtrip.limit.rangeLabel')}
+                    suffix={imperial ? 'mi' : 'km'}
+                    value={rangeShown}
+                    placeholder={t('roadtrip.limit.off')}
+                    derived={computedKm ? t('roadtrip.limit.computed') : undefined}
+                    testId="limit-range"
+                    onDraft={v => setPreview({ key: 'range', value: v })}
+                    onChange={setRange}
+                  />
+                  {/* Under the range, because it is a fraction OF it. Nobody charges to
+                      100 % on the road: the last fifth takes as long as the first four, so a
+                      stop counted as a full tank overstates everything after it by that
+                      fifth. */}
+                  <LimitRow
+                    icon={BatteryCharging}
+                    label={t('roadtrip.limit.fillLabel')}
+                    suffix="%"
+                    value={settings.roadtrip_fill_percent}
+                    placeholder={t('roadtrip.limit.fillFull')}
+                    testId="limit-fill"
+                    onDraft={v => setPreview({ key: 'fill', value: v > 100 ? 100 : v })}
+                    onChange={v => onSave?.('roadtrip_fill_percent', v > 100 ? 100 : v)}
+                  />
+
+                  {/* The car's own figures, folded away. Nothing here is required — somebody
+                      who knows their range types it above and never opens this — but it
+                      starts open the moment any of them is stored, because otherwise the
+                      range row is read-only with its cause out of sight. */}
+                  {vehicleKind ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => { setSpecOpen(o => !o); setPreview(null) }}
+                        aria-expanded={specOpen}
+                        aria-controls="roadtrip-spec"
+                        className="-mx-1 flex items-center gap-1.5 self-start rounded-lg px-1 py-0.5 text-caption font-semibold text-accent-on transition-colors hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      >
+                        <ChevronRight
+                          size={13}
+                          className={`shrink-0 transition-transform ${specOpen ? 'rotate-90' : ''}`}
+                          aria-hidden
+                        />
+                        {t('roadtrip.limit.specToggle')}
+                      </button>
+                      {/* `hidden` rather than unmounting: it really leaves the tab order,
+                          and a field that kept a draft while folded away would be a draft
+                          nobody can see. */}
+                      {/* The display class only while it is open. `[hidden]` sets
+                          `display: none` in the preflight, but a `flex` class beats it on
+                          specificity — so the attribute flipped, the semantics were right,
+                          and the panel stayed on screen. */}
+                      <div id="roadtrip-spec" hidden={!specOpen} className={specOpen ? 'flex flex-col gap-3' : ''}>
+                        {SPEC_ROWS[vehicleKind].map(({ key, setting, Icon, labelKey, step }) => (
+                          <LimitRow
+                            key={key}
+                            icon={Icon}
+                            label={t(labelKey)}
+                            suffix={specUnit(key, imperial)}
+                            step={step}
+                            value={showSpec(key, saved[key], imperial)}
+                            placeholder={t('roadtrip.limit.off')}
+                            testId={`limit-${key}`}
+                            onDraft={v => setPreview({ key, value: v })}
+                            onChange={v => onSave?.(setting, storeSpec(key, v, imperial))}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+                </Panel>
+
+                <Panel icon={Route} title={t('roadtrip.line.section')} note={automaticWindow ? undefined : t('roadtrip.line.hint')}>
                   {/* The road between one day's last stop and the next day's first is real
                       driving that the rail has never drawn: days are routed one at a time,
                       so that gap was never asked for. Off by default because it costs a
                       routing request per join and changes every day's kilometres. */}
-                  <AvoidRow
+                  {automaticWindow ? (
+                    <div className="flex items-center gap-3" title={t('roadtrip.window.hint')}>
+                      <Link2 size={16} className="shrink-0 text-content-faint" aria-hidden />
+                      <span className="min-w-0 flex-1 text-body text-content-secondary">{t('roadtrip.line.connect')}</span>
+                      <Check size={16} className="text-accent-on" aria-label={t('roadtrip.window.hint')} />
+                    </div>
+                  ) : <AvoidRow
                     icon={Link2}
                     label={t('roadtrip.line.connect')}
                     on={!!settings.roadtrip_connect_days}
                     disabled={false}
                     onToggle={() => onSave?.('roadtrip_connect_days', !settings.roadtrip_connect_days)}
-                  />
+                  />}
                   {/* Which matters most once the line IS continuous: end to end it is one
                       stroke, and a colour per day is what puts the days back into it. */}
                   <AvoidRow
@@ -490,134 +637,6 @@ export default function RoadtripLimitsCard({ onSave }: {
                   />
                 </Panel>
               </div>
-
-              <Panel
-                icon={Car}
-                title={t('roadtrip.limit.sectionVehicle')}
-                note={vehicleKind ? t('roadtrip.limit.specHint') : t('roadtrip.limit.vehicleHint')}
-              >
-                {/* First, because it decides what everything under it means: with no
-                    vehicle named, a petrol station and a charger both fill the tank, which
-                    is arithmetic that is wrong for everybody who drives just one of them.
-
-                    Radios in a segmented shell rather than a dropdown: three options that
-                    change the meaning of everything below them should be readable without
-                    being opened, and the arrow keys, the names and the roles then come
-                    from the browser instead of from a rebuilt listbox. */}
-                <fieldset className="min-w-0">
-                  <legend className="sr-only">{t('roadtrip.limit.vehicleLabel')}</legend>
-                  <div className="grid grid-cols-3 gap-1 rounded-xl border border-edge bg-surface-tertiary p-1">
-                    {VEHICLES.map(({ key, labelKey, Icon }) => (
-                      <label key={key ?? 'unset'} className="min-w-0">
-                        <input
-                          type="radio"
-                          name="roadtrip-vehicle"
-                          className="peer sr-only"
-                          checked={(settings.roadtrip_vehicle || '') === (key ?? '')}
-                          onChange={() => {
-                            // Never writes the car's figures away: switching kind leaves
-                            // both sets stored, `rangeFromSpec` simply returns null for
-                            // the other one, and the typed range comes back as an editable
-                            // field. Deleting the other kind's values here would lose data
-                            // on a mis-click.
-                            setPreview(null)
-                            onSave?.('roadtrip_vehicle', key ?? '')
-                          }}
-                        />
-                        <span className="flex min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-center text-body text-content-secondary transition-colors hover:bg-surface-hover peer-checked:bg-accent peer-checked:text-accent-text peer-focus-visible:ring-2 peer-focus-visible:ring-accent">
-                          <Icon size={14} className="shrink-0" aria-hidden />
-                          {t(labelKey)}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-
-                <RangeStrip
-                  rangeKm={planningKm}
-                  fillPercent={shownFill}
-                  wearPercent={vehicleKind === 'electric' ? spec.degradationPercent ?? null : null}
-                  unit={distanceUnit}
-                  electric={vehicleKind === 'electric'}
-                />
-
-                {/* Read-only once the parts add up, because then it IS the parts. Leaving
-                    it editable would offer a second answer to a question that already has
-                    one, and the traveller would have no way of telling which the warnings
-                    were using. Clearing a field above hands the row straight back. */}
-                <LimitRow
-                  icon={Route}
-                  // "on one tank" is the wrong noun for half the travellers who set this.
-                  label={t(vehicleKind === 'electric' ? 'roadtrip.limit.rangeLabelCharge' : 'roadtrip.limit.rangeLabel')}
-                  suffix={imperial ? 'mi' : 'km'}
-                  value={rangeShown}
-                  placeholder={t('roadtrip.limit.off')}
-                  derived={computedKm ? t('roadtrip.limit.computed') : undefined}
-                  testId="limit-range"
-                  onDraft={v => setPreview({ key: 'range', value: v })}
-                  onChange={setRange}
-                />
-                {/* Under the range, because it is a fraction OF it. Nobody charges to
-                    100 % on the road: the last fifth takes as long as the first four, so a
-                    stop counted as a full tank overstates everything after it by that
-                    fifth. */}
-                <LimitRow
-                  icon={BatteryCharging}
-                  label={t('roadtrip.limit.fillLabel')}
-                  suffix="%"
-                  value={settings.roadtrip_fill_percent}
-                  placeholder={t('roadtrip.limit.fillFull')}
-                  testId="limit-fill"
-                  onDraft={v => setPreview({ key: 'fill', value: v > 100 ? 100 : v })}
-                  onChange={v => onSave?.('roadtrip_fill_percent', v > 100 ? 100 : v)}
-                />
-
-                {/* The car's own figures, folded away. Nothing here is required — somebody
-                    who knows their range types it above and never opens this — but it
-                    starts open the moment any of them is stored, because otherwise the
-                    range row is read-only with its cause out of sight. */}
-                {vehicleKind ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => { setSpecOpen(o => !o); setPreview(null) }}
-                      aria-expanded={specOpen}
-                      aria-controls="roadtrip-spec"
-                      className="-mx-1 flex items-center gap-1.5 self-start rounded-lg px-1 py-0.5 text-caption font-semibold text-accent-on transition-colors hover:text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                    >
-                      <ChevronRight
-                        size={13}
-                        className={`shrink-0 transition-transform ${specOpen ? 'rotate-90' : ''}`}
-                        aria-hidden
-                      />
-                      {t('roadtrip.limit.specToggle')}
-                    </button>
-                    {/* `hidden` rather than unmounting: it really leaves the tab order,
-                        and a field that kept a draft while folded away would be a draft
-                        nobody can see. */}
-                    {/* The display class only while it is open. `[hidden]` sets
-                        `display: none` in the preflight, but a `flex` class beats it on
-                        specificity — so the attribute flipped, the semantics were right,
-                        and the panel stayed on screen. */}
-                    <div id="roadtrip-spec" hidden={!specOpen} className={specOpen ? 'flex flex-col gap-3' : ''}>
-                      {SPEC_ROWS[vehicleKind].map(({ key, setting, Icon, labelKey, step }) => (
-                        <LimitRow
-                          key={key}
-                          icon={Icon}
-                          label={t(labelKey)}
-                          suffix={specUnit(key, imperial)}
-                          step={step}
-                          value={showSpec(key, saved[key], imperial)}
-                          placeholder={t('roadtrip.limit.off')}
-                          testId={`limit-${key}`}
-                          onDraft={v => setPreview({ key, value: v })}
-                          onChange={v => onSave?.(setting, storeSpec(key, v, imperial))}
-                        />
-                      ))}
-                    </div>
-                  </>
-                ) : null}
-              </Panel>
             </div>
           </div>
         </Modal>

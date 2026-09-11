@@ -1,6 +1,34 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "Khi trực tuyến, kéo điểm kết thúc ngày dọc tuyến đường hoặc đến một địa điểm; nhấp chuột phải để khôi phục kết thúc tự động.",
+  'roadtrip.window.resetBoundaries': "Khôi phục kết thúc ngày tự động",
+  'roadtrip.window.endHere': 'Kết thúc ngày tại đây',
+  'roadtrip.window.endHereHint':
+    'Bạn có thể kết thúc ngày tại một điểm dừng trong chi tiết địa điểm khi chế độ Roadtrip và giờ di chuyển hằng ngày đang bật.',
+  'roadtrip.window.endAt': 'Kết thúc ngày',
+  'roadtrip.window.onRoute': 'Trên tuyến đường',
+  'roadtrip.window.atStop': 'Tại địa điểm cuối',
+  'roadtrip.window.routeHint': 'Tạm dừng trên tuyến đường khi đến giờ kết thúc.',
+  'roadtrip.window.stopHint': 'Ở lại địa điểm cuối nếu không thể đến địa điểm tiếp theo trước giờ kết thúc ngày.',
+  'roadtrip.window.legTooLong':
+    'Một chặng lái xe vượt quá khung giờ hằng ngày. Thêm địa điểm dọc đường hoặc chọn tạm dừng trên tuyến đường.',
+  'roadtrip.window.pointLabel': 'Kết thúc ngày {day} lúc {time}',
+  'roadtrip.window.title': 'Giờ di chuyển hằng ngày',
+  'roadtrip.window.start': 'Giờ bắt đầu ngày',
+  'roadtrip.window.end': 'Giờ kết thúc ngày',
+  'roadtrip.window.hint':
+    'Đặt cả hai giờ để lên kế hoạch nghỉ mỗi ngày. Xóa một giờ để tắt. Giờ nhập thủ công được ưu tiên. Các ngày được nối tự động.',
+  'roadtrip.window.invalid': 'Giờ kết thúc phải sau giờ bắt đầu.',
+  'roadtrip.window.stop': 'Kết thúc ngày',
+  'roadtrip.window.resume': 'Tiếp tục hành trình',
+  'roadtrip.window.pointHint': 'Đây là điểm tạm dừng qua đêm dự kiến của hành trình.',
+  'roadtrip.window.departure': 'Tiếp tục sau phần tham quan còn lại lúc {time}',
+  'roadtrip.window.showPoint': 'Hiện trên bản đồ',
+  'roadtrip.window.incomplete': 'Cần có tất cả tuyến đường nối để tính thời gian nghỉ hằng ngày.',
+  'roadtrip.window.conflict':
+    'Một giờ cố định xung đột với việc lái xe và nghỉ. Giờ thủ công được giữ nguyên; lập lịch tự động tạm dừng.',
+  'roadtrip.window.tooLong': 'Các giờ này cần hơn 365 ngày bổ sung. Hãy chọn khoảng thời gian mỗi ngày dài hơn.',
   'roadtrip.mode.roadtrip': 'Chuyến đi đường bộ',
   'roadtrip.mode.days': 'Ngày',
   'roadtrip.mode.label': 'Chế độ xem kế hoạch',

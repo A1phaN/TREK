@@ -1,6 +1,34 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "Çevrimiçiyken gün sonunu rota boyunca veya bir yere sürükleyin; otomatik sonu geri yüklemek için sağ tıklayın.",
+  'roadtrip.window.resetBoundaries': "Otomatik gün sonlarını geri yükle",
+  'roadtrip.window.endHere': 'Günü burada bitir',
+  'roadtrip.window.endHereHint':
+    'Roadtrip modu ve günlük seyahat saatleri etkinken yer ayrıntılarından belirli bir durağı gün sonu olarak seçebilirsiniz.',
+  'roadtrip.window.endAt': 'Günü bitir',
+  'roadtrip.window.onRoute': 'Rota üzerinde',
+  'roadtrip.window.atStop': 'Son yerde',
+  'roadtrip.window.routeHint': 'Bitiş saatine ulaşıldığında rota üzerinde mola ver.',
+  'roadtrip.window.stopHint': 'Bir sonraki yere gün bitmeden ulaşılamıyorsa son yerde kal.',
+  'roadtrip.window.legTooLong':
+    'Bir sürüş günlük zaman aralığını aşıyor. Yol üzerine bir yer ekleyin veya rota üzerinde mola vermeyi seçin.',
+  'roadtrip.window.pointLabel': '{day}. günün bitişi saat {time}',
+  'roadtrip.window.title': 'Günlük yolculuk saatleri',
+  'roadtrip.window.start': 'Gün başlangıcı',
+  'roadtrip.window.end': 'Gün bitişi',
+  'roadtrip.window.hint':
+    'Günlük molaları planlamak için iki saati de ayarlayın. Kapatmak için birini temizleyin. Elle girilen saatler önceliklidir. Günler otomatik bağlanır.',
+  'roadtrip.window.invalid': 'Bitiş saati başlangıç saatinden sonra olmalıdır.',
+  'roadtrip.window.stop': 'Gün sonu',
+  'roadtrip.window.resume': 'Yolculuğa devam et',
+  'roadtrip.window.pointHint': 'Burası yolculuğunuzun tahmini gece molası noktasıdır.',
+  'roadtrip.window.departure': 'Ziyaretin kalan kısmından sonra {time} saatinde devam et',
+  'roadtrip.window.showPoint': 'Haritada göster',
+  'roadtrip.window.incomplete': 'Günlük molaları hesaplamak için tüm bağlantı rotaları gereklidir.',
+  'roadtrip.window.conflict':
+    'Sabit bir saat sürüş ve molalarla çakışıyor. Elle girilen saatler korunur; otomatik planlama duraklatıldı.',
+  'roadtrip.window.tooLong': 'Bu saatler 365 günden fazla ek süre gerektiriyor. Daha uzun bir günlük aralık seçin.',
   'roadtrip.mode.roadtrip': 'Yol gezisi',
   'roadtrip.mode.days': 'Günler',
   'roadtrip.mode.label': 'Plan görünümü',

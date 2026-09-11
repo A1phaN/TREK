@@ -27,7 +27,8 @@ const settings: TranslationStrings = {
   'settings.routingBase': '자체 경로 서버',
   'settings.routingBaseHint': '자체 OSRM 인스턴스입니다. 비워 두면 초당 약 한 번의 요청만 허용하는 공개 서버를 사용합니다. 하루치는 충분하지만 로드트립에는 빠듯합니다. 서버를 다시 시작해야 적용됩니다.',
   'settings.valhallaBase': '자체 Valhalla 인스턴스',
-  'settings.valhallaBaseHint': '자체 Valhalla 인스턴스. 구간에서 통행료, 고속도로, 페리를 피해야 할 때 이 서버에 묻습니다. 공개 OSRM 서버는 이에 답하지 못합니다. 비워 두면 FOSSGIS의 공개 Valhalla를 쓰지만, 위에 자체 라우팅 서버를 적어 두었다면 두 번째 엔진은 아예 묻지 않습니다. 서버를 다시 시작한 뒤에 적용됩니다.',
+  'settings.valhallaBaseHint':
+    'TREK은 기본적으로 유료 도로, 고속도로, 페리를 피하기 위해 FOSSGIS의 공개 Valhalla를 사용합니다. 대신 자체 Valhalla를 사용하려면 여기에 URL을 입력하세요. 자체 라우팅 서버만 설정된 경우 공개 Valhalla는 사용되지 않습니다. 자체 URL을 입력한 후 서버를 재시작하고 페이지를 새로고침하세요.',
   'settings.mapHint': '지도 타일 URL 템플릿',
   'settings.mapProvider': '지도 공급자',
   'settings.mapProviderHint': '여행 플래너 및 Journey 지도에 영향을 줍니다. Atlas는 항상 Leaflet을 사용합니다.',

@@ -10,10 +10,15 @@ import { useSettingsStore } from '../../store/settingsStore'
 import { useVehicleRange } from './useVehicleRange'
 import type { Assignment, AssignmentsMap, Day, RouteAvoidClass, RouteSegment, RouteVia, SnappedWaypoint } from '../../types'
 import { spurFor } from './accessSpur'
-import type { RoadtripVia } from '@trek/shared'
+import type { RoadtripVia, RoadtripDayBoundary } from '@trek/shared'
+import { dayWindow, planDayWindow, type AutomaticNight, type WindowPlan } from './dayWindow'
+import type { DayBoundaryLeg } from './dayBoundaryPath'
+import { useTranslation } from '../../i18n/TranslationContext'
+import { computeSchedule } from './roadtripModel'
 
 /** One stop on a day's drive — an assignment whose place actually has coordinates. */
 export interface RoadtripStop {
+  automaticNight?: AutomaticNight
   assignmentId: number
   /**
    * The day this stop is STORED on, and its position there.
@@ -34,6 +39,7 @@ export interface RoadtripStop {
   time: string | null
   /** How long the visit is planned to take. `places.duration_minutes` has carried this for years. */
   dwellMinutes: number | null
+  endDay?: boolean
   /** Mode of the leg LEAVING this stop; null inherits the day default. */
   legMode: string | null
   incomingLegMode: string | null
@@ -59,6 +65,7 @@ export interface RoadtripStop {
 }
 
 export interface RoadtripDay {
+  automaticSchedule?: boolean
   dayId: number
   dayNumber: number
   date: string | null
@@ -151,6 +158,9 @@ export interface QuietDay {
 }
 
 export interface RoadtripRoutes {
+  boundaryPath?: DayBoundaryLeg[]
+  validateBoundaries?: (boundaries: RoadtripDayBoundary[]) => WindowPlan['issue']
+  dayWindowIssue?: 'incomplete' | 'conflict' | 'tooLong' | 'legTooLong' | null
   days: RoadtripDay[]
   /**
    * Days with fewer than two stops, in trip order.
@@ -220,7 +230,7 @@ const sleep = (ms: number, signal: AbortSignal): Promise<void> =>
  * than added later, because this shape is written in one place and read in another and
  * three separate changes to the same two lines is three merge conflicts.
  */
-interface RoutedLeg {
+export interface RoutedLeg {
   seg: RouteSegment
   line: [number, number][]
   /**
@@ -287,6 +297,7 @@ const asStop = (a: Assignment, ownerDayId: number, ownerIndex: number): Roadtrip
     lng: p.lng,
     time: a.assignment_time ?? p.place_time ?? null,
     dwellMinutes: typeof p.duration_minutes === 'number' ? p.duration_minutes : null,
+    endDay: a.end_day === true,
     legMode: a.leg_transport_mode ?? null,
     incomingLegMode: a.incoming_leg_transport_mode ?? null,
     stopType: p.stop_type ?? null,
@@ -318,7 +329,9 @@ export function useRoadtripRoutes(
    * chose rather than the one it prefers.
    */
   viasByDay: Record<number, RoadtripVia[]> = {},
+  boundaries: RoadtripDayBoundary[] = [],
 ): RoadtripRoutes {
+  const { t } = useTranslation()
   const routeProfile = fallbackProfile || 'driving'
   // Leg text is pre-formatted in the chosen unit, so a km↔mi switch has to re-fetch.
   const distanceUnit = useSettingsStore(s => s.settings.distance_unit)
@@ -367,7 +380,12 @@ export function useRoadtripRoutes(
    * the trip one continuous drive — every one of those gaps is routed, drawn, and counted
    * towards the day it ARRIVES on, which is the same rule a night drive already follows.
    */
-  const connectDays = useSettingsStore(s => !!s.settings.roadtrip_connect_days)
+  const connectSetting = useSettingsStore(s => !!s.settings.roadtrip_connect_days)
+  const startTime = useSettingsStore(s => s.settings.roadtrip_day_start)
+  const endTime = useSettingsStore(s => s.settings.roadtrip_day_end)
+  const endMode = useSettingsStore(s => s.settings.roadtrip_day_end_mode)
+  const window = useMemo(() => dayWindow(startTime, endTime, endMode), [startTime, endTime, endMode])
+  const connectDays = connectSetting || window !== null
   const avoid = useMemo(() => parseAvoid(avoidSetting), [avoidSetting])
   // What the car is and how far it goes on one fill, assembled in one place because the
   // rail needs the same answer to say what a given fill buys at a given stop.
@@ -671,7 +689,10 @@ export function useRoadtripRoutes(
       if (have && have.shape === seamShape(from, viasByDay)) return
       out.push({ from, to, dayId })
     }
-    for (const chain of chains) {
+    const routingChains = window
+      ? [...plan, ...quietDays].sort((a, b) => a.dayNumber - b.dayNumber).filter(d => d.stops.length)
+      : chains
+    for (const chain of routingChains) {
       for (let i = 0; i < chain.stops.length - 1; i++) {
         const from = chain.stops[i]
         const to = chain.stops[i + 1]
@@ -683,14 +704,14 @@ export function useRoadtripRoutes(
     // And, when the traveller asks for one continuous drive, the road from each card's
     // last stop to the next card's first — the one gap a day-at-a-time routing leaves.
     if (connectDays) {
-      for (let d = 0; d < chains.length - 1; d++) {
-        const from = chains[d].stops[chains[d].stops.length - 1]
-        const to = chains[d + 1].stops[0]
-        if (from && to) want(from, to, chains[d + 1].dayId)
+      for (let d = 0; d < routingChains.length - 1; d++) {
+        const from = routingChains[d].stops[routingChains[d].stops.length - 1]
+        const to = routingChains[d + 1].stops[0]
+        if (from && to) want(from, to, routingChains[d + 1].dayId)
       }
     }
     return out
-  }, [chains, legsByDay, seamLegs, viasByDay, connectDays])
+  }, [chains, plan, quietDays, window, legsByDay, seamLegs, viasByDay, connectDays])
   const seamKey = seams.map(s => `${legKey(s.from, s.to)}#${seamShape(s.from, viasByDay)}`).join(';')
 
   useEffect(() => {
@@ -761,7 +782,22 @@ export function useRoadtripRoutes(
     // places is the road between them whichever date it is driven on.
     const allSnaps: Record<string, SnappedWaypoint> = {}
     for (const day of plan) Object.assign(allSnaps, snapByDay[day.dayId] ?? {})
-    const legFor = (from: RoadtripStop, to: RoadtripStop): RoutedLeg | undefined => allLegs[legKey(from, to)]
+    const storedLegFor = (from: RoadtripStop, to: RoadtripStop): RoutedLeg | undefined => allLegs[legKey(from, to)]
+    const timed = window ? planDayWindow(
+      [...plan, ...quietDays], window, storedLegFor, distanceUnit,
+      { start: t('roadtrip.window.resume'), end: t('roadtrip.window.stop') },
+      boundaries,
+    ) : null
+    const automaticSchedule = !!timed && timed.issue === null
+    const displayChains = automaticSchedule ? timed.chains : timed?.issue
+      ? [...plan, ...quietDays].sort((a, b) => a.dayNumber - b.dayNumber).filter(d => d.stops.length).map(d => ({
+          ...d, spills: [], schedule: computeSchedule(
+            d.stops.map(s => ({ anchor: s.time, dwellMinutes: s.dwellMinutes })),
+            d.stops.slice(0, -1).map((s, i) => storedLegFor(s, d.stops[i + 1])?.seg.duration),
+          ),
+        }))
+      : chains
+    const legFor = automaticSchedule ? timed.legFor : storedLegFor
 
     const lines: [number, number][][] = []
     const lineDays: number[] = []
@@ -777,7 +813,7 @@ export function useRoadtripRoutes(
     let previousStop: RoadtripStop | undefined
     /** And which day that was, so the road out of it is drawn as that day's. */
     let previousDayNumber: number | undefined
-    for (const chain of chains) {
+    for (const chain of displayChains) {
       const routed = chain.stops.slice(0, -1).map((s, i) => legFor(s, chain.stops[i + 1]))
       /**
        * The drives that reach this card rather than leave from it, and only when the
@@ -799,7 +835,7 @@ export function useRoadtripRoutes(
        * look like it begins at a stop that is not on it.
        */
       const inboundAt = new Map<number, { seg: RouteSegment | undefined; line: [number, number][]; drawnAs: number }>()
-      if (connectDays) {
+      if (connectDays && !automaticSchedule) {
         for (const spill of chain.spills) {
           inboundAt.set(spill.at, { seg: spill.leg, line: spill.line, drawnAs: spill.fromDayNumber })
         }
@@ -839,7 +875,7 @@ export function useRoadtripRoutes(
       const schedule = chain.schedule
       const legVias = routed.map(l => l?.vias ?? [])
       const stops = chain.stops.map(s => {
-        const snap = allSnaps[stopKey(s)]
+        const snap = s.automaticNight ? undefined : allSnaps[stopKey(s)]
         const line = spurFor(snap)
         if (line) accessLines.push({ line, meters: snap.meters, stopKey: stopKey(s) })
         return { ...s, offRoadMeters: line ? snap.meters : null }
@@ -884,6 +920,7 @@ export function useRoadtripRoutes(
       // ferry or a walk pays for a second copy.
       const drivingGeometry = drivingLine.length === geometry.length ? geometry : drivingLine
       out.push({
+        automaticSchedule,
         dayId: chain.dayId,
         dayNumber: chain.dayNumber,
         date: chain.date,
@@ -895,8 +932,19 @@ export function useRoadtripRoutes(
         dayWarning: drive.day,
       })
     }
-    const drives = out.filter(d => d.stops.length > 1)
+    const drives = out.filter(d => d.stops.length > 1 || d.stops.some(s => s.automaticNight))
+    const originalStops = [...plan, ...quietDays].sort((a, b) => a.dayNumber - b.dayNumber).flatMap(day => day.stops)
+    const boundaryPath = originalStops.slice(0, -1).flatMap((from, position) => {
+      const to = originalStops[position + 1]
+      const leg = storedLegFor(from, to)
+      return leg && (!leg.seg.mode || leg.seg.mode === 'driving') && from.assignmentId > 0 && to.assignmentId > 0
+        ? [{ from, to, position, line: leg.line }] : []
+    })
     return {
+      boundaryPath,
+      validateBoundaries: (next: RoadtripDayBoundary[]) => window ? planDayWindow([...plan, ...quietDays], window, storedLegFor, distanceUnit,
+        { start: t('roadtrip.window.resume'), end: t('roadtrip.window.stop') }, next).issue : 'conflict',
+      dayWindowIssue: timed?.issue ?? null,
       days: drives,
       lines,
       lineDays,
@@ -909,13 +957,13 @@ export function useRoadtripRoutes(
       // holding a single stop draws no card and contributes nothing else here either.
       // Service stops are not stops in this sense — a charger on the way is part of the
       // drive, and counting it here would make the head disagree with the day cards.
-      totalStops: drives.reduce((s, d) => s + d.stops.filter(st => !isServiceStopType(st.stopType)).length, 0),
+      totalStops: drives.reduce((s, d) => s + d.stops.filter(st => !st.automaticNight && !isServiceStopType(st.stopType)).length, 0),
       // A day left with one stop or none draws no drive, so it stays what it was: an
       // outline that appears while a stop is in flight and is not worth a row otherwise.
       quietDays: out
-        .filter(d => d.stops.length < 2)
+        .filter(d => d.stops.length < 2 && !d.stops.some(s => s.automaticNight))
         .map(d => ({ dayId: d.dayId, dayNumber: d.dayNumber, date: d.date, title: d.title, stops: d.stops })),
       loading,
     }
-  }, [plan, chains, allLegs, snapByDay, missedByDay, loading, limits, vehicleKind, connectDays])
+  }, [plan, quietDays, window, distanceUnit, t, chains, allLegs, snapByDay, missedByDay, loading, limits, vehicleKind, connectDays, boundaries])
 }

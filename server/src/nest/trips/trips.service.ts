@@ -610,8 +610,8 @@ export class TripsService {
       `).all(sourceTripId) as any[];
       const assignmentMap = new Map<number, number | bigint>();
       const insertAssignment = this.db.prepare(`
-        INSERT INTO day_assignments (day_id, place_id, order_index, notes, reservation_status, reservation_notes, reservation_datetime, assignment_time, assignment_end_time)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO day_assignments (day_id, place_id, order_index, notes, reservation_status, reservation_notes, reservation_datetime, assignment_time, assignment_end_time, end_day)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       for (const a of oldAssignments) {
         const newDayId = dayMap.get(a.day_id);
@@ -619,9 +619,19 @@ export class TripsService {
         if (newDayId && newPlaceId) {
           const r = insertAssignment.run(newDayId, newPlaceId, a.order_index, a.notes,
             a.reservation_status, a.reservation_notes, a.reservation_datetime,
-            a.assignment_time, a.assignment_end_time);
+            a.assignment_time, a.assignment_end_time, a.end_day ?? 0);
           assignmentMap.set(a.id, r.lastInsertRowid);
         }
+      }
+
+      const oldBoundaries = this.db.prepare('SELECT * FROM roadtrip_day_boundaries WHERE trip_id = ?').all(sourceTripId) as {
+        day_number: number; from_assignment_id: number; to_assignment_id: number | null; fraction: number;
+      }[];
+      const insertBoundary = this.db.prepare('INSERT INTO roadtrip_day_boundaries (trip_id, day_number, from_assignment_id, to_assignment_id, fraction) VALUES (?, ?, ?, ?, ?)');
+      for (const boundary of oldBoundaries) {
+        const from = assignmentMap.get(boundary.from_assignment_id);
+        const to = boundary.to_assignment_id === null ? null : assignmentMap.get(boundary.to_assignment_id);
+        if (from && to !== undefined) insertBoundary.run(newTripId, boundary.day_number, from, to, boundary.fraction);
       }
 
       const oldParticipants = this.db.prepare(`

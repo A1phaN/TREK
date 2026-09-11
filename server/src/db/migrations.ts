@@ -4534,6 +4534,22 @@ function runMigrations(db: Database.Database): void {
         db.exec('ALTER TABLE places ADD COLUMN fill_percent INTEGER');
       }
     },
+    () => {
+      const cols = db.prepare("SELECT name FROM pragma_table_info('day_assignments')").all() as Array<{ name: string }>;
+      if (!cols.some(c => c.name === 'end_day')) {
+        db.exec('ALTER TABLE day_assignments ADD COLUMN end_day INTEGER NOT NULL DEFAULT 0');
+      }
+    },
+    () => {
+      db.exec(`CREATE TABLE IF NOT EXISTS roadtrip_day_boundaries (
+        trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+        day_number INTEGER NOT NULL CHECK (day_number BETWEEN 1 AND 366),
+        from_assignment_id INTEGER NOT NULL REFERENCES day_assignments(id) ON DELETE CASCADE,
+        to_assignment_id INTEGER REFERENCES day_assignments(id) ON DELETE CASCADE,
+        fraction REAL NOT NULL CHECK (fraction BETWEEN 0 AND 1),
+        PRIMARY KEY (trip_id, day_number)
+      )`);
+    },
   ];
 
   if (currentVersion < migrations.length) {

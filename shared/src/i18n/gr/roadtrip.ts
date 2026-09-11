@@ -1,6 +1,36 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "Με σύνδεση, σύρετε το τέλος της ημέρας στη διαδρομή ή σε ένα μέρος· με δεξί κλικ επαναφέρετε το αυτόματο τέλος.",
+  'roadtrip.window.resetBoundaries': "Επαναφορά αυτόματων ορίων ημέρας",
+  'roadtrip.window.endHere': 'Τέλος ημέρας εδώ',
+  'roadtrip.window.endHereHint':
+    'Μπορείτε να ορίσετε μια στάση ως τέλος ημέρας στις λεπτομέρειες του μέρους, όταν είναι ενεργά το Roadtrip και τα ημερήσια ωράρια ταξιδιού.',
+  'roadtrip.window.endAt': 'Τέλος ημέρας',
+  'roadtrip.window.onRoute': 'Στη διαδρομή',
+  'roadtrip.window.atStop': 'Στο τελευταίο μέρος',
+  'roadtrip.window.routeHint': 'Παύση στη διαδρομή όταν φτάσει η ώρα λήξης.',
+  'roadtrip.window.stopHint':
+    'Παραμονή στο τελευταίο μέρος αν το επόμενο δεν είναι προσβάσιμο πριν το τέλος της ημέρας.',
+  'roadtrip.window.legTooLong':
+    'Μια διαδρομή υπερβαίνει το ημερήσιο ωράριο. Προσθέστε ένα μέρος καθ’ οδόν ή επιλέξτε παύση στη διαδρομή.',
+  'roadtrip.window.pointLabel': 'Τέλος ημέρας {day} στις {time}',
+  'roadtrip.window.title': 'Καθημερινές ώρες ταξιδιού',
+  'roadtrip.window.start': 'Έναρξη ημέρας',
+  'roadtrip.window.end': 'Λήξη ημέρας',
+  'roadtrip.window.hint':
+    'Ορίστε και τις δύο ώρες για καθημερινές παύσεις. Αφήστε μία κενή για απενεργοποίηση. Οι χειροκίνητες ώρες έχουν προτεραιότητα. Οι ημέρες συνδέονται αυτόματα.',
+  'roadtrip.window.invalid': 'Η ώρα λήξης πρέπει να είναι μετά την ώρα έναρξης.',
+  'roadtrip.window.stop': 'Τέλος ημέρας',
+  'roadtrip.window.resume': 'Συνέχεια ταξιδιού',
+  'roadtrip.window.pointHint': 'Αυτό είναι το εκτιμώμενο σημείο της νυχτερινής σας στάσης.',
+  'roadtrip.window.departure': 'Συνέχεια μετά την υπόλοιπη επίσκεψη στις {time}',
+  'roadtrip.window.showPoint': 'Προβολή στον χάρτη',
+  'roadtrip.window.incomplete': 'Απαιτούνται όλες οι συνδετικές διαδρομές για τον υπολογισμό των καθημερινών παύσεων.',
+  'roadtrip.window.conflict':
+    'Μια σταθερή ώρα συγκρούεται με την οδήγηση και τις παύσεις. Οι χειροκίνητες ώρες διατηρούνται· ο αυτόματος σχεδιασμός έχει παύσει.',
+  'roadtrip.window.tooLong':
+    'Αυτές οι ώρες απαιτούν πάνω από 365 επιπλέον ημέρες. Επιλέξτε μεγαλύτερο ημερήσιο διάστημα.',
   'roadtrip.mode.roadtrip': 'Οδικό ταξίδι',
   'roadtrip.mode.days': 'Ημέρες',
   'roadtrip.mode.label': 'Προβολή σχεδίου',

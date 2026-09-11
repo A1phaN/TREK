@@ -27,8 +27,10 @@ import type { RouteVia } from '../../types'
 import { FS } from './typeScale'
 import type { RouteSegment } from '../../types'
 import EmptyState from '../shared/EmptyState'
+import AutomaticDayStop from './AutomaticDayStop'
 
 interface RoadtripSidebarProps {
+  onFocusPoint?: (lat: number, lng: number) => void
   /** Legs and totals for the whole trip, computed once in the planner hook. */
   routes: RoadtripRoutes
   selectedAssignmentId?: number | null
@@ -1203,13 +1205,7 @@ function SpillBlock({ spill, children }: {
         boxShadow: `inset 0 1px 0 color-mix(in srgb, var(--info) 20%, transparent)`,
       }}
     >
-      {/* Moonlight from the left, falling on the mascot. A radial wash rather than a
-          second background colour: it has no edge of its own, so the head reads as lit
-          rather than as another box stacked on the first. */}
-      <div
-        className="px-2 pb-1 pt-2"
-        style={{ backgroundImage: `radial-gradient(140px 64px at 22px 26px, color-mix(in srgb, var(--info) 12%, transparent), transparent 72%)` }}
-      >
+      <div className="px-2 pb-1 pt-2">
         <div className="flex items-center gap-2 text-info">
           <MDancingTrek scene="idle" mood="sleepy" size={26} />
           <span
@@ -1231,7 +1227,7 @@ function SpillBlock({ spill, children }: {
             reason the block exists, and the kilometres on it are the ones the card's
             header now counts. Not clickable: alternatives are asked for on the day the
             leg is stored on, and offering the same leg twice would be two answers. */}
-        <div className="grid" style={RAIL_GRID}>
+        <div className={spill.automatic ? 'hidden' : 'grid'} style={RAIL_GRID}>
           <span className="relative z-[1] flex flex-col items-center" aria-hidden>
             <span className="flex-1" style={RAIL_DASH} />
           </span>
@@ -1294,7 +1290,8 @@ function SpillBlock({ spill, children }: {
  * move, a stay edit or a refuel offer still names the day the server knows it by. See
  * `nightSpill.ts`.
  */
-function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, onMoveStopToDay, drag, onAskAlternatives, openAlternatives, onEditStay, onSetStopKind, onSetStopFill, onFollowTrack, viaCount, trackName, refuel, onAskRefuel, onAcceptRefuel, loading, collapsed, onToggle }: {
+function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, onMoveStopToDay, drag, onAskAlternatives, openAlternatives, onEditStay, onSetStopKind, onSetStopFill, onFollowTrack, viaCount, trackName, refuel, onAskRefuel, onAcceptRefuel, loading, collapsed, onToggle, onFocusPoint }: {
+  onFocusPoint?: RoadtripSidebarProps['onFocusPoint']
   day: RoadtripDay
   /** Folded down to the header, and off the map with it. */
   collapsed?: boolean
@@ -1355,6 +1352,20 @@ function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, on
    * still stored on the day it set off from (`nightSpill.ts`).
    */
   const renderStop = (stop: RoadtripStop, i: number): React.ReactElement => {
+    if (stop.automaticNight) return (
+      <li key={stop.assignmentId}>
+        <AutomaticDayStop stop={stop} entry={day.schedule.entries[i]} onFocus={onFocusPoint} />
+        {i < last && day.legs[i]?.distance !== 0 ? <DriveBand leg={day.legs[i]} /> : null}
+        {refuel && !loading ? (day.dryPoints ?? []).filter(dry => dry.legIndex === i).map(dry => (
+          <RefuelBand key={`dry-${dry.legIndex}`} dry={dry} dayId={day.dayId} refuel={refuel}
+            onAsk={() => onAskRefuel?.(day.dayId, dry)}
+            onAccept={onAcceptRefuel ? poi => onAcceptRefuel(day.dayId, poi, dry) : undefined} />
+        )) : null}
+        {i < last ? (day.legVias[i] ?? []).map((via, vi) => (
+          <RouteViaStop key={`via-${vi}-${via.lat},${via.lng}`} via={via} />
+        )) : null}
+      </li>
+    )
     const service = isServiceStopType(stop.stopType)
     if (!service) counted += 1
     // Every finding at this index is read on its own. Taking the first match let an
@@ -1424,10 +1435,10 @@ function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, on
             onPickFill={onSetStopFill ? anchor => setFilling({ anchor, stop }) : undefined}
           />
         )}
-        {i < last ? (
+        {i < last && (!day.stops[i + 1].automaticNight || day.legs[i]?.distance !== 0) ? (
           <DriveBand
             leg={day.legs[i]}
-            onAskAlternatives={onAskAlternatives ? () => onAskAlternatives(day.dayId, i) : undefined}
+            onAskAlternatives={onAskAlternatives && !day.stops[i + 1].automaticNight ? () => onAskAlternatives(day.dayId, i) : undefined}
             alternativesOpen={openAlternatives?.dayId === day.dayId && openAlternatives.index === i}
           />
         ) : null}
@@ -1556,7 +1567,7 @@ function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, on
             </Tooltip>
           ) : null}
           <span className={`${DAY_BADGE} bg-surface-card`} style={{ fontSize: FS.label }}>
-            {t('roadtrip.day.stopCount', { count: day.stops.filter(s => !isServiceStopType(s.stopType)).length })}
+            {t('roadtrip.day.stopCount', { count: day.stops.filter(s => !s.automaticNight && !isServiceStopType(s.stopType)).length })}
           </span>
           {/* The other half of "where possible". The setting is a weighting, so a day
               with no untolled crossing comes back on the toll road — and the only thing
@@ -1714,7 +1725,7 @@ function QuietDaySection({ day, onMoveStopToDay, drag }: {
 export default function RoadtripSidebar({
   routes, selectedAssignmentId, onSelectStop, onReorderStop, onMoveStopToDay, onAskAlternatives, openAlternatives, onEditStay,
   onSetStopKind, onSetStopFill, onFollowTrack, viaCounts, trackNames, refuel, onAskRefuel, onAcceptRefuel,
-  collapsedDayIds, onToggleDay,
+  collapsedDayIds, onToggleDay, onFocusPoint,
 }: RoadtripSidebarProps): React.ReactElement {
   const { t } = useTranslation()
   // One drag state for the whole rail rather than one per day: a stop that cannot leave
@@ -1751,12 +1762,18 @@ export default function RoadtripSidebar({
     <div className="flex min-h-0 flex-1 flex-col gap-3 pt-1">
       <div className="shrink-0">
         <TripSummary routes={routes} />
+        {routes.dayWindowIssue ? (
+          <p role="status" className="mx-3.5 mt-2 rounded-xl bg-warning-soft p-3 text-caption text-content">
+            {t(`roadtrip.window.${routes.dayWindowIssue}`)}
+          </p>
+        ) : null}
       </div>
       <div className="roadtrip-rail-scroll flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto pb-3.5">
         {routes.days.map(day => (
           <DaySection
             key={day.dayId}
             day={day}
+            onFocusPoint={onFocusPoint}
             selectedAssignmentId={selectedAssignmentId}
             onSelectStop={onSelectStop}
             onReorderStop={onReorderStop}
@@ -1767,7 +1784,7 @@ export default function RoadtripSidebar({
             onEditStay={onEditStay}
             onSetStopKind={onSetStopKind}
             onSetStopFill={onSetStopFill}
-            onFollowTrack={onFollowTrack}
+            onFollowTrack={day.dayId < 0 ? undefined : onFollowTrack}
             viaCount={viaCounts?.[day.dayId] ?? 0}
             trackName={trackNames?.[day.dayId]}
             refuel={refuel}

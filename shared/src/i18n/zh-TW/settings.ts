@@ -27,7 +27,8 @@ const settings: TranslationStrings = {
   'settings.routingBase': '自建路徑規劃服務',
   'settings.routingBaseHint': '你自己的 OSRM 實例。留空則使用公共伺服器，約每秒一個請求 — 單日夠用，長途自駕則吃緊。需重新啟動伺服器後生效。',
   'settings.valhallaBase': '自建 Valhalla 執行個體',
-  'settings.valhallaBaseHint': '自建的 Valhalla 執行個體。當某段路程需要避開收費站、高速公路或渡輪時會向它詢問，公開的 OSRM 伺服器無法回答這類問題。留空則使用 FOSSGIS 的公開 Valhalla；若上方已填寫自建路徑規劃服務，則完全不詢問第二個引擎。重新啟動伺服器後生效。',
+  'settings.valhallaBaseHint':
+    'TREK 預設使用 FOSSGIS 的公共 Valhalla 來避開收費道路、高速公路和渡輪。若要改用自己的 Valhalla，請在此輸入網址。如果只設定了自己的路線規劃伺服器，就不會使用公共 Valhalla。輸入自己的網址後，請重新啟動伺服器並重新載入頁面。',
   'settings.mapHint': '地圖瓦片 URL 模板',
   'settings.mapProvider': '地圖提供商',
   'settings.mapProviderHint': '影響行程規劃和旅程地圖。Atlas 始終使用 Leaflet。',

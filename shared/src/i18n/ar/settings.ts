@@ -26,7 +26,8 @@ const settings: TranslationStrings = {
   'settings.routingBase': 'محرك مسارات خاص',
   'settings.routingBaseHint': 'خادم OSRM خاص بك. اتركه فارغًا لاستخدام الخوادم العامة التي تسمح بطلب واحد تقريبًا في الثانية — يكفي ليوم واحد، وضيّق لرحلة برية. يسري بعد إعادة تشغيل الخادم.',
   'settings.valhallaBase': 'خادم Valhalla خاص بك',
-  'settings.valhallaBaseHint': 'خادم Valhalla خاص بك. يُسأل عندما يجب أن تتجنب المرحلة الرسوم أو الطرق السريعة أو العبّارات — الخوادم العامة لـ OSRM لا تستطيع الإجابة عن ذلك. الفراغ يستخدم Valhalla العام من FOSSGIS، إلا إذا حُدِّد أعلاه محرك توجيه خاص بك، فلا يُسأل أي محرك ثانٍ. يسري بعد إعادة تشغيل الخادم.',
+  'settings.valhallaBaseHint':
+    'يستخدم TREK خدمة Valhalla العامة من FOSSGIS افتراضيًا لتجنب الطرق ذات الرسوم والطرق السريعة والعبّارات. أدخل رابط خادم Valhalla الخاص بك هنا لاستخدامه بدلًا منها. إذا تم إعداد خادم توجيه خاص فقط، فلن تُستخدم خدمة Valhalla العامة. بعد إدخال رابط خاص، أعد تشغيل الخادم وحمّل الصفحة مجددًا.',
   'settings.mapHint': 'قالب URL لبلاطات الخريطة',
   'settings.mapProvider': 'مزود الخريطة',
   'settings.mapProviderHint': 'يؤثر على خرائط Trip Planner و Journey. يستخدم Atlas دائمًا Leaflet.',

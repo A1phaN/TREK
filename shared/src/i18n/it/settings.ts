@@ -27,7 +27,8 @@ const settings: TranslationStrings = {
   'settings.routingBase': 'Motore di percorso proprio',
   'settings.routingBaseHint': 'Una tua istanza OSRM. Vuoto usa i server pubblici, che consentono circa una richiesta al secondo: sufficiente per un giorno, poco per un viaggio in auto. Ha effetto dopo il riavvio del server.',
   'settings.valhallaBase': 'Istanza Valhalla propria',
-  'settings.valhallaBaseHint': 'Una istanza Valhalla propria. Viene interrogata quando una tappa deve evitare pedaggi, autostrade o traghetti: i server OSRM pubblici non sanno rispondere. Vuoto usa il Valhalla pubblico di FOSSGIS, a meno che sopra non sia indicato un motore di routing proprio, nel qual caso non viene interrogato alcun secondo motore. Ha effetto dopo il riavvio del server.',
+  'settings.valhallaBaseHint':
+    'TREK usa per impostazione predefinita la Valhalla pubblica di FOSSGIS per evitare pedaggi, autostrade e traghetti. Inserisci qui l’URL della tua Valhalla per usarla al suo posto. Se è configurata solo un’istanza di routing personalizzata, la Valhalla pubblica non viene usata. Dopo aver inserito un URL personalizzato, riavvia il server e ricarica la pagina.',
   'settings.mapHint': 'Modello URL per i tile della mappa',
   'settings.mapProvider': 'Provider mappa',
   'settings.mapProviderHint': 'Influisce sulle mappe Trip Planner e Journey. Atlas usa sempre Leaflet.',

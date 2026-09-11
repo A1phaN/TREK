@@ -19,6 +19,7 @@ import {
   type GlMapProvider,
 } from '../Map/glProviders'
 import { useAuthStore } from '../../store/authStore'
+import RoutingInstanceFields, { type RoutingDefaults } from './RoutingInstanceFields'
 
 const MAP_PRESETS = [
   { name: 'OpenStreetMap', url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png' },
@@ -34,7 +35,7 @@ const MAP_PRESETS = [
   { name: 'Stadia Smooth', url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png' },
 ]
 
-type Defaults = {
+type Defaults = RoutingDefaults & {
   temperature_unit?: string
   distance_unit?: DistanceUnit
   dark_mode?: string | boolean
@@ -43,8 +44,6 @@ type Defaults = {
   blur_booking_codes?: boolean
   map_tile_url?: string
   carto_api_key?: string
-  routing_base_url?: string
-  valhalla_base_url?: string
   map_provider?: string
   mapbox_access_token?: string
   mapbox_style?: string
@@ -121,8 +120,6 @@ export default function DefaultUserSettingsTab(): React.ReactElement {
   const managed = useAuthStore((s) => s.managed)
   const [mapboxToken, setMapboxToken] = useState('')
   const [cartoKey, setCartoKey] = useState('')
-  const [routingBase, setRoutingBase] = useState('')
-  const [valhallaBase, setValhallaBase] = useState('')
   const [mapboxStyle, setMapboxStyle] = useState('')
 
   useEffect(() => {
@@ -132,8 +129,6 @@ export default function DefaultUserSettingsTab(): React.ReactElement {
       setMapTileUrl(normalizeTileUrl(data.map_tile_url || ''))
       setMapboxToken(data.mapbox_access_token || '')
       setCartoKey(data.carto_api_key || '')
-      setRoutingBase(data.routing_base_url || '')
-      setValhallaBase(data.valhalla_base_url || '')
       setMapboxStyle(provider === 'leaflet' ? (data.mapbox_style || '') : styleForProvider(provider, provider === 'maplibre-gl' ? data.maplibre_style : data.mapbox_style))
       setLoaded(true)
     }).catch(() => setLoaded(true))
@@ -156,8 +151,6 @@ export default function DefaultUserSettingsTab(): React.ReactElement {
       if (key === 'map_tile_url') setMapTileUrl('')
       if (key === 'mapbox_access_token') setMapboxToken('')
       if (key === 'carto_api_key') setCartoKey('')
-      if (key === 'routing_base_url') setRoutingBase('')
-      if (key === 'valhalla_base_url') setValhallaBase('')
       if (key === 'mapbox_style' || key === 'maplibre_style') {
         const provider = normalizeProvider(defaults.map_provider)
         setMapboxStyle(provider === 'leaflet' ? '' : defaultStyleForProvider(provider))
@@ -387,53 +380,10 @@ export default function DefaultUserSettingsTab(): React.ReactElement {
           <p className="text-xs mt-1 text-content-faint">{t('admin.defaultSettings.cartoKeyHint')}</p>
         </div>
         )}
-        {/* Instance configuration, not a taste, which is why it sits here rather
-            than in a user's own Map settings. The origin has to appear in the CSP
-            `connect-src` the server emits at boot, and that list is built from
-            this default — a value on a personal settings row is read by the route
-            calculator and then refused by the browser, so the whole app stops
-            routing with no error it could report. The write route refuses one
-            from a non-admin for the same reason. */}
         {!managed && (
-        <div style={{ marginTop: 14 }}>
-          <label className="block text-sm font-medium mb-1.5 text-content-secondary">
-            {t('settings.routingBase')}
-            <ResetButton field="routing_base_url" />
-          </label>
-          <input
-            type="text"
-            value={routingBase}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRoutingBase(e.target.value)}
-            onBlur={() => save({ routing_base_url: routingBase.trim() })}
-            placeholder="https://osrm.example.org"
-            spellCheck={false}
-            autoComplete="off"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-400 focus:border-transparent"
-          />
-          <p className="text-xs mt-1 text-content-faint">{t('settings.routingBaseHint')}</p>
-        </div>
-        )}
-        {/* The second engine, next to the first because it is the same kind of decision
-            and carries the same restart caveat. Only ever asked to leave a road class
-            out of one leg, which is the one question the OSRM above refuses. */}
-        {!managed && (
-        <div style={{ marginTop: 14 }}>
-          <label className="block text-sm font-medium mb-1.5 text-content-secondary">
-            {t('settings.valhallaBase')}
-            <ResetButton field="valhalla_base_url" />
-          </label>
-          <input
-            type="text"
-            value={valhallaBase}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValhallaBase(e.target.value)}
-            onBlur={() => save({ valhalla_base_url: valhallaBase.trim() })}
-            placeholder="https://valhalla.example.org"
-            spellCheck={false}
-            autoComplete="off"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-400 focus:border-transparent"
-          />
-          <p className="text-xs mt-1 text-content-faint">{t('settings.valhallaBaseHint')}</p>
-        </div>
+          <div className="mt-3.5">
+            <RoutingInstanceFields defaults={defaults} onSave={save} onReset={reset} />
+          </div>
         )}
         <div style={{ position: 'relative', height: '200px', width: '100%', marginTop: 12 }}>
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}

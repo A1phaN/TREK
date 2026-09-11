@@ -1,6 +1,34 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "オンライン時は一日の終了地点をルート上や場所へドラッグできます。右クリックで自動の終了地点に戻せます。",
+  'roadtrip.window.resetBoundaries': "一日の終了地点を自動に戻す",
+  'roadtrip.window.endHere': 'ここで一日を終了',
+  'roadtrip.window.endHereHint':
+    'Roadtripモードと毎日の移動時間が有効な場合、場所の詳細から特定の立ち寄り先を一日の終点に設定できます。',
+  'roadtrip.window.endAt': '1日の終了地点',
+  'roadtrip.window.onRoute': 'ルートの途中',
+  'roadtrip.window.atStop': '最後の場所',
+  'roadtrip.window.routeHint': '終了時刻になったら、ルート上の到達地点で休止します。',
+  'roadtrip.window.stopHint': '終了時刻までに次の場所へ到着できない場合は、最後の場所に留まります。',
+  'roadtrip.window.legTooLong':
+    '1区間の移動時間が1日の時間枠を超えています。途中に場所を追加するか、ルートの途中で休止する設定を選んでください。',
+  'roadtrip.window.pointLabel': '{day}日目の終了時刻は{time}',
+  'roadtrip.window.title': '毎日の移動時間',
+  'roadtrip.window.start': '一日の開始時刻',
+  'roadtrip.window.end': '一日の終了時刻',
+  'roadtrip.window.hint':
+    '両方の時刻を設定すると毎日の休憩を計画します。どちらかを空欄にすると無効になります。手動の時刻が優先され、各日のルートは自動で接続されます。',
+  'roadtrip.window.invalid': '終了時刻は開始時刻より後にしてください。',
+  'roadtrip.window.stop': '一日の終了',
+  'roadtrip.window.resume': '移動を再開',
+  'roadtrip.window.pointHint': 'ここが夜間の休止地点になる見込みです。',
+  'roadtrip.window.departure': '残りの滞在後、{time}に出発',
+  'roadtrip.window.showPoint': '地図で表示',
+  'roadtrip.window.incomplete': '毎日の休憩を計算するには、すべての接続ルートが必要です。',
+  'roadtrip.window.conflict':
+    '固定時刻が移動や休憩と両立しません。手動の時刻は保持され、自動計画は一時停止しています。',
+  'roadtrip.window.tooLong': 'この設定では365日を超える追加日数が必要です。一日の移動時間を長くしてください。',
   'roadtrip.mode.roadtrip': 'ロードトリップ',
   'roadtrip.mode.days': '日ごと',
   'roadtrip.mode.label': 'プラン表示',

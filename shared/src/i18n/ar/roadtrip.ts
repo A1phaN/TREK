@@ -1,6 +1,34 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "عند الاتصال بالإنترنت، اسحب نهاية اليوم على المسار أو إلى مكان؛ انقر بزر الفأرة الأيمن لاستعادة النهاية التلقائية.",
+  'roadtrip.window.resetBoundaries': "استعادة نهايات الأيام التلقائية",
+  'roadtrip.window.endHere': 'إنهاء اليوم هنا',
+  'roadtrip.window.endHereHint':
+    'يمكنك إنهاء اليوم عند محطة محددة من تفاصيل المكان عندما يكون وضع Roadtrip وأوقات السفر اليومية مفعّلين.',
+  'roadtrip.window.endAt': 'نهاية اليوم',
+  'roadtrip.window.onRoute': 'على الطريق',
+  'roadtrip.window.atStop': 'في آخر مكان',
+  'roadtrip.window.routeHint': 'التوقف على الطريق عند بلوغ وقت نهاية اليوم.',
+  'roadtrip.window.stopHint': 'البقاء في آخر مكان إذا تعذر الوصول إلى المكان التالي قبل نهاية اليوم.',
+  'roadtrip.window.legTooLong':
+    'تتجاوز مدة إحدى الرحلات الفترة اليومية. أضف مكانًا في الطريق أو اختر التوقف على الطريق.',
+  'roadtrip.window.pointLabel': 'نهاية اليوم {day} عند الساعة {time}',
+  'roadtrip.window.title': 'أوقات السفر اليومية',
+  'roadtrip.window.start': 'بداية اليوم',
+  'roadtrip.window.end': 'نهاية اليوم',
+  'roadtrip.window.hint':
+    'حدّد الوقتين لتخطيط الاستراحات اليومية. امسح أحدهما لإيقاف الميزة. الأوقات اليدوية لها الأولوية. يتم وصل الأيام تلقائيًا.',
+  'roadtrip.window.invalid': 'يجب أن يكون وقت النهاية بعد وقت البداية.',
+  'roadtrip.window.stop': 'نهاية اليوم',
+  'roadtrip.window.resume': 'متابعة الرحلة',
+  'roadtrip.window.pointHint': 'هذه نقطة التوقف الليلية المتوقعة لرحلتك.',
+  'roadtrip.window.departure': 'المتابعة بعد بقية الزيارة الساعة {time}',
+  'roadtrip.window.showPoint': 'عرض على الخريطة',
+  'roadtrip.window.incomplete': 'يلزم توفر جميع المسارات الرابطة لحساب الاستراحات اليومية.',
+  'roadtrip.window.conflict':
+    'يتعارض وقت ثابت مع القيادة والاستراحات. تبقى الأوقات اليدوية كما هي؛ تم إيقاف التخطيط التلقائي مؤقتًا.',
+  'roadtrip.window.tooLong': 'تتطلب هذه الأوقات أكثر من 365 يومًا إضافيًا. اختر فترة يومية أطول.',
   'roadtrip.mode.roadtrip': 'رحلة برية',
   'roadtrip.mode.days': 'الأيام',
   'roadtrip.mode.label': 'عرض الخطة',

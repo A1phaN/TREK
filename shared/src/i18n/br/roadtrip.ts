@@ -1,6 +1,34 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "Online, arraste o fim do dia pela rota ou até um lugar; clique com o botão direito para restaurar o fim automático.",
+  'roadtrip.window.resetBoundaries': "Restaurar fins de dia automáticos",
+  'roadtrip.window.endHere': 'Encerrar o dia aqui',
+  'roadtrip.window.endHereHint':
+    'Você pode encerrar o dia em uma parada específica nos detalhes do local quando o modo Roadtrip e os horários diários estiverem ativos.',
+  'roadtrip.window.endAt': 'Encerrar o dia',
+  'roadtrip.window.onRoute': 'No trajeto',
+  'roadtrip.window.atStop': 'No último local',
+  'roadtrip.window.routeHint': 'Pausar no trajeto ao atingir o horário de término.',
+  'roadtrip.window.stopHint': 'Ficar no último local se não for possível chegar ao próximo antes do fim do dia.',
+  'roadtrip.window.legTooLong':
+    'Um trecho excede o período diário. Adicione um local no caminho ou escolha pausar no trajeto.',
+  'roadtrip.window.pointLabel': 'Fim do dia {day} às {time}',
+  'roadtrip.window.title': 'Horários diários',
+  'roadtrip.window.start': 'Início do dia',
+  'roadtrip.window.end': 'Fim do dia',
+  'roadtrip.window.hint':
+    'Defina os dois horários para planejar pausas diárias. Limpe um deles para desativar. Horários manuais têm prioridade. Os dias são conectados automaticamente.',
+  'roadtrip.window.invalid': 'O horário final deve ser posterior ao inicial.',
+  'roadtrip.window.stop': 'Fim do dia',
+  'roadtrip.window.resume': 'Continuar viagem',
+  'roadtrip.window.pointHint': 'Este é o ponto estimado de pausa durante a noite.',
+  'roadtrip.window.departure': 'Continuar após o restante da visita às {time}',
+  'roadtrip.window.showPoint': 'Mostrar no mapa',
+  'roadtrip.window.incomplete': 'Todas as rotas de conexão são necessárias para calcular as pausas diárias.',
+  'roadtrip.window.conflict':
+    'Um horário fixo conflita com o trajeto e as pausas. Os horários manuais são mantidos; o planejamento automático está pausado.',
+  'roadtrip.window.tooLong': 'Esses horários exigiriam mais de 365 dias extras. Escolha um período diário maior.',
   'roadtrip.mode.roadtrip': 'Viagem de carro',
   'roadtrip.mode.days': 'Dias',
   'roadtrip.mode.label': 'Visão do plano',

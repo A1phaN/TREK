@@ -1,6 +1,35 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "Online húzza a nap végét az útvonalon vagy egy helyre; jobb kattintással visszaállíthatja az automatikus befejezést.",
+  'roadtrip.window.resetBoundaries': "Automatikus napvégek visszaállítása",
+  'roadtrip.window.endHere': 'Nap befejezése itt',
+  'roadtrip.window.endHereHint':
+    'A hely részleteinél jelölhetsz ki megállót a nap végének, ha a Roadtrip mód és a napi utazási idők aktívak.',
+  'roadtrip.window.endAt': 'Nap lezárása',
+  'roadtrip.window.onRoute': 'Az útvonalon',
+  'roadtrip.window.atStop': 'Az utolsó helyen',
+  'roadtrip.window.routeHint': 'Megállás az útvonalon a befejezési idő elérésekor.',
+  'roadtrip.window.stopHint': 'Maradjon az utolsó helyen, ha a következő nem érhető el a nap vége előtt.',
+  'roadtrip.window.legTooLong':
+    'Egy útszakasz hosszabb a napi időkeretnél. Adjon hozzá egy helyet útközben, vagy válasszon megállást az útvonalon.',
+  'roadtrip.window.pointLabel': 'A(z) {day}. nap vége {time}-kor',
+  'roadtrip.window.title': 'Napi utazási időszak',
+  'roadtrip.window.start': 'Nap kezdete',
+  'roadtrip.window.end': 'Nap vége',
+  'roadtrip.window.hint':
+    'A napi szünetekhez add meg mindkét időpontot. Egy mező törlése kikapcsolja az automatikát. A kézi időpontok elsőbbséget élveznek. A napok automatikusan összekapcsolódnak.',
+  'roadtrip.window.invalid': 'A befejezésnek a kezdés után kell lennie.',
+  'roadtrip.window.stop': 'Nap vége',
+  'roadtrip.window.resume': 'Utazás folytatása',
+  'roadtrip.window.pointHint': 'Ez az éjszakai pihenő becsült helye.',
+  'roadtrip.window.departure': 'Továbbindulás a látogatás hátralévő része után: {time}',
+  'roadtrip.window.showPoint': 'Megjelenítés a térképen',
+  'roadtrip.window.incomplete': 'A napi szünetek kiszámításához minden összekötő útvonal szükséges.',
+  'roadtrip.window.conflict':
+    'Egy rögzített időpont ütközik az utazással és a szünetekkel. A kézi időpontok megmaradnak; az automatikus tervezés szünetel.',
+  'roadtrip.window.tooLong':
+    'Ezek az időpontok több mint 365 további napot igényelnének. Válassz hosszabb napi időszakot.',
   'roadtrip.mode.roadtrip': 'Autós út',
   'roadtrip.mode.days': 'Napok',
   'roadtrip.mode.label': 'Terv nézet',

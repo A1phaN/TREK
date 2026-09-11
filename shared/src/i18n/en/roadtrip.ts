@@ -1,6 +1,34 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "While online, drag a day ending along the route or onto a place; right-click it to restore the automatic ending.",
+  'roadtrip.window.resetBoundaries': "Restore automatic day endings",
+  'roadtrip.window.endHere': 'End the day here',
+  'roadtrip.window.endHereHint':
+    'You can end a day at a specific stop in its place details while Roadtrip mode and daily travel times are active.',
+  'roadtrip.window.endAt': 'End the day',
+  'roadtrip.window.onRoute': 'Along the route',
+  'roadtrip.window.atStop': 'At the last place',
+  'roadtrip.window.routeHint': 'Pause along the route when the end time is reached.',
+  'roadtrip.window.stopHint': 'Stay at the last place if the next one cannot be reached before the end time.',
+  'roadtrip.window.legTooLong':
+    'A drive exceeds the daily travel window. Add a place along the way or choose to pause along the route.',
+  'roadtrip.window.pointLabel': 'End of day {day} at {time}',
+  'roadtrip.window.title': 'Daily travel times',
+  'roadtrip.window.start': 'Day start time',
+  'roadtrip.window.end': 'Day end time',
+  'roadtrip.window.hint':
+    'Set both times to plan daily breaks. Clear either to turn this off. Manual times take priority. Days are connected automatically.',
+  'roadtrip.window.invalid': 'The end time must be later than the start time.',
+  'roadtrip.window.stop': 'End of day',
+  'roadtrip.window.resume': 'Continue journey',
+  'roadtrip.window.pointHint': 'This is your estimated overnight pause point.',
+  'roadtrip.window.departure': 'Continue after the remaining visit at {time}',
+  'roadtrip.window.showPoint': 'Show on map',
+  'roadtrip.window.incomplete': 'Daily breaks cannot be calculated until all connecting routes are available.',
+  'roadtrip.window.conflict':
+    'A fixed time conflicts with the drive and daily breaks. Manual times are unchanged; automatic scheduling is paused.',
+  'roadtrip.window.tooLong': 'These travel times would require more than 365 extra days. Choose a longer daily window.',
   'roadtrip.mode.roadtrip': 'Road trip',
   'roadtrip.mode.days': 'Days',
   'roadtrip.mode.label': 'Plan view',

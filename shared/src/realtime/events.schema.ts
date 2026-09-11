@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { roadtripDayBoundaryListSchema } from '../roadtrip/day-boundary.schema';
 
 /**
  * WS event contract registry — the single source of truth for every realtime
@@ -110,6 +111,7 @@ export const TREK_WS_EVENTS = {
     scope: 'trip',
     payload: z.object({ dayId: id, track: entity.nullable() }),
   },
+  'roadtripBoundary:changed': { scope: 'trip', payload: roadtripDayBoundaryListSchema },
 
   // ── Day notes ────────────────────────────────────────────────────────────
   'dayNote:created': { scope: 'trip', payload: z.object({ dayId: id, note: entity }) },

@@ -7,14 +7,17 @@ import { PermissionsModule } from '../permissions/permissions.module';
 import { AuthModule } from '../auth/auth.module';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { AddonsModule } from '../addons/addons.module';
+import { DayBoundariesController } from './day-boundaries.controller';
+import { DayBoundariesService } from './day-boundaries.service';
+import { DayBoundariesMcp } from './day-boundaries.mcp';
 
 /** Road trip domain (#1797): the points a drive is routed through. Registered in AppModule. */
 @Module({
   // McpShared brings the tool guards, Auth the demo check, Permissions the trip guard,
   // Addons the enabled-check the MCP tools gate on (the controller has @RequireAddon).
   imports: [McpSharedModule, PermissionsModule, AuthModule, AddonsModule, RealtimeModule],
-  controllers: [RoadtripController],
-  providers: [RoadtripService, RoadtripMcp],
+  controllers: [RoadtripController, DayBoundariesController],
+  providers: [RoadtripService, RoadtripMcp, DayBoundariesService, DayBoundariesMcp],
   exports: [RoadtripService],
 })
 export class RoadtripModule {}

@@ -1,6 +1,35 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "В сети перетащите конец дня по маршруту или на место; щёлкните правой кнопкой для возврата к автоматическому завершению.",
+  'roadtrip.window.resetBoundaries': "Восстановить автоматические окончания дней",
+  'roadtrip.window.endHere': 'Завершить день здесь',
+  'roadtrip.window.endHereHint':
+    'В сведениях о месте можно завершить день на выбранной остановке, когда активны режим Roadtrip и ежедневное время поездки.',
+  'roadtrip.window.endAt': 'Завершение дня',
+  'roadtrip.window.onRoute': 'На маршруте',
+  'roadtrip.window.atStop': 'В последнем месте',
+  'roadtrip.window.routeHint': 'Остановиться на маршруте при наступлении времени окончания дня.',
+  'roadtrip.window.stopHint': 'Остаться в последнем месте, если до следующего нельзя доехать до конца дня.',
+  'roadtrip.window.legTooLong':
+    'Один переезд превышает дневной интервал. Добавьте место по пути или выберите остановку на маршруте.',
+  'roadtrip.window.pointLabel': 'Конец дня {day} в {time}',
+  'roadtrip.window.title': 'Ежедневное время в пути',
+  'roadtrip.window.start': 'Начало дня',
+  'roadtrip.window.end': 'Конец дня',
+  'roadtrip.window.hint':
+    'Задайте оба времени для ежедневных перерывов. Очистите одно поле, чтобы отключить расчёт. Ручные значения имеют приоритет. Дни соединяются автоматически.',
+  'roadtrip.window.invalid': 'Конец дня должен быть позже начала.',
+  'roadtrip.window.stop': 'Конец дня',
+  'roadtrip.window.resume': 'Продолжить поездку',
+  'roadtrip.window.pointHint': 'Здесь предполагается ночная остановка в пути.',
+  'roadtrip.window.departure': 'Продолжить после оставшейся части посещения в {time}',
+  'roadtrip.window.showPoint': 'Показать на карте',
+  'roadtrip.window.incomplete': 'Для расчёта ежедневных перерывов нужны все соединяющие маршруты.',
+  'roadtrip.window.conflict':
+    'Фиксированное время противоречит поездке и перерывам. Ручные значения сохранены; автоматическое планирование приостановлено.',
+  'roadtrip.window.tooLong':
+    'При этих настройках потребуется более 365 дополнительных дней. Увеличьте ежедневный интервал.',
   'roadtrip.mode.roadtrip': 'Автопутешествие',
   'roadtrip.mode.days': 'Дни',
   'roadtrip.mode.label': 'Вид плана',

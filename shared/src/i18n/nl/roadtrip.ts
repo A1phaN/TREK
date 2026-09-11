@@ -1,6 +1,35 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "Sleep online het dageinde langs de route of naar een plaats; klik met rechts om het automatische einde te herstellen.",
+  'roadtrip.window.resetBoundaries': "Automatische dageinden herstellen",
+  'roadtrip.window.endHere': 'Dag hier beëindigen',
+  'roadtrip.window.endHereHint':
+    'Je kunt een stop als dageinde instellen in de plaatsdetails wanneer de Roadtrip-modus en dagelijkse reistijden actief zijn.',
+  'roadtrip.window.endAt': 'Dag afsluiten',
+  'roadtrip.window.onRoute': 'Onderweg',
+  'roadtrip.window.atStop': 'Bij de laatste plek',
+  'roadtrip.window.routeHint': 'Pauzeer onderweg zodra de eindtijd is bereikt.',
+  'roadtrip.window.stopHint': 'Blijf bij de laatste plek als de volgende niet voor het einde van de dag bereikbaar is.',
+  'roadtrip.window.legTooLong':
+    'Een rit duurt langer dan het dagelijkse tijdvenster. Voeg onderweg een plek toe of kies voor een pauze onderweg.',
+  'roadtrip.window.pointLabel': 'Einde van dag {day} om {time}',
+  'roadtrip.window.title': 'Dagelijkse reistijden',
+  'roadtrip.window.start': 'Begin van de dag',
+  'roadtrip.window.end': 'Einde van de dag',
+  'roadtrip.window.hint':
+    'Vul beide tijden in om dagelijkse pauzes te plannen. Maak één veld leeg om dit uit te zetten. Handmatige tijden gaan voor. Dagen worden automatisch verbonden.',
+  'roadtrip.window.invalid': 'De eindtijd moet na de begintijd liggen.',
+  'roadtrip.window.stop': 'Einde van de dag',
+  'roadtrip.window.resume': 'Reis hervatten',
+  'roadtrip.window.pointHint': 'Hier pauzeert je reis naar verwachting voor de nacht.',
+  'roadtrip.window.departure': 'Verder na het resterende bezoek om {time}',
+  'roadtrip.window.showPoint': 'Toon op kaart',
+  'roadtrip.window.incomplete':
+    'Dagelijkse pauzes kunnen pas worden berekend als alle verbindingsroutes beschikbaar zijn.',
+  'roadtrip.window.conflict':
+    'Een vaste tijd past niet bij de rit en pauzes. Handmatige tijden blijven behouden; automatische planning is gepauzeerd.',
+  'roadtrip.window.tooLong': 'Deze tijden vragen meer dan 365 extra dagen. Kies een langer dagelijks tijdvak.',
   'roadtrip.mode.roadtrip': 'Roadtrip',
   'roadtrip.mode.days': 'Dagen',
   'roadtrip.mode.label': 'Planweergave',

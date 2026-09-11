@@ -1,6 +1,35 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "Saat online, seret akhir hari di sepanjang rute atau ke suatu tempat; klik kanan untuk memulihkan akhir otomatis.",
+  'roadtrip.window.resetBoundaries': "Pulihkan akhir hari otomatis",
+  'roadtrip.window.endHere': 'Akhiri hari di sini',
+  'roadtrip.window.endHereHint':
+    'Anda dapat mengakhiri hari di pemberhentian tertentu melalui detail tempat saat mode Roadtrip dan waktu perjalanan harian aktif.',
+  'roadtrip.window.endAt': 'Akhir hari',
+  'roadtrip.window.onRoute': 'Di sepanjang rute',
+  'roadtrip.window.atStop': 'Di tempat terakhir',
+  'roadtrip.window.routeHint': 'Berhenti di sepanjang rute saat waktu akhir tercapai.',
+  'roadtrip.window.stopHint': 'Tetap di tempat terakhir jika tempat berikutnya tidak dapat dicapai sebelum akhir hari.',
+  'roadtrip.window.legTooLong':
+    'Satu perjalanan melebihi rentang waktu harian. Tambahkan tempat di sepanjang jalan atau pilih berhenti di rute.',
+  'roadtrip.window.pointLabel': 'Akhir hari {day} pukul {time}',
+  'roadtrip.window.title': 'Waktu perjalanan harian',
+  'roadtrip.window.start': 'Awal hari',
+  'roadtrip.window.end': 'Akhir hari',
+  'roadtrip.window.hint':
+    'Atur kedua waktu untuk merencanakan jeda harian. Kosongkan salah satunya untuk menonaktifkan. Waktu manual diprioritaskan. Hari dihubungkan otomatis.',
+  'roadtrip.window.invalid': 'Waktu akhir harus setelah waktu mulai.',
+  'roadtrip.window.stop': 'Akhir hari',
+  'roadtrip.window.resume': 'Lanjutkan perjalanan',
+  'roadtrip.window.pointHint': 'Ini perkiraan titik jeda perjalanan Anda untuk bermalam.',
+  'roadtrip.window.departure': 'Lanjutkan setelah sisa kunjungan pada {time}',
+  'roadtrip.window.showPoint': 'Tampilkan di peta',
+  'roadtrip.window.incomplete': 'Semua rute penghubung diperlukan untuk menghitung jeda harian.',
+  'roadtrip.window.conflict':
+    'Waktu tetap bertentangan dengan perjalanan dan jeda. Waktu manual tidak berubah; perencanaan otomatis dijeda.',
+  'roadtrip.window.tooLong':
+    'Waktu ini memerlukan lebih dari 365 hari tambahan. Pilih rentang waktu harian yang lebih panjang.',
   'roadtrip.mode.roadtrip': 'Perjalanan darat',
   'roadtrip.mode.days': 'Hari',
   'roadtrip.mode.label': 'Tampilan rencana',

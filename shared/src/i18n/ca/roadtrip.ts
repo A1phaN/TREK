@@ -1,6 +1,35 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "En línia, arrossega el final del dia per la ruta o fins a un lloc; fes clic amb el botó dret per restaurar el final automàtic.",
+  'roadtrip.window.resetBoundaries': "Restaura els finals de dia automàtics",
+  'roadtrip.window.endHere': 'Acaba el dia aquí',
+  'roadtrip.window.endHereHint':
+    'Pots acabar el dia en una parada concreta des dels seus detalls quan el mode Roadtrip i els horaris diaris estiguin actius.',
+  'roadtrip.window.endAt': 'Final del dia',
+  'roadtrip.window.onRoute': 'Durant el trajecte',
+  'roadtrip.window.atStop': 'A l’últim lloc',
+  'roadtrip.window.routeHint': 'Fer una pausa al trajecte en arribar a l’hora de finalització.',
+  'roadtrip.window.stopHint': 'Quedar-se a l’últim lloc si no es pot arribar al següent abans del final del dia.',
+  'roadtrip.window.legTooLong':
+    'Un trajecte supera l’horari diari. Afegeix un lloc pel camí o tria fer una pausa durant el trajecte.',
+  'roadtrip.window.pointLabel': 'Final del dia {day} a les {time}',
+  'roadtrip.window.title': 'Horaris diaris',
+  'roadtrip.window.start': 'Inici del dia',
+  'roadtrip.window.end': 'Final del dia',
+  'roadtrip.window.hint':
+    'Indica les dues hores per planificar pauses diàries. Buida un camp per desactivar-les. Les hores manuals tenen prioritat. Els dies es connecten automàticament.',
+  'roadtrip.window.invalid': 'L’hora final ha de ser posterior a la inicial.',
+  'roadtrip.window.stop': 'Final del dia',
+  'roadtrip.window.resume': 'Continuar el viatge',
+  'roadtrip.window.pointHint': 'Aquest és el punt estimat de pausa durant la nit.',
+  'roadtrip.window.departure': 'Continuar després de la resta de la visita a les {time}',
+  'roadtrip.window.showPoint': 'Mostra al mapa',
+  'roadtrip.window.incomplete': 'Calen totes les rutes de connexió per calcular les pauses diàries.',
+  'roadtrip.window.conflict':
+    'Una hora fixa entra en conflicte amb el trajecte i les pauses. Es mantenen les hores manuals; la planificació automàtica està en pausa.',
+  'roadtrip.window.tooLong':
+    'Aquests horaris requereixen més de 365 dies addicionals. Tria una franja diària més llarga.',
   'roadtrip.mode.roadtrip': 'Viatge per carretera',
   'roadtrip.mode.days': 'Dies',
   'roadtrip.mode.label': 'Vista del pla',

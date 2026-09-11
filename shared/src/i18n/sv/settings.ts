@@ -27,7 +27,8 @@ const settings: TranslationStrings = {
   'settings.routingBase': 'Egen ruttmotor',
   'settings.routingBaseHint': 'En egen OSRM-instans. Tomt använder de publika servrarna, som tillåter ungefär en förfrågan per sekund – nog för en dag, knappt för en bilresa. Träder i kraft efter omstart av servern.',
   'settings.valhallaBase': 'Egen Valhalla-instans',
-  'settings.valhallaBaseHint': 'En egen Valhalla-instans. Den frågas när en etapp ska undvika vägavgifter, motorvägar eller färjor — de publika OSRM-servrarna kan inte svara på det. Tomt använder FOSSGIS publika Valhalla, om inte en egen ruttmotor angetts ovan; då frågas ingen andra motor alls. Börjar gälla efter en omstart av servern.',
+  'settings.valhallaBaseHint':
+    'TREK använder som standard FOSSGIS publika Valhalla för att undvika vägtullar, motorvägar och färjor. Ange URL:en till din egen Valhalla här för att använda den i stället. Om bara en egen ruttserver är konfigurerad används inte den publika Valhalla. Starta om servern och ladda om sidan efter att du angett en egen URL.',
   'settings.mapHint': 'URL-mall för kartrutor',
   'settings.mapProvider': 'Kartleverantör',
   'settings.mapProviderHint': 'Påverkar resplaneraren och resedagbokens kartor. Atlas använder alltid Leaflet.',

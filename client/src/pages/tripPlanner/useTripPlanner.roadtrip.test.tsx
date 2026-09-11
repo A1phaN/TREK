@@ -170,6 +170,7 @@ function makeActions() {
     moveAssignment: vi.fn(async () => undefined),
     removeAssignment: vi.fn(async () => undefined),
     reorderAssignments: vi.fn(async () => undefined),
+    setAssignmentEndDay: vi.fn(async () => undefined),
     reorderDays: vi.fn(async () => undefined),
     insertDay: vi.fn(async () => undefined),
     updateDayTitle: vi.fn(async () => undefined),
@@ -187,6 +188,23 @@ function wrapper({ children }: { children: React.ReactNode }) {
 
 /** Mount with the addon on and the mode on, and wait until both have landed. */
 async function renderRoadtrip() {
+  if (!rt.routes.days.length && rt.corridor.day) {
+    const dayId = Number(rt.corridor.day.dayId)
+    const assigned = useTripStore.getState().assignments[String(dayId)] ?? []
+    const stops = assigned.length
+      ? assigned.filter(a => typeof a.place.lat === 'number' && typeof a.place.lng === 'number').map(a => ({
+        assignmentId: a.id, placeId: a.place_id, lat: a.place.lat, lng: a.place.lng,
+      }))
+      : [0, 1, 2].map(i => ({ assignmentId: i + 1, placeId: i + 1, lat: 53 - i, lng: 10 + i }))
+    rt.routes.days = [{ ...rt.corridor.day, stops }]
+  }
+  rt.routes.days = rt.routes.days.map(day => ({
+    ...day,
+    stops: (day.stops as Array<Record<string, unknown>>).map((stop, i) => ({
+      ownerDayId: day.dayId, ownerIndex: i, ...stop,
+    })),
+  }))
+  if (rt.corridor.day) rt.corridor.day = rt.routes.days.find(d => d.dayId === rt.corridor.day?.dayId) ?? rt.corridor.day
   const rendered = renderHook(() => useTripPlanner(), { wrapper })
   await act(async () => { await Promise.resolve() })
   await waitFor(() => expect(rendered.result.current.roadtripActive).toBe(true))
@@ -309,6 +327,51 @@ afterEach(() => {
   delete window.__addToast
   sessionStorage.clear()
   vi.restoreAllMocks()
+})
+
+describe('visit day-end controls', () => {
+  const setup = async () => {
+    const place = buildPlace({ id: 101 })
+    seedTrip({ places: [place], days: [buildDay({ id: 5 })] })
+    rt.routes.days = [{ dayId: 5, stops: [{ assignmentId: 11, placeId: 101, endDay: true }] }]
+    useSettingsStore.setState(s => ({ settings: { ...s.settings, roadtrip_day_start: '08:00', roadtrip_day_end: '18:00' } }))
+    const rendered = await renderRoadtrip()
+    act(() => rendered.result.current.selectAssignment(11, 101))
+    return rendered
+  }
+
+  it('offers the selected visit and saves to its stored day', async () => {
+    const { result } = await setup()
+    expect(result.current.roadtripEndDay?.active).toBe(true)
+    await act(async () => result.current.roadtripEndDay?.onToggle())
+    expect(actions.setAssignmentEndDay).toHaveBeenCalledWith(42, 5, 11, false)
+  })
+
+  it('hides the control when daily times are off and restores the stored choice when enabled', async () => {
+    const { result } = await setup()
+    act(() => useSettingsStore.setState(s => ({ settings: { ...s.settings, roadtrip_day_end: '' } })))
+    expect(result.current.roadtripEndDay).toBeUndefined()
+    act(() => useSettingsStore.setState(s => ({ settings: { ...s.settings, roadtrip_day_end: '18:00' } })))
+    expect(result.current.roadtripEndDay?.active).toBe(true)
+  })
+
+  it('hides the control in Days mode and from a reader', async () => {
+    const { result } = await setup()
+    act(() => result.current.toggleRoadtripMode())
+    expect(result.current.roadtripEndDay).toBeUndefined()
+    act(() => {
+      result.current.toggleRoadtripMode()
+      asReader('day_edit')
+    })
+    expect(result.current.roadtripEndDay).toBeUndefined()
+  })
+
+  it('reports a rejected change', async () => {
+    const { result } = await setup()
+    actions.setAssignmentEndDay.mockRejectedValueOnce(new Error('Save failed'))
+    await act(async () => result.current.roadtripEndDay?.onToggle())
+    expect(toasts.some(t => t.type === 'error')).toBe(true)
+  })
 })
 
 describe('useTripPlanner road trip: a hit on the drive', () => {

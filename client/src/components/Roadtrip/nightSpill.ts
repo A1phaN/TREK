@@ -25,6 +25,7 @@ import type { RouteSegment } from '../../types'
 
 /** A stretch of one card's chain that was driven onto it from an earlier day. */
 export interface SpillMark {
+  automatic?: boolean
   /** Where it starts in the card's `stops`. */
   at: number
   /** How many stops it covers. */

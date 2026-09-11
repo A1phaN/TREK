@@ -148,6 +148,9 @@ export interface Settings {
    */
   roadtrip_leg_minutes?: number
   roadtrip_day_minutes?: number
+  roadtrip_day_start?: string
+  roadtrip_day_end?: string
+  roadtrip_day_end_mode?: 'route' | 'stop'
   roadtrip_range_km?: number
   /**
    * Road classes the drive should leave out where it can, as a comma list
@@ -256,6 +259,8 @@ export interface RouteSegment {
 
 /** An intermediate stop a plugin route places on the drawn line (charging stop, rest area). */
 export interface RouteVia {
+  hoverCard?: boolean
+  nightPause?: { day: number; atPlace: boolean; position?: number; manual?: boolean; minPosition?: number; maxPosition?: number }
   lat: number
   lng: number
   label?: string

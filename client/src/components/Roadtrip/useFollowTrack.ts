@@ -100,7 +100,12 @@ export function useFollowTrack(
   const abort = useRef<AbortController | null>(null)
 
   const day = useMemo(() => routes.days.find(d => d.dayId === dayId), [routes.days, dayId])
-  const stops = useMemo<LatLng[]>(() => (day?.stops ?? []).map(s => ({ lat: s.lat, lng: s.lng })), [day])
+  const stops = useMemo<LatLng[]>(() => {
+    const original = day?.automaticSchedule
+      ? routes.days.flatMap(d => d.stops).filter(s => !s.automaticNight && s.ownerDayId === dayId).sort((a, b) => a.ownerIndex - b.ownerIndex)
+      : day?.stops ?? []
+    return original.map(s => ({ lat: s.lat, lng: s.lng }))
+  }, [day, routes.days, dayId])
 
   /**
    * Parsed only while the dialog is open.

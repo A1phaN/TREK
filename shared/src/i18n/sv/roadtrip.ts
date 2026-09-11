@@ -1,6 +1,34 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "Dra dagens slut längs rutten eller till en plats när du är online; högerklicka för att återställa det automatiska slutet.",
+  'roadtrip.window.resetBoundaries': "Återställ automatiska dagsslut",
+  'roadtrip.window.endHere': 'Avsluta dagen här',
+  'roadtrip.window.endHereHint':
+    'Du kan avsluta dagen vid ett visst stopp i platsens detaljer när Roadtrip-läget och dagliga restider är aktiva.',
+  'roadtrip.window.endAt': 'Avsluta dagen',
+  'roadtrip.window.onRoute': 'Längs rutten',
+  'roadtrip.window.atStop': 'Vid sista platsen',
+  'roadtrip.window.routeHint': 'Pausa längs rutten när sluttiden nås.',
+  'roadtrip.window.stopHint': 'Stanna vid sista platsen om nästa inte kan nås före dagens slut.',
+  'roadtrip.window.legTooLong':
+    'En körsträcka överskrider dagens tidsram. Lägg till en plats längs vägen eller välj att pausa längs rutten.',
+  'roadtrip.window.pointLabel': 'Slut på dag {day} kl. {time}',
+  'roadtrip.window.title': 'Dagliga restider',
+  'roadtrip.window.start': 'Dagens start',
+  'roadtrip.window.end': 'Dagens slut',
+  'roadtrip.window.hint':
+    'Ange båda tiderna för att planera dagliga pauser. Töm ett fält för att stänga av. Manuella tider har företräde. Dagarna kopplas ihop automatiskt.',
+  'roadtrip.window.invalid': 'Sluttiden måste vara senare än starttiden.',
+  'roadtrip.window.stop': 'Dagens slut',
+  'roadtrip.window.resume': 'Fortsätt resan',
+  'roadtrip.window.pointHint': 'Här beräknas resan göra uppehåll över natten.',
+  'roadtrip.window.departure': 'Fortsätt efter resten av besöket klockan {time}',
+  'roadtrip.window.showPoint': 'Visa på kartan',
+  'roadtrip.window.incomplete': 'Alla anslutande rutter behövs för att beräkna dagliga pauser.',
+  'roadtrip.window.conflict':
+    'En fast tid krockar med körningen och pauserna. Manuella tider behålls; automatisk planering är pausad.',
+  'roadtrip.window.tooLong': 'Dessa tider kräver fler än 365 extra dagar. Välj ett längre dagligt tidsintervall.',
   'roadtrip.mode.roadtrip': 'Bilresa',
   'roadtrip.mode.days': 'Dagar',
   'roadtrip.mode.label': 'Planvy',

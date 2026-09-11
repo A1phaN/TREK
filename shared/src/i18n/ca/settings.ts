@@ -17,7 +17,8 @@ const settings: TranslationStrings = {
   'settings.routingBase': 'Motor de rutes propi',
   'settings.routingBaseHint': 'Una instància pròpia d’OSRM. Buit fa servir els servidors públics, que permeten aproximadament una petició per segon: prou per a un dia, just per a un viatge llarg. Té efecte després de reiniciar el servidor.',
   'settings.valhallaBase': 'Instància Valhalla pròpia',
-  'settings.valhallaBaseHint': 'Una instància Valhalla pròpia. Es consulta quan una etapa ha d’evitar peatges, autopistes o ferris: els servidors OSRM públics no poden respondre-ho. Buit fa servir el Valhalla públic de FOSSGIS, tret que a dalt s’indiqui un motor de rutes propi, cas en què no es consulta cap segon motor. Té efecte després de reiniciar el servidor.',
+  'settings.valhallaBaseHint':
+    'TREK utilitza per defecte la Valhalla pública de FOSSGIS per evitar peatges, autopistes i ferris. Introdueix aquí l’URL de la teva Valhalla per utilitzar-la en lloc de la pública. Si només hi ha una instància d’encaminament pròpia configurada, no s’utilitza la Valhalla pública. Després d’introduir una URL pròpia, reinicia el servidor i torna a carregar la pàgina.',
   'settings.mapHint': "Plantilla d'URL per als mosaics del mapa",
   'settings.mapProvider': 'Proveïdor de mapa',
   'settings.mapProviderHint': 'Afecta els mapes de Trip Planner i Journey. Atles sempre utilitza Leaflet.',

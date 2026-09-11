@@ -1,6 +1,35 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "En ligne, faites glisser la fin de journée sur le trajet ou sur un lieu ; un clic droit rétablit la fin automatique.",
+  'roadtrip.window.resetBoundaries': "Rétablir les fins de journée automatiques",
+  'roadtrip.window.endHere': 'Terminer la journée ici',
+  'roadtrip.window.endHereHint':
+    'Vous pouvez terminer une journée à une étape précise dans ses détails lorsque le mode Roadtrip et les horaires quotidiens sont actifs.',
+  'roadtrip.window.endAt': 'Fin de journée',
+  'roadtrip.window.onRoute': 'Sur le trajet',
+  'roadtrip.window.atStop': 'Au dernier lieu',
+  'roadtrip.window.routeHint': 'Faire une pause sur le trajet à l’heure de fin.',
+  'roadtrip.window.stopHint': 'Rester au dernier lieu si le suivant ne peut pas être atteint avant la fin de journée.',
+  'roadtrip.window.legTooLong':
+    'Un trajet dépasse la plage horaire quotidienne. Ajoutez un lieu en chemin ou choisissez une pause sur le trajet.',
+  'roadtrip.window.pointLabel': 'Fin du jour {day} à {time}',
+  'roadtrip.window.title': 'Horaires quotidiens',
+  'roadtrip.window.start': 'Début de journée',
+  'roadtrip.window.end': 'Fin de journée',
+  'roadtrip.window.hint':
+    'Renseignez les deux heures pour prévoir les pauses. Effacez-en une pour désactiver cette option. Les heures manuelles sont prioritaires. Les journées sont reliées automatiquement.',
+  'roadtrip.window.invalid': 'La fin doit être postérieure au début de journée.',
+  'roadtrip.window.stop': 'Fin de journée',
+  'roadtrip.window.resume': 'Reprendre le trajet',
+  'roadtrip.window.pointHint': 'Votre voyage devrait faire une pause ici pour la nuit.',
+  'roadtrip.window.departure': 'Repartir après le reste de la visite à {time}',
+  'roadtrip.window.showPoint': 'Voir sur la carte',
+  'roadtrip.window.incomplete': 'Toutes les liaisons doivent être disponibles pour calculer les pauses quotidiennes.',
+  'roadtrip.window.conflict':
+    'Une heure fixe est incompatible avec le trajet et les pauses. Les heures manuelles sont conservées ; la planification automatique est suspendue.',
+  'roadtrip.window.tooLong':
+    'Ces horaires nécessitent plus de 365 jours supplémentaires. Élargissez la plage horaire quotidienne.',
   'roadtrip.mode.roadtrip': 'Road trip',
   'roadtrip.mode.days': 'Jours',
   'roadtrip.mode.label': 'Vue du plan',

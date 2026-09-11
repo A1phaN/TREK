@@ -267,9 +267,9 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
     setRoadtripStopKind,
     setRoadtripStopFill,
     saveRoadtripLimit,
-    roadtripVias, addRoadtripVia, moveRoadtripVia, removeRoadtripVia,
-    routeAlternatives, askRouteAlternatives, refuel, askRefuel, acceptRefuel, chooseRouteAlternative, alternativeOverlays, alternativeFocusPoints, mapFocusPoints,
-    stayDraft, setStayDraft, setRoadtripStay,
+    roadtripVias, addRoadtripVia, moveRoadtripVia, removeRoadtripVia, resetDayBoundaries,
+    routeAlternatives, askRouteAlternatives, refuel, askRefuel, acceptRefuel, chooseRouteAlternative, alternativeOverlays, alternativeFocusPoints, mapFocusPoints, roadtripMapVias, focusRoadtripPoint, dayBoundaryControls,
+    stayDraft, setStayDraft, setRoadtripStay, roadtripEndDay, roadtripStay,
     highlightedAlternative, setHighlightedAlternative,
     moveRoadtripStopToDay,
     dropPoiOnRoute,
@@ -407,7 +407,8 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
               dayPlaces={dayPlaces}
               route={roadtripActive ? roadtripMapLines : route}
               routeColors={roadtripActive ? roadtripLineColors : undefined}
-              routeVias={roadtripActive ? roadtripRoutes.vias : routeVias}
+              routeVias={roadtripActive ? roadtripMapVias : routeVias}
+              dayBoundaryControls={roadtripActive ? dayBoundaryControls : undefined}
               accessLines={roadtripActive ? roadtripRoutes.accessLines : undefined}
               showTransitRoutes={transitRoutesShown}
               // The route toggle belongs to one day, so the map needs that day to
@@ -543,6 +544,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
                   <LazyPanel id="roadtrip-rail">
                     <RoadtripSidebar
                       routes={roadtripRoutes}
+                      onFocusPoint={focusRoadtripPoint}
                       selectedAssignmentId={selectedAssignmentId}
                       onSelectStop={(placeId, assignmentId) => handlePlaceClick(placeId, assignmentId)}
                       onReorderStop={can('day_edit', trip) ? reorderRoadtripStop : undefined}
@@ -685,7 +687,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
                       {/* Under the search, because the limits are read while looking at
                           what the drive is doing rather than set up front. */}
                       <div className="px-3.5 pb-3.5">
-                        <RoadtripLimitsCard onSave={saveRoadtripLimit} />
+                        <RoadtripLimitsCard onSave={saveRoadtripLimit} onResetDayBoundaries={resetDayBoundaries} />
                       </div>
                     </LazyPanel>
                   ) : (
@@ -769,6 +771,8 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
 
             {selectedPlace && !isMobile && (
               <PlaceInspector
+                roadtripEndDay={roadtripEndDay}
+                roadtripStay={roadtripStay}
                 onEditTransport={openLinkedTransport}
                 onEditReservation={openLinkedReservation}
                 place={selectedPlace}
@@ -811,6 +815,8 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
               <div className="bg-[rgba(0,0,0,0.3)]" style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 'var(--bottom-nav-h)' }} role="presentation" onClick={() => setSelectedPlaceId(null)}>
                 <div style={{ width: '100%', maxHeight: '85vh' }} role="presentation" onClick={e => e.stopPropagation()}>
                   <PlaceInspector
+                    roadtripEndDay={roadtripEndDay}
+                    roadtripStay={roadtripStay}
                     onEditTransport={openLinkedTransport}
                     onEditReservation={openLinkedReservation}
                     place={selectedPlace}

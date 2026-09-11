@@ -1,6 +1,35 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.window.dragHint': "Online kannst du ein Tagesende entlang der Route oder auf einen Ort ziehen; ein Rechtsklick stellt das automatische Ende wieder her.",
+  'roadtrip.window.resetBoundaries': "Automatische Tagesenden wiederherstellen",
+  'roadtrip.window.endHere': 'Tag hier beenden',
+  'roadtrip.window.endHereHint':
+    'In den Ortsdetails kannst du einen Ort als Tagesende festlegen, solange der Roadtrip-Modus und die täglichen Reisezeiten aktiv sind.',
+  'roadtrip.window.endAt': 'Tagesende planen',
+  'roadtrip.window.onRoute': 'Auf der Strecke',
+  'roadtrip.window.atStop': 'Am letzten Ort',
+  'roadtrip.window.routeHint': 'Zur Endzeit an der erreichten Stelle auf der Strecke pausieren.',
+  'roadtrip.window.stopHint': 'Am letzten Ort bleiben, wenn der nächste vor Tagesende nicht mehr erreichbar ist.',
+  'roadtrip.window.legTooLong':
+    'Eine Fahrt ist länger als das tägliche Zeitfenster. Ergänze einen Ort unterwegs oder wähle die Pause auf der Strecke.',
+  'roadtrip.window.pointLabel': 'Tagesende von Tag {day} um {time} Uhr',
+  'roadtrip.window.title': 'Tägliche Reisezeiten',
+  'roadtrip.window.start': 'Tagesbeginn',
+  'roadtrip.window.end': 'Tagesende',
+  'roadtrip.window.hint':
+    'Beide Zeiten setzen, um tägliche Pausen zu planen. Ein leeres Feld schaltet dies aus. Manuelle Zeiten haben Vorrang. Tage werden automatisch verbunden.',
+  'roadtrip.window.invalid': 'Das Tagesende muss nach dem Tagesbeginn liegen.',
+  'roadtrip.window.stop': 'Tagesende',
+  'roadtrip.window.resume': 'Weiterfahrt',
+  'roadtrip.window.pointHint': 'Hier pausiert deine Reise voraussichtlich über Nacht.',
+  'roadtrip.window.departure': 'Weiterfahrt nach dem restlichen Aufenthalt um {time}',
+  'roadtrip.window.showPoint': 'Auf Karte zeigen',
+  'roadtrip.window.incomplete': 'Tagespausen lassen sich erst berechnen, wenn alle Verbindungsrouten vorliegen.',
+  'roadtrip.window.conflict':
+    'Eine feste Uhrzeit passt nicht zu Fahrzeit und Tagespausen. Manuelle Zeiten bleiben unverändert; die automatische Aufteilung pausiert.',
+  'roadtrip.window.tooLong':
+    'Diese Reisezeiten erfordern mehr als 365 zusätzliche Tage. Wähle ein längeres Tagesfenster.',
   'roadtrip.mode.roadtrip': 'Roadtrip',
   'roadtrip.mode.days': 'Tage',
   'roadtrip.mode.label': 'Plan-Ansicht',

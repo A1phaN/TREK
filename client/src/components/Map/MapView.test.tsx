@@ -248,9 +248,9 @@ describe('MapView', () => {
     expect(screen.getAllByTestId('polyline').length).toBe(3)
   })
 
-  it('FE-COMP-MAPVIEW-010: MarkerClusterGroup is rendered', () => {
+  it.each([false, true])('FE-COMP-MAPVIEW-010: place clustering stays enabled with roadtrip=%s', (roadtrip) => {
     const places = [buildMapPlace({ lat: 48.8584, lng: 2.2945 })]
-    render(<MapView places={places} />)
+    render(<MapView places={places} clusterLoosely={roadtrip} />)
     expect(screen.getByTestId('cluster-group')).toBeTruthy()
   })
 
@@ -678,6 +678,27 @@ describe('MapView plugin route vias', () => {
   it('FE-COMP-MAPVIEW-040: a via tooltip joins its label and its dwell time', () => {
     render(<MapView routeVias={[via({ label: 'Supercharger', dwellSeconds: 5400 })]} />)
     expect(markersWithZ('800')[0].textContent).toContain('Supercharger · 1 h 30 min')
+  })
+
+  it('hides night badges at wide zoom and shows the full description when zoomed in', () => {
+    mapMock.getZoom.mockReturnValue(5)
+    const label = 'Tagesende von Tag 1 um 18:00 Uhr'
+    render(<MapView routeVias={[via({ label, hoverCard: true, nightPause: { day: 1, atPlace: true } })]} />)
+    expect(markersWithZ('800')).toHaveLength(0)
+    mapMock.getZoom.mockReturnValue(6)
+    act(() => { mapMock.on.mock.calls.find(([events]) => events === 'moveend zoomend')![1]() })
+    const badge = markersWithZ('800')[0]
+    expect(iconHtmlOf(badge)).toContain('data-night-pause="place"')
+    fireEvent.click(screen.getByTestId('marker-hover-trigger'))
+    expect(screen.getByRole('tooltip')).toHaveTextContent(label)
+    mapMock.getZoom.mockReturnValue(5)
+    act(() => {
+      mapMock.on.mock.calls.find(([events]) => events === 'movestart zoomstart')![1]()
+      mapMock.on.mock.calls.find(([events]) => events === 'moveend zoomend')![1]()
+    })
+    expect(markersWithZ('800')).toHaveLength(0)
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    mapMock.getZoom.mockReturnValue(10)
   })
 
   it('FE-COMP-MAPVIEW-041: a dwell under an hour is shown in minutes alone', () => {
