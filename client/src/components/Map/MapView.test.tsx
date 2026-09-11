@@ -18,7 +18,13 @@ const mapMock = vi.hoisted(() => ({
   on: vi.fn(),
   off: vi.fn(),
   panBy: vi.fn(),
-  latLngToContainerPoint: vi.fn(() => ({ x: 0, y: 0, distanceTo: () => 1000 })),
+  // A flat projection, 1000 px per degree: far enough apart that every
+  // booking line clears its declutter floor, which is measured along the
+  // projected line (#2275) rather than read off a canned distanceTo.
+  latLngToContainerPoint: vi.fn(([lat, lng]: [number, number]) => ({
+    x: lng * 1000, y: lat * 1000,
+    distanceTo(other: { x: number; y: number }) { return Math.hypot(lng * 1000 - other.x, lat * 1000 - other.y) },
+  })),
   // Panes: jsdom has none, so keep them in a map the pane tests can read back.
   panes: new Map<string, HTMLElement>(),
   getPane: vi.fn(function (this: void, name: string) { return mapMock.panes.get(name) }),
