@@ -24,6 +24,7 @@ import { tripRepo } from './repo/tripRepo'
 import { readStartDestination, tripStartPath, DEFAULT_START_PAGE, DEFAULT_START_TRIP_TAB, SETTINGS_WAIT_MS, START_DESTINATION_ROUTE } from './utils/startDestination'
 import { usePermissionsStore, PermissionLevel } from './store/permissionsStore'
 import { useInAppNotificationListener } from './hooks/useInAppNotificationListener.ts'
+import { useRoadtripPreferencesSync } from './hooks/useRoadtripPreferencesSync'
 import { registerSyncTriggers, unregisterSyncTriggers } from './sync/syncTriggers'
 import OfflineBanner from './components/Layout/OfflineBanner'
 import { SystemNoticeHost } from './components/SystemNotices/SystemNoticeHost.js'
@@ -364,6 +365,7 @@ export default function App() {
   const { settings } = useSettingsStore()
 
   useInAppNotificationListener()
+  useRoadtripPreferencesSync()
 
   useEffect(() => {
     if (isAuthenticated) {

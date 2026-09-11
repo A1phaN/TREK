@@ -67,7 +67,7 @@ While online, drag an end-of-day map label along the driving route or onto a vis
 
 The map marks pauses with a moon and day number beside a place or above the route. These markers disappear when zoomed out beyond level 6.
 
-> **AI / MCP:** Pauses are calculated in the Roadtrip view and are not stored as places or bookings. `set_assignment_end_day` sets or clears the boolean `end_day` on a specific visit; it takes effect only with daily travel times enabled. `list_day_boundaries` and `set_day_boundary` read, set or clear dragged day endings, anchored to assignment IDs and a fraction of the route. Place and assignment tools continue to read the original assignments and manually entered times.
+> **AI / MCP:** `get_roadtrip_context` reads saved days, visits, pins, stays, vias, followed tracks and day endings. `calculate_roadtrip` calculates arrivals, day splits, driving limits and vehicle-range warnings on the server, using the same planning logic as the browser. No open TREK tab is needed. Pauses remain calculated markers, never places or bookings. `get_roadtrip_settings` and `update_roadtrip_settings` read and change your personal driving preferences; these apply to all your trips and update connected views. Place and assignment tools edit stops, stay durations, times and ordering. `set_assignment_end_day` and `set_day_boundary` set or clear individual day endings. `search_roadtrip_corridor` finds stops along a calculated day, with name, charging and route-section filters. `import_trip_gpx` imports tracks; the via tools edit their routing handles. See [MCP-Addon-Tools](MCP-Addon-Tools) for units, scopes and incomplete results.
 
 ## Mobile Layout
 

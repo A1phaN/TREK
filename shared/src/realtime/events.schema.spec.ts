@@ -15,6 +15,7 @@ import { describe, it, expect } from 'vitest';
  * fixture map cannot silently shrink relative to the registry.
  */
 const FIXTURES: Record<TrekWsEventName, Record<string, unknown>> = {
+  'roadtripPreferences:changed': { preferences: { roadtrip_day_start: '08:00' } },
   'place:created': { place: { id: 3, name: 'Louvre' } },
   'place:updated': { place: { id: 3, name: 'Louvre' } },
   'place:deleted': { placeId: 3 },
@@ -30,7 +31,9 @@ const FIXTURES: Record<TrekWsEventName, Record<string, unknown>> = {
   'day:reordered': { orderedIds: [2, 1] },
   'roadtripVia:changed': { dayId: 2, vias: [{ id: 9, lat: 53.5, lng: 9.9 }] },
   'roadtripTrack:changed': { dayId: 2, track: null },
-  'roadtripBoundary:changed': { boundaries: [{ day_number: 1, from_assignment_id: 9, to_assignment_id: null, fraction: 1 }] },
+  'roadtripBoundary:changed': {
+    boundaries: [{ day_number: 1, from_assignment_id: 9, to_assignment_id: null, fraction: 1 }],
+  },
   'dayNote:created': { dayId: 2, note: { id: 5 } },
   'dayNote:updated': { dayId: 2, note: { id: 5 } },
   'dayNote:deleted': { noteId: 5, dayId: 2 },
@@ -141,12 +144,12 @@ const DRIFT_VARIANTS: Partial<Record<TrekWsEventName, Record<string, unknown>[]>
 };
 
 describe('@trek/shared realtime event registry', () => {
-  it('WSEVT-REG-001: pins the authoritative inventory counts (72 trip + 32 user = 104)', () => {
+  it('WSEVT-REG-001: pins the authoritative inventory counts (72 trip + 33 user = 105)', () => {
     // 67th to 69th trip event: the three collab:link:* a shared link emits.
     // 70th and 71st: the road trip's vias and tracks, which used to be written silently.
     expect(TREK_WS_TRIP_EVENT_NAMES).toHaveLength(72);
-    expect(TREK_WS_USER_EVENT_NAMES).toHaveLength(32);
-    expect(TREK_WS_EVENT_NAMES).toHaveLength(104);
+    expect(TREK_WS_USER_EVENT_NAMES).toHaveLength(33);
+    expect(TREK_WS_EVENT_NAMES).toHaveLength(105);
   });
 
   it('WSEVT-REG-002: every name is domain:action shaped and outside the reserved plugin: namespace', () => {

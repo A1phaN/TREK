@@ -35,6 +35,7 @@ export const HANDLED_OUTSIDE_TRIP_STORE = [
   // second copy of the same list to keep in step.
   'roadtripVia:changed',
   'roadtripTrack:changed',
+  'roadtripPreferences:changed',
   // In-app notifications — hooks/useInAppNotificationListener
   'notification:new',
   'notification:updated',

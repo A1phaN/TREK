@@ -185,6 +185,27 @@ Requires `journey:read` or `journey:write` scope.
 
 ---
 
+### Roadtrip
+
+The Roadtrip addon must be enabled. These tools work without an open browser. The external assistant chooses places based on the traveller's interests, uses the existing trip, day, place and assignment tools to save them, and recalculates to check the result.
+
+| Tool | Purpose | Scope |
+|---|---|---|
+| `get_roadtrip_context` | Saved days, visits, coordinates, stays, pinned times, vehicle preferences, route profiles, vias, tracks and manual boundaries | trips:read |
+| `calculate_roadtrip` | Calculated days, arrivals, departures, automatic pauses, driving warnings and range warnings; optional geometry | trips:read |
+| `get_roadtrip_settings` | Personal driving preferences | settings:read |
+| `update_roadtrip_settings` | Patch personal driving preferences, preserving other settings | settings:write |
+| `search_roadtrip_corridor` | Fuel, charging, rest areas, campsites, food, sights or hotels along a day | trips:read |
+| `update_route_via` | Move an existing routing handle and optionally change its outgoing leg | trips:write |
+
+Driving preferences include daily times, day-ending mode, leg/day driving limits, fuel or electric vehicle specifications, fallback range, fill percentage, avoidance and route display. They belong to the requesting account and apply across its trips. Manual endings belong to the shared trip. Only authorized trip editors can change visits, vias or endings. Fixed visit times retain priority over automatic times. Turning daily travel times off preserves saved endings but stops applying them.
+
+Calculation distances are metres, route durations seconds, and stays minutes. Settings use kilometres, litres, kWh, consumption per 100 km and percentages regardless of display units. Zero clears a numeric limit; an empty daily time disables the automatic window. Vehicle specifications take precedence over fallback range when complete. The optional calculation settings are a preview and are never saved. Calculations support up to 150 visits and 100 waypoints per routing run (30 for plugin profiles). Routing calls are paced and cached. Missing coordinates, provider failures and schedule conflicts are reported explicitly; incomplete totals must not be presented as a complete itinerary. Avoidance is a routing preference, and `avoidMissed` identifies requested classes that could not be avoided, including when Valhalla falls back to OSRM.
+
+Corridor results include source attribution, distance along/from the route, failed areas and truncated areas. Follow `nextOffset` for remaining search rectangles. Filters include name or brand, socket type, minimum known charging power and `fromKm`/`toKm`. Unknown charging power remains unknown. Search never adds places automatically. Use the returned place information with `create_and_assign_place`, then move or reorder the assignment and re-anchor vias as needed. Recalculate after editing.
+
+Existing `list_route_vias`, `add_route_via`, `add_route_vias`, `reanchor_route_vias` and `remove_route_via` manage scenic detours and followed tracks. `list_day_boundaries`, `set_day_boundary` and `set_assignment_end_day` manage manual endings. The Places tool `import_trip_gpx` accepts GPX XML up to one million characters, uses the standard importer and requires places:write. It imports waypoints, routes and tracks without assigning them to days; `export_trip_gpx` exports the trip. Stay durations and place-level time defaults can be cleared with null through `update_place`.
+
 ## Addon-gated resources
 
 Resources provide read-only access via `trek://` URIs. The following resources require their addon to be enabled.

@@ -1,5 +1,7 @@
-import { z } from 'zod';
 import { roadtripDayBoundaryListSchema } from '../roadtrip/day-boundary.schema';
+import { roadtripPreferencesSchema } from '../roadtrip/preferences.schema';
+
+import { z } from 'zod';
 
 /**
  * WS event contract registry — the single source of truth for every realtime
@@ -257,6 +259,7 @@ export const TREK_WS_EVENTS = {
   'memories:updated': { scope: 'trip', payload: z.object({ userId: id }) },
 
   // ── Notifications (user-scoped) ──────────────────────────────────────────
+  'roadtripPreferences:changed': { scope: 'user', payload: z.object({ preferences: roadtripPreferencesSchema }) },
   'notification:new': { scope: 'user', payload: z.object({ notification: entity }) },
   'notification:updated': { scope: 'user', payload: z.object({ notification: entity }) },
 
@@ -333,12 +336,14 @@ export const TREK_WS_EVENTS = {
     scope: 'user',
     payload: z.object({
       journeyId: id,
-      peers: z.array(z.object({
-        socketId: z.number(),
-        userId: id,
-        username: z.string(),
-        avatar: z.string().nullable().optional(),
-      })),
+      peers: z.array(
+        z.object({
+          socketId: z.number(),
+          userId: id,
+          username: z.string(),
+          avatar: z.string().nullable().optional(),
+        }),
+      ),
     }),
   },
 
