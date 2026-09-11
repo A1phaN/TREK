@@ -16,7 +16,8 @@ interface DragMap {
 
 export function bindDayBoundaryDrag(el: HTMLElement, via: RouteVia, controls: DayBoundaryControls, map: DragMap) {
   const pause = via.nightPause!
-  const handle = el.querySelector<HTMLElement>('[data-night-pause]') ?? el
+  // Leaflet replaces the label contents when its icon changes, but keeps this root.
+  const handle = el
   handle.style.cursor = 'grab'
   handle.style.touchAction = 'none'
   handle.tabIndex = 0
