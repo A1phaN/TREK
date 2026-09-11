@@ -18,7 +18,7 @@ import CustomSelect from '../shared/CustomSelect'
 import { CustomDatePicker } from '../shared/CustomDateTimePicker'
 import { localToday } from '../Planner/today'
 import { SYMBOLS, currenciesWith, SPLIT_COLORS } from './BudgetPanel.constants'
-import { amountPattern, calculateTicketShares, hasTicketSplit, NOTE_MAX, payersBalanced, readTicketItems, readUserNote, rebalancePayers, splitEqualShares, writeTicketItems, type TicketItem } from './CostsPanel.helpers'
+import { amountPattern, calculateTicketShares, hasTicketSplit, NOTE_MAX, payersBalanced, readTicketItems, readUserNote, rebalancePayers, settlementDate, splitEqualShares, writeTicketItems, type TicketItem } from './CostsPanel.helpers'
 import { COST_CATEGORY_LIST, catMeta } from './costsCategories'
 import { ReceiptPreviewModal } from './ReceiptPreviewModal'
 import type { BudgetItem, BudgetItemReceipt } from '../../types'
@@ -41,6 +41,10 @@ interface Settlement {
   // read as the display currency, which is what the server assumes for them too.
   currency?: string | null
   created_at?: string
+  // The day the transfer actually happened; editable, unlike created_at (when it
+  // was recorded). Null/absent on rows predating this field — settlementDate()
+  // falls back to created_at for those.
+  settled_at?: string | null
   from_username?: string
   to_username?: string
 }
@@ -178,14 +182,14 @@ export default function CostsPanel({ tripId, tripMembers = [] }: CostsPanelProps
     if (filter === 'owed') return []
     let list = settlement?.settlements || []
     if (filter === 'mine') list = list.filter(s => s.from_user_id === me || s.to_user_id === me)
-    if (dayFilter) list = list.filter(s => (s.created_at || '').slice(0, 10) === dayFilter)
+    if (dayFilter) list = list.filter(s => settlementDate(s) === dayFilter)
     return list
   }, [settlement, filter, search, catFilter, dayFilter, me])
 
   const dayGroups = useMemo(() => {
     const entries: LedgerEntry[] = [
       ...filtered.map(e => ({ kind: 'expense' as const, date: e.expense_date || '', e })),
-      ...filteredSettlements.map(s => ({ kind: 'payment' as const, date: (s.created_at || '').slice(0, 10), s })),
+      ...filteredSettlements.map(s => ({ kind: 'payment' as const, date: settlementDate(s), s })),
     ]
     const labelOf = (date: string) => {
       if (!date) return t('costs.noDate')
@@ -1014,6 +1018,7 @@ function SettlementModal({ tripId, people, me, editing, currency, onClose, onSav
   // "4.90" and not "4.9" (#2175) — and a JPY transfer gets no fake decimals.
   const [amount, setAmount] = useState<string>(editing ? amountToInputString(editing.amount, (editing.currency || currency).toUpperCase()) : '')
   const [cur, setCur] = useState<string>((editing?.currency || currency).toUpperCase())
+  const [day, setDay] = useState(editing ? settlementDate(editing) : localToday())
   const [saving, setSaving] = useState(false)
 
   const amt = Number.parseFloat(amount) || 0
@@ -1023,7 +1028,7 @@ function SettlementModal({ tripId, people, me, editing, currency, onClose, onSav
   const save = async () => {
     if (!valid) return
     setSaving(true)
-    const data = { from_user_id: Number(fromId), to_user_id: Number(toId), amount: amt, currency: cur }
+    const data = { from_user_id: Number(fromId), to_user_id: Number(toId), amount: amt, currency: cur, settled_at: day }
     try {
       if (editing) await budgetApi.updateSettlement(tripId, editing.id, data)
       else await budgetApi.createSettlement(tripId, data)
@@ -1066,6 +1071,10 @@ function SettlementModal({ tripId, people, me, editing, currency, onClose, onSav
               options={currenciesWith(cur).map(c => ({ value: c, label: SYMBOLS[c] ? `${c}  ${SYMBOLS[c]}` : c }))}
               style={{ width: '100%' }} />
           </div>
+        </div>
+        <div>
+          <label className={labelCls}>{t('costs.day')}</label>
+          <CustomDatePicker value={day} onChange={setDay} style={{ width: '100%' }} />
         </div>
       </div>
     </Modal>

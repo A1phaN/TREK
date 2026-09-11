@@ -4576,6 +4576,20 @@ function runMigrations(db: Database.Database): void {
       const inherit = db.prepare('INSERT OR IGNORE INTO roadtrip_preferences (trip_id, key, value) SELECT t.id, s.key, s.value FROM trips t JOIN settings s ON s.user_id = t.user_id WHERE s.key = ? AND s.value IS NOT NULL');
       for (const key of ROADTRIP_PREFERENCE_KEYS) inherit.run(key);
     },
+
+    // A settle-up payment's date was silently `created_at` (when it was recorded),
+    // not editable like a regular expense's `expense_date`. Add the same split:
+    // settled_at is the calendar day the transfer actually happened, independent
+    // of when someone got around to logging it. NULL on legacy rows and rows
+    // whose caller didn't set it; the read side falls back to created_at's date.
+    //
+    // Appended LAST: the array is index-addressed against schema_version.
+    () => {
+      const cols = db.prepare("SELECT name FROM pragma_table_info('budget_settlements')").all() as Array<{ name: string }>;
+      if (!cols.some(c => c.name === 'settled_at')) {
+        db.exec('ALTER TABLE budget_settlements ADD COLUMN settled_at TEXT');
+      }
+    },
   ];
 
   if (currentVersion < migrations.length) {

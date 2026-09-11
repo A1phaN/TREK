@@ -12,7 +12,7 @@ type Trip = TripAccess;
 type SettlementRow = {
   id: number; trip_id: string; from_user_id: number; to_user_id: number;
   amount: number; currency: string | null; exchange_rate: number | null;
-  created_at: string; created_by_user_id: number | null;
+  created_at: string; settled_at: string | null; created_by_user_id: number | null;
   from_username: string; from_avatar: string | null;
   to_username: string; to_avatar: string | null;
 };
@@ -1052,7 +1052,7 @@ export class BudgetService {
   // Settlement usernames use COALESCE(display_name, username) like every item
   // query (the legacy raw fu.username was the odd one out).
   private static readonly SETTLEMENT_SELECT = `
-    SELECT s.id, s.trip_id, s.from_user_id, s.to_user_id, s.amount, s.currency, s.exchange_rate, s.created_at, s.created_by_user_id,
+    SELECT s.id, s.trip_id, s.from_user_id, s.to_user_id, s.amount, s.currency, s.exchange_rate, s.created_at, s.settled_at, s.created_by_user_id,
            COALESCE(fu.display_name, fu.username) AS from_username, fu.avatar AS from_avatar,
            COALESCE(tu.display_name, tu.username) AS to_username,   tu.avatar AS to_avatar
     FROM budget_settlements s
@@ -1065,7 +1065,7 @@ export class BudgetService {
       id: r.id, trip_id: r.trip_id,
       from_user_id: r.from_user_id, to_user_id: r.to_user_id,
       amount: r.amount, currency: r.currency ?? null, exchange_rate: r.exchange_rate ?? 1,
-      created_at: r.created_at, created_by_user_id: r.created_by_user_id,
+      created_at: r.created_at, settled_at: r.settled_at ?? null, created_by_user_id: r.created_by_user_id,
       from_username: r.from_username, from_avatar_url: avatarUrl({ avatar: r.from_avatar }),
       to_username: r.to_username, to_avatar_url: avatarUrl({ avatar: r.to_avatar }),
     };
@@ -1092,14 +1092,15 @@ export class BudgetService {
   /** Raw settlement insert (no FX freeze) — the REST path wraps it in createSettlement. */
   insertSettlement(
     tripId: string | number,
-    data: { from_user_id: number; to_user_id: number; amount: number; currency?: string | null; exchange_rate?: number },
+    data: { from_user_id: number; to_user_id: number; amount: number; currency?: string | null; exchange_rate?: number; settled_at?: string | null },
     createdByUserId?: number,
   ) {
     const result = this.db.run(
-      'INSERT INTO budget_settlements (trip_id, from_user_id, to_user_id, amount, currency, exchange_rate, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO budget_settlements (trip_id, from_user_id, to_user_id, amount, currency, exchange_rate, settled_at, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       tripId, data.from_user_id, data.to_user_id, Math.round(data.amount * 100) / 100,
       data.currency ? data.currency.toUpperCase() : null,
       data.exchange_rate != null ? data.exchange_rate : 1,
+      data.settled_at || null,
       createdByUserId ?? null,
     );
     return this.getSettlement(Number(result.lastInsertRowid), tripId);
@@ -1109,7 +1110,7 @@ export class BudgetService {
   applySettlementUpdate(
     id: string | number,
     tripId: string | number,
-    data: { from_user_id: number; to_user_id: number; amount: number; currency?: string | null; exchange_rate?: number },
+    data: { from_user_id: number; to_user_id: number; amount: number; currency?: string | null; exchange_rate?: number; settled_at?: string | null },
   ) {
     const row = this.db.get('SELECT id FROM budget_settlements WHERE id = ? AND trip_id = ?', id, tripId);
     if (!row) return null;
@@ -1117,12 +1118,14 @@ export class BudgetService {
     UPDATE budget_settlements SET
       from_user_id = ?, to_user_id = ?, amount = ?,
       currency = CASE WHEN ? THEN ? ELSE currency END,
-      exchange_rate = CASE WHEN ? IS NOT NULL THEN ? ELSE exchange_rate END
+      exchange_rate = CASE WHEN ? IS NOT NULL THEN ? ELSE exchange_rate END,
+      settled_at = CASE WHEN ? THEN ? ELSE settled_at END
     WHERE id = ?
   `,
       data.from_user_id, data.to_user_id, Math.round(data.amount * 100) / 100,
       data.currency !== undefined ? 1 : 0, data.currency ? data.currency.toUpperCase() : null,
       data.exchange_rate !== undefined ? 1 : null, data.exchange_rate !== undefined ? data.exchange_rate : 1,
+      data.settled_at !== undefined ? 1 : 0, data.settled_at || null,
       id,
     );
     return this.getSettlement(id, tripId);
@@ -1184,7 +1187,7 @@ export class BudgetService {
     return roster.has(data.from_user_id) && roster.has(data.to_user_id);
   }
 
-  async createSettlement(tripId: string | number, data: { from_user_id: number; to_user_id: number; amount: number; currency?: string | null }, userId: number) {
+  async createSettlement(tripId: string | number, data: { from_user_id: number; to_user_id: number; amount: number; currency?: string | null; settled_at?: string | null }, userId: number) {
     if (!this.settlementPartiesOnTrip(tripId, data)) return null;
     // Freeze the FX rate for the display currency the amount was entered in so the
     // transfer keeps cancelling its expense when live rates drift (#1445).
@@ -1192,7 +1195,7 @@ export class BudgetService {
     return this.insertSettlement(tripId, data, userId);
   }
 
-  async updateSettlement(id: string | number, tripId: string | number, data: { from_user_id: number; to_user_id: number; amount: number; currency?: string | null }) {
+  async updateSettlement(id: string | number, tripId: string | number, data: { from_user_id: number; to_user_id: number; amount: number; currency?: string | null; settled_at?: string | null }) {
     // Pass the settlement's stored currency so an edit that doesn't change it keeps
     // the already-frozen rate (#1445) — otherwise a live-rate drift would re-open a
     // settled position on an unrelated edit.

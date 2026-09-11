@@ -1,5 +1,5 @@
 import type { CostCategory } from '@trek/shared'
-import { readUserNote, splitEqualShares } from '../../../../components/Budget/CostsPanel.helpers'
+import { readUserNote, settlementDate, splitEqualShares } from '../../../../components/Budget/CostsPanel.helpers'
 import { catMeta, COST_CATEGORY_LIST } from '../../../../components/Budget/costsCategories'
 import { currencyDecimals } from '../../../../utils/formatters'
 import type { BudgetItem } from '../../../../types'
@@ -87,6 +87,9 @@ export interface CostsSettlement {
   // Legacy rows predate this column (null) and are read as the display currency.
   currency?: string | null
   created_at?: string
+  // The day the transfer actually happened; editable, unlike created_at (when it
+  // was recorded). Null/absent on rows predating this field.
+  settled_at?: string | null
 }
 
 export interface CostsSettlementResponse {
@@ -183,7 +186,7 @@ export function filterSettlements(settlements: CostsSettlement[], f: CostsFilter
   if (f.segment === 'owed') return []
   let list = settlements.slice()
   if (f.segment === 'mine') list = list.filter(s => s.from_user_id === me || s.to_user_id === me)
-  if (f.dayKey) list = list.filter(s => (s.created_at || '').slice(0, 10) === f.dayKey)
+  if (f.dayKey) list = list.filter(s => settlementDate(s) === f.dayKey)
   return list
 }
 
@@ -199,14 +202,14 @@ export interface CostsLedgerDayGroup {
 
 /**
  * Like {@link groupByDay}, but also folds in settlement payments (see
- * {@link filterSettlements}) as their own ledger entries, keyed by the day
- * they were recorded — the mobile counterpart to desktop's unified
+ * {@link filterSettlements}) as their own ledger entries, keyed by
+ * {@link settlementDate} — the mobile counterpart to desktop's unified
  * `LedgerEntry` grouping, so a payment shows up even on a day with no expense.
  */
 export function groupLedgerByDay(items: BudgetItem[], settlements: CostsSettlement[]): CostsLedgerDayGroup[] {
   const entries: CostsLedgerEntry[] = [
     ...items.map(item => ({ kind: 'expense' as const, date: item.expense_date || '', item })),
-    ...settlements.map(settlement => ({ kind: 'payment' as const, date: (settlement.created_at || '').slice(0, 10), settlement })),
+    ...settlements.map(settlement => ({ kind: 'payment' as const, date: settlementDate(settlement), settlement })),
   ]
   const byDate = new Map<string, CostsLedgerEntry[]>()
   for (const en of entries) {

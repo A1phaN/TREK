@@ -15,6 +15,8 @@ import MCostSheet from '../sheets/MCostSheet'
 import { ReceiptPreviewModal } from '../../../../components/Budget/ReceiptPreviewModal'
 import { readUserNote } from '../../../../components/Budget/CostsPanel.helpers'
 import { catMeta, COST_CAT_META } from '../../../../components/Budget/costsCategories'
+import { CustomDatePicker } from '../../../../components/shared/CustomDateTimePicker'
+import { localToday } from '../../../../components/Planner/today'
 import MConfirmSheet from '../../settings/MConfirmSheet'
 import MSheet from '../../../components/MSheet'
 import MChip from '../../../components/MChip'
@@ -737,7 +739,9 @@ function MemberAvatar({ name, avatarUrl, isMe, variant, size, t }: {
  * No pixel spec exists for this form (the demo only toasts "Demo: add payment",
  * 03-trip-tabs.md §3.8) and no mobile/exported-desktop sheet covers it, so this
  * is a small local sheet built from the trip form-sheet chrome, kept to the
- * fields the settle-up card itself needs: from, to, amount in the display currency.
+ * fields the settle-up card itself needs: from, to, amount in the display
+ * currency, and the day it happened (editable like an expense's, unlike the
+ * legacy created_at-only date — see `settlementDate` in CostsPanel.helpers.ts).
  */
 function AddPaymentSheet({ open, onClose, tripId, base, people, me, toast, t, onSaved }: {
   open: boolean
@@ -753,6 +757,7 @@ function AddPaymentSheet({ open, onClose, tripId, base, people, me, toast, t, on
   const [fromId, setFromId] = useState(me)
   const [toId, setToId] = useState(() => people.find(p => p.id !== me)?.id ?? me)
   const [amount, setAmount] = useState('')
+  const [day, setDay] = useState(localToday())
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -760,6 +765,7 @@ function AddPaymentSheet({ open, onClose, tripId, base, people, me, toast, t, on
     setFromId(me)
     setToId(people.find(p => p.id !== me)?.id ?? me)
     setAmount('')
+    setDay(localToday())
     setSaving(false)
   }, [open, me, people])
 
@@ -770,7 +776,7 @@ function AddPaymentSheet({ open, onClose, tripId, base, people, me, toast, t, on
     if (!valid || saving) return
     setSaving(true)
     try {
-      await budgetApi.createSettlement(tripId, { from_user_id: fromId, to_user_id: toId, amount: amt, currency: base })
+      await budgetApi.createSettlement(tripId, { from_user_id: fromId, to_user_id: toId, amount: amt, currency: base, settled_at: day })
       onSaved()
     } catch {
       toast.error(t('common.unknownError'))
@@ -808,6 +814,9 @@ function AddPaymentSheet({ open, onClose, tripId, base, people, me, toast, t, on
           <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" className={FIELD_CLS} />
           <span className="flex-none font-geist text-[0.75rem] font-bold text-m-faint">{base}</span>
         </div>
+
+        <Eyebrow className="mb-[7px] mt-[14px] uppercase">{t('costs.day')}</Eyebrow>
+        <CustomDatePicker value={day} onChange={setDay} style={{ width: '100%' }} />
       </div>
       <FormSheetFooter onCancel={onClose} cancelLabel={t('common.cancel')} onSubmit={save} submitLabel={t('costs.addPayment')} submitDisabled={!valid || saving} />
     </MSheet>

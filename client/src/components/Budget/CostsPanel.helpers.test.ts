@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calculateTicketShares, hasTicketSplit, payerSum, payersBalanced, readTicketItems, readUserNote, rebalancePayers, splitCents, splitEqualShares, writeTicketItems, type TicketItem } from './CostsPanel.helpers'
+import { calculateTicketShares, hasTicketSplit, payerSum, payersBalanced, readTicketItems, readUserNote, rebalancePayers, settlementDate, splitCents, splitEqualShares, writeTicketItems, type TicketItem } from './CostsPanel.helpers'
 
 describe('splitCents', () => {
   it('splits evenly when it divides cleanly', () => {
@@ -185,6 +185,21 @@ describe('readUserNote', () => {
     expect(readUserNote({ note: 'TICKETJSON:{"items":[]}' })).toBe('')
     expect(readUserNote({ note: null })).toBe('')
     expect(readUserNote(null)).toBe('')
+  })
+})
+
+describe('settlementDate', () => {
+  it('prefers settled_at over created_at', () => {
+    expect(settlementDate({ settled_at: '2026-07-05', created_at: '2026-07-01T09:00:00Z' })).toBe('2026-07-05')
+  })
+
+  it('falls back to the day it was recorded when settled_at is unset', () => {
+    expect(settlementDate({ created_at: '2026-07-01T09:00:00Z' })).toBe('2026-07-01')
+    expect(settlementDate({ settled_at: null, created_at: '2026-07-01T09:00:00Z' })).toBe('2026-07-01')
+  })
+
+  it('is empty when neither is set', () => {
+    expect(settlementDate({})).toBe('')
   })
 })
 

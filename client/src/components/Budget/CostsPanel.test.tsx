@@ -740,7 +740,7 @@ describe('CostsPanel — settlements in the ledger', () => {
 
 type Flow = { from: { user_id: number; username: string }; to: { user_id: number; username: string }; amount: number }
 type Balance = { user_id: number; username: string; avatar_url: string | null; balance: number }
-type Payment = { id: number; from_user_id: number; to_user_id: number; amount: number; currency?: string | null; created_at?: string }
+type Payment = { id: number; from_user_id: number; to_user_id: number; amount: number; currency?: string | null; created_at?: string; settled_at?: string | null }
 
 // `members` here is the wire shape the panel reads; `paid` is only set by the server.
 type MemberFixture = { user_id: number; username?: string; amount?: number; paid?: number }
@@ -1051,6 +1051,21 @@ describe('CostsPanel — filtering the ledger', () => {
     expect(screen.queryByText('Payment')).not.toBeInTheDocument()
   })
 
+  it('FE-W5COSTS-076: a payment groups by its own settled day, not the day it was recorded', async () => {
+    // Recorded (created_at) on the 16th, but settled on the 15th — the ledger
+    // must follow settled_at, the same way it already follows expense_date over
+    // an expense's own created_at.
+    mount([dinner(), taxi()], { settlements: [{ ...payment, settled_at: '2025-06-15' }] })
+
+    await screen.findByText('Taxi')
+    fireEvent.click(screen.getByRole('button', { name: /All days/ }))
+    pickOption('Sun, Jun 15')
+
+    expect(screen.getByText('Dinner')).toBeInTheDocument()
+    expect(screen.queryByText('Taxi')).not.toBeInTheDocument()
+    expect(screen.getByText('Payment')).toBeInTheDocument()
+  })
+
   it('FE-W5COSTS-018: expenses without a date are grouped under "No date"', async () => {
     mount([expense({ id: 120, name: 'Souvenirs', category: 'shopping', total_price: 12, expense_date: null })])
 
@@ -1251,6 +1266,47 @@ describe('CostsPanel — payment modal', () => {
 
     await waitFor(() => expect(addToast).toHaveBeenCalledWith('Unknown error', 'error', undefined))
     delete window.__addToast
+  })
+
+  it('FE-W5COSTS-074: a new payment defaults its day to today, by the local calendar', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    const behindUtc = new Date(2026, 7, 12).getTimezoneOffset() > 0
+    vi.setSystemTime(new Date(2026, 7, 12, behindUtc ? 23 : 1, 30, 0))
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    let posted: Record<string, unknown> | null = null
+    server.use(http.post('/api/trips/1/budget/settlements', async ({ request }) => {
+      posted = await request.json() as Record<string, unknown>
+      return HttpResponse.json({ settlement: { id: 9 } })
+    }))
+    mount([])
+
+    try {
+      await user.click(await screen.findByRole('button', { name: 'Add payment' }))
+      await user.type(await screen.findByPlaceholderText('0.00'), '10')
+      const submits = screen.getAllByRole('button', { name: 'Add payment' })
+      await user.click(submits[submits.length - 1])
+
+      await waitFor(() => expect(posted).toBeTruthy())
+      expect(posted!.settled_at).toBe('2026-08-12')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('FE-W5COSTS-075: editing a payment keeps its own settled day, not the day it was recorded', async () => {
+    const user = userEvent.setup()
+    let put: Record<string, unknown> | null = null
+    server.use(http.put('/api/trips/1/budget/settlements/7', async ({ request }) => {
+      put = await request.json() as Record<string, unknown>
+      return HttpResponse.json({ settlement: { id: 7 } })
+    }))
+    mount([], { settlements: [{ id: 7, from_user_id: 2, to_user_id: 1, amount: 30, settled_at: '2025-06-10', created_at: '2025-06-16 10:00:00' }] })
+
+    await user.click(await screen.findByTitle('Edit'))
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(put).toBeTruthy())
+    expect(put!.settled_at).toBe('2025-06-10')
   })
 })
 

@@ -769,6 +769,27 @@ describe('post-fold quirk fixes', () => {
     expect(budget.listSettlements(trip.id)[0].from_username).toBe('Alice Displayed');
   });
 
+  it('BUDGET-SVC-DB-042: a settle-up payment carries its own settled_at, independent of created_at', () => {
+    const { user: alice } = createUser(testDb, { username: 'alice' });
+    const { user: bob } = createUser(testDb, { username: 'bob' });
+    const trip = createTrip(testDb, alice.id);
+
+    const noDate = budget.insertSettlement(trip.id, { from_user_id: alice.id, to_user_id: bob.id, amount: 10 }, alice.id);
+    expect(noDate!.settled_at).toBeNull();
+
+    const dated = budget.insertSettlement(trip.id, { from_user_id: alice.id, to_user_id: bob.id, amount: 20, settled_at: '2026-01-05' }, alice.id);
+    expect(dated!.settled_at).toBe('2026-01-05');
+    expect(budget.getSettlement(dated!.id, trip.id)!.settled_at).toBe('2026-01-05');
+
+    const moved = budget.applySettlementUpdate(dated!.id, trip.id, { from_user_id: alice.id, to_user_id: bob.id, amount: 20, settled_at: '2026-01-09' });
+    expect(moved!.settled_at).toBe('2026-01-09');
+
+    // An update that omits settled_at (undefined) leaves the stored day alone,
+    // the same CASE WHEN pattern currency/exchange_rate already follow.
+    const untouched = budget.applySettlementUpdate(dated!.id, trip.id, { from_user_id: alice.id, to_user_id: bob.id, amount: 25 });
+    expect(untouched!.settled_at).toBe('2026-01-09');
+  });
+
   // ── Notes vs. itemized receipts (#1658) ────────────────────────────────────
 
   it('BUDGET-SVC-DB-021: a note and a receipt are stored in their own columns', () => {

@@ -221,6 +221,11 @@ export const budgetSettlementSchema = z.object({
   currency: z.string().nullable().optional(),
   exchange_rate: z.number().optional(),
   created_at: z.string().optional(),
+  // The calendar day the transfer actually happened (YYYY-MM-DD), independent of
+  // `created_at` (when it was recorded) — same split as budget_items' expense_date
+  // vs. created_at. Null/absent on rows recorded before this column existed; the
+  // ledger falls back to `created_at`'s date for those.
+  settled_at: z.string().nullable().optional(),
   created_by_user_id: z.number().nullable().optional(),
   from_username: z.string().optional(),
   from_avatar_url: z.string().nullable().optional(),
@@ -235,6 +240,8 @@ export const budgetCreateSettlementRequestSchema = z.object({
   amount: z.number(),
   // The display currency the amount was entered in; the server freezes its FX rate.
   currency: z.string().nullable().optional(),
+  // The day the transfer happened; defaults to today (server-side) when omitted.
+  settled_at: z.string().nullable().optional(),
 });
 export type BudgetCreateSettlementRequest = z.infer<typeof budgetCreateSettlementRequestSchema>;
 
@@ -244,6 +251,7 @@ export const budgetUpdateSettlementRequestSchema = z.object({
   to_user_id: z.number(),
   amount: z.number(),
   currency: z.string().nullable().optional(),
+  settled_at: z.string().nullable().optional(),
 });
 export type BudgetUpdateSettlementRequest = z.infer<typeof budgetUpdateSettlementRequestSchema>;
 

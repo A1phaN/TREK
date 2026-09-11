@@ -34,6 +34,17 @@ export function splitCents(amount: number, n: number): number[] {
   return Array.from({ length: n }, (_, i) => (base + (i < rem ? 1 : 0)) / 100)
 }
 
+/**
+ * The calendar day a settle-up payment counts on for grouping/filtering: its own
+ * `settled_at` if the user set one, else the day it was recorded (`created_at`).
+ * Mirrors `expense_date` falling back nowhere on a budget item — a settlement's
+ * `created_at` doubled as its date before `settled_at` existed, so this keeps
+ * every pre-existing row grouped exactly where it already was.
+ */
+export function settlementDate(s: { settled_at?: string | null; created_at?: string | null }): string {
+  return (s.settled_at || s.created_at || '').slice(0, 10)
+}
+
 /** Sum the amounts of the selected payers. */
 export function payerSum(amounts: Record<number, string>, ids: Set<number>): number {
   return [...ids].reduce((a, id) => a + (Number.parseFloat(amounts[id]) || 0), 0)
