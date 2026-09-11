@@ -18,9 +18,10 @@ import CustomSelect from '../shared/CustomSelect'
 import { CustomDatePicker } from '../shared/CustomDateTimePicker'
 import { localToday } from '../Planner/today'
 import { SYMBOLS, currenciesWith, SPLIT_COLORS } from './BudgetPanel.constants'
-import { amountPattern, calculateTicketShares, hasTicketSplit, NOTE_MAX, payersBalanced, readTicketItems, readUserNote, rebalancePayers, settlementDate, splitEqualShares, writeTicketItems, type TicketItem } from './CostsPanel.helpers'
+import { amountPattern, calculateTicketShares, finalBudgetFor, finalBudgetSources, hasTicketSplit, NOTE_MAX, paidByUser, payersBalanced, readTicketItems, readUserNote, rebalancePayers, settlementDate, splitEqualShares, writeTicketItems, type TicketItem } from './CostsPanel.helpers'
 import { COST_CATEGORY_LIST, catMeta } from './costsCategories'
 import { ReceiptPreviewModal } from './ReceiptPreviewModal'
+import type { BudgetParticipantFinal } from '@trek/shared'
 import type { BudgetItem, BudgetItemReceipt } from '../../types'
 import type { TripMember } from './BudgetPanelMemberChips'
 import GuestBadge from '../shared/GuestBadge'
@@ -52,6 +53,9 @@ interface SettlementData {
   balances: { user_id: number; username: string; avatar_url: string | null; balance: number }[]
   flows: { from: { user_id: number; username: string }; to: { user_id: number; username: string }; amount: number }[]
   settlements: Settlement[]
+  // What the trip ends up costing each participant. Computed server-side off the
+  // same ledger as the balances, so the breakdown can't contradict them.
+  finalBudgets: BudgetParticipantFinal[]
 }
 
 // One row in the unified Costs ledger — either an expense or a settle-up payment,
@@ -94,6 +98,9 @@ export default function CostsPanel({ tripId, tripMembers = [] }: CostsPanelProps
   // One note open at a time: two expanded rows next to each other read as a mess,
   // and the point of the collapse is that the list stays scannable.
   const [expandedNoteId, setExpandedNoteId] = useState<number | null>(null)
+  // One open final-budget breakdown at a time, for the same reason a single note
+  // is expanded at a time: the card is a sidebar, not a report.
+  const [expandedFinalId, setExpandedFinalId] = useState<number | null>(null)
   const [editingSettlement, setEditingSettlement] = useState<Settlement | null>(null)
   const [addingPayment, setAddingPayment] = useState(false)
 
@@ -129,7 +136,8 @@ export default function CostsPanel({ tripId, tripMembers = [] }: CostsPanelProps
 
   // ── derived expense maths (everything converted to the base currency) ────
   const baseTotal = (e: BudgetItem) => convert(e.total_price || 0, curOf(e))
-  const myPaidOf = (e: BudgetItem) => (e.payers || []).filter(p => p.user_id === me).reduce((a, p) => a + convert(p.amount, curOf(e)), 0)
+  const paidByOf = (e: BudgetItem, userId: number) => convert(paidByUser(e, userId), curOf(e))
+  const myPaidOf = (e: BudgetItem) => paidByOf(e, me)
   // "Unfinished": a recorded total nobody has paid yet — counts toward the trip
   // total but stays out of settlements until who-paid is filled in. A negative
   // total (a refund, #2176) is just as unfinished until its recipient is named.
@@ -478,6 +486,12 @@ export default function CostsPanel({ tripId, tripMembers = [] }: CostsPanelProps
             {BalancesList({ balances: settlement?.balances || [] })}
           </div>
 
+          {/* final budget */}
+          <div className={cardCls} style={{ borderRadius: 22, padding: '22px 24px' }}>
+            <div className={labelCls} style={{ marginBottom: 14 }}>{t('costs.finalBudget')}</div>
+            {FinalBudgetList()}
+          </div>
+
           {/* by category */}
           <div className={cardCls} style={{ borderRadius: 22, padding: '22px 24px' }}>
             <div className={labelCls} style={{ marginBottom: 14 }}>{t('costs.byCategory')}</div>
@@ -696,6 +710,12 @@ export default function CostsPanel({ tripId, tripMembers = [] }: CostsPanelProps
         <div className={cardCls} style={{ borderRadius: 18, padding: 16 }}>
           <div className={labelCls} style={{ marginBottom: 14 }}>{t('costs.balances')}</div>
           {BalancesList({ balances: settlement?.balances || [] })}
+        </div>
+
+        {/* Final budget */}
+        <div className={cardCls} style={{ borderRadius: 18, padding: 16 }}>
+          <div className={labelCls} style={{ marginBottom: 14 }}>{t('costs.finalBudget')}</div>
+          {FinalBudgetList()}
         </div>
 
         {/* By category */}
@@ -918,6 +938,111 @@ export default function CostsPanel({ tripId, tripMembers = [] }: CostsPanelProps
             </div>
           )
         })}
+      </div>
+    )
+  }
+
+  /**
+   * What the trip actually costs each traveler — one amount per person, with the
+   * arithmetic behind it a click away.
+   *
+   * The four figures come from the settlement response, not from a second pass
+   * over the expenses here: the server nets them in the same integer cents as
+   * the balances, so `expenses − reimbursed − pending` always lands on the total
+   * printed beside the name. The lists under the breakdown are the rows those
+   * figures came from, which is what makes an unexpected total explainable.
+   */
+  function FinalBudgetList() {
+    if (settlementError) return loadFailed()
+    const finals = settlement?.finalBudgets || []
+    const rows = people.map(p => finalBudgetFor(finals, p))
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {rows.map(r => {
+          const open = expandedFinalId === r.user_id
+          return (
+            <div key={r.user_id}>
+              <button type="button" onClick={() => setExpandedFinalId(open ? null : r.user_id)} aria-expanded={open}
+                className="text-content"
+                style={{ display: 'grid', gridTemplateColumns: '28px 1fr auto 14px', gap: 10, alignItems: 'center', width: '100%', padding: '7px 0', background: 'none', border: 0, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>
+                <Avatar id={r.user_id} size={28} />
+                <span style={{ fontSize: 'calc(13px * var(--fs-scale-body, 1))', fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{personName(r.user_id)}</span>
+                <span style={{ fontSize: 'calc(13px * var(--fs-scale-body, 1))', fontWeight: 700 }}>{fmt(r.final)}</span>
+                <ChevronDown size={14} className="text-content-faint" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+              </button>
+              {open && FinalBudgetBreakdown({ row: r })}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  /** The three lines behind one traveler's final budget, and the rows they add up from. */
+  function FinalBudgetBreakdown({ row }: { row: Pick<BudgetParticipantFinal, 'user_id' | 'expenses' | 'reimbursed' | 'pending'> }) {
+    // Each line is signed by what it does to the final, so the column reads as the
+    // subtraction it is: a reimbursement this traveler *sent* raises their cost and
+    // shows as a plus, which "received: −50" could never say.
+    const signed = (v: number) => (v < 0 ? '−' : '+') + fmt(Math.abs(v))
+    const { fronted, moved, outstanding } = finalBudgetSources(
+      row.user_id, budgetItems, settlement?.settlements || [], settlement?.flows || [], e => paidByOf(e, row.user_id))
+    const lineCls = { display: 'flex', alignItems: 'baseline', gap: 10, fontSize: 'calc(12px * var(--fs-scale-body, 1))' } as const
+    const detail = (label: string, value: string) => (
+      <div style={lineCls}>
+        <span className="text-content-muted" style={{ minWidth: 0, flex: 1 }}>{label}</span>
+        <span className="text-content" style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{value}</span>
+      </div>
+    )
+    const transferLabel = (fromId: number, toId: number) => `${personName(fromId)} → ${toId === me ? t('costs.youLower') : personName(toId)}`
+    // Capped and scrollable: a long trip's expense list would otherwise push the
+    // rest of the sidebar off the screen every time a name is tapped.
+    const listCls = { display: 'flex', flexDirection: 'column', gap: 5, marginTop: 6, maxHeight: 180, overflowY: 'auto' } as const
+    return (
+      <div className="bg-surface-secondary" style={{ borderRadius: 12, padding: '11px 12px', margin: '2px 0 8px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {detail(t('costs.finalExpenses'), signed(row.expenses))}
+          {detail(t('costs.finalReimbursed'), signed(-row.reimbursed))}
+          {detail(t('costs.finalPending'), signed(-row.pending))}
+        </div>
+        {fronted.length > 0 && (
+          <div>
+            <div className={labelCls}>{t('costs.finalExpenses')}</div>
+            <div style={listCls}>
+              {fronted.map(({ item, amount }) => (
+                <div key={item.id} style={lineCls}>
+                  <span className="text-content-muted" style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
+                  <span className="text-content" style={{ whiteSpace: 'nowrap' }}>{fmt(amount)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {moved.length > 0 && (
+          <div>
+            <div className={labelCls}>{t('costs.finalReimbursed')}</div>
+            <div style={listCls}>
+              {moved.map(s => (
+                <div key={s.id} style={lineCls}>
+                  <span className="text-content-muted" style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{transferLabel(s.from_user_id, s.to_user_id)}</span>
+                  <span className="text-content" style={{ whiteSpace: 'nowrap' }}>{fmt(convert(s.amount, (s.currency || base).toUpperCase()))}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {outstanding.length > 0 && (
+          <div>
+            <div className={labelCls}>{t('costs.finalPending')}</div>
+            <div style={listCls}>
+              {outstanding.map((f, i) => (
+                <div key={i} style={lineCls}>
+                  <span className="text-content-muted" style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{transferLabel(f.from.user_id, f.to.user_id)}</span>
+                  <span className="text-content" style={{ whiteSpace: 'nowrap' }}>{fmt(f.amount)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     )
   }

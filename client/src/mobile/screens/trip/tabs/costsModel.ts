@@ -1,5 +1,5 @@
-import type { CostCategory } from '@trek/shared'
-import { readUserNote, settlementDate, splitEqualShares } from '../../../../components/Budget/CostsPanel.helpers'
+import type { BudgetParticipantFinal, CostCategory } from '@trek/shared'
+import { paidByUser, readUserNote, settlementDate, splitEqualShares } from '../../../../components/Budget/CostsPanel.helpers'
 import { catMeta, COST_CATEGORY_LIST } from '../../../../components/Budget/costsCategories'
 import { currencyDecimals } from '../../../../utils/formatters'
 import type { BudgetItem } from '../../../../types'
@@ -31,11 +31,14 @@ export function baseTotal(e: BudgetItem, ctx: CostsCtx): number {
   return ctx.convert(e.total_price || 0, currencyOf(e, ctx))
 }
 
+/** How much a given participant fronted for this expense, in the base currency. */
+export function paidByOf(e: BudgetItem, userId: number, ctx: CostsCtx): number {
+  return ctx.convert(paidByUser(e, userId), currencyOf(e, ctx))
+}
+
 /** How much `ctx.me` personally fronted for this expense, in the base currency. */
 export function myPaidOf(e: BudgetItem, ctx: CostsCtx): number {
-  return (e.payers || [])
-    .filter(p => p.user_id === ctx.me)
-    .reduce((a, p) => a + ctx.convert(p.amount, currencyOf(e, ctx)), 0)
+  return paidByOf(e, ctx.me, ctx)
 }
 
 /** A given member's share of this expense (explicit custom amount, else equal split), base currency. */
@@ -96,6 +99,8 @@ export interface CostsSettlementResponse {
   balances: CostsBalance[]
   flows: CostsSettlementFlow[]
   settlements: CostsSettlement[]
+  /** What the trip ends up costing each participant — netted server-side off the same ledger as `balances`. */
+  finalBudgets: BudgetParticipantFinal[]
 }
 
 // ── hero / tile totals (spec §3.1-§3.3) ────────────────────────────────────

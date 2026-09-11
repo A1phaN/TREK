@@ -256,6 +256,35 @@ export const budgetUpdateSettlementRequestSchema = z.object({
 });
 export type BudgetUpdateSettlementRequest = z.infer<typeof budgetUpdateSettlementRequestSchema>;
 
+/**
+ * What the trip actually costs one participant, as GET …/budget/settlement
+ * returns it alongside the balances and the suggested flows.
+ *
+ * `final = expenses - reimbursed - pending`, and the identity holds to the cent
+ * in whatever display currency was asked for: the server derives all four
+ * figures from the one integer-cent ledger the balances come from, so a
+ * breakdown can never disagree with the balance shown next to it. Every amount
+ * is in that display currency.
+ *
+ * A participant who fronted nothing and owes nothing is absent, exactly like
+ * they are from `balances` — a client listing the trip's roster fills the gap
+ * with zeroes rather than expecting a row per member.
+ */
+export const budgetParticipantFinalSchema = z.object({
+  user_id: z.number(),
+  username: z.string(),
+  avatar_url: z.string().nullable(),
+  /** Gross outlay: what this participant fronted as a payer on split expenses. */
+  expenses: z.number(),
+  /** Recorded settle-up transfers, netted: received minus sent. */
+  reimbursed: z.number(),
+  /** Still to be squared up — the participant's current balance, positive when owed. */
+  pending: z.number(),
+  /** What the trip leaves them out of pocket once everything has been settled. */
+  final: z.number(),
+});
+export type BudgetParticipantFinal = z.infer<typeof budgetParticipantFinalSchema>;
+
 export const budgetUpdateMembersRequestSchema = z.object({
   user_ids: z.array(z.number()),
 });

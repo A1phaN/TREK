@@ -580,6 +580,43 @@ describe('MCostsTab', () => {
     expect(within(row).getByText('$15.00')).toBeInTheDocument()
   })
 
+  it('FE-MOB-COSTT-041: shows what the trip costs each traveler and opens the arithmetic on tap', async () => {
+    serveSettlement({
+      ...SETTLEMENT,
+      settlements: [{ id: 5, from_user_id: 3, to_user_id: 1, amount: 15, currency: 'USD', created_at: '2026-05-02 10:00:00' }],
+      finalBudgets: [
+        { user_id: 1, username: 'Me', avatar_url: null, expenses: 100, reimbursed: 15, pending: 12.5, final: 72.5 },
+      ],
+    })
+    await renderTab()
+    const card = up(screen.getByText('costs.finalBudget'), 1)
+
+    // One amount per traveler; the two the ledger left out cost nothing.
+    expect(within(card).getByText('$72.50')).toBeInTheDocument()
+    expect(within(card).getAllByText('$0.00')).toHaveLength(2)
+    expect(within(card).queryByText('costs.finalPending')).not.toBeInTheDocument()
+
+    const mine = within(card).getByRole('button', { name: /\$72\.50/ })
+    fireEvent.click(mine)
+    expect(mine).toHaveAttribute('aria-expanded', 'true')
+    // Each line signed by what it does to the final.
+    expect(within(card).getByText('+$100.00')).toBeInTheDocument()
+    expect(within(card).getByText('−$15.00')).toBeInTheDocument()
+    expect(within(card).getByText('−$12.50')).toBeInTheDocument()
+    // The rows behind it: only the expenses I fronted, the transfer I received,
+    // and the flows still open on my side.
+    expect(within(card).getByText('Ramen')).toBeInTheDocument()
+    expect(within(card).getByText('Taxi')).toBeInTheDocument()
+    expect(within(card).queryByText('Museum')).not.toBeInTheDocument()
+    expect(within(card).getAllByText('Bob → costs.you')).toHaveLength(2)
+    expect(within(card).getByText('costs.you → Ada')).toBeInTheDocument()
+    expect(within(card).queryByText('? → Bob')).not.toBeInTheDocument()
+
+    fireEvent.click(mine)
+    expect(mine).toHaveAttribute('aria-expanded', 'false')
+    expect(within(card).queryByText('+$100.00')).not.toBeInTheDocument()
+  })
+
   it('FE-MOB-COSTT-040: the expense filters apply to payments the same way they do on desktop', async () => {
     const mine = { id: 503, from_user_id: 1, to_user_id: 2, amount: 8, currency: 'USD', created_at: '2026-05-02T09:00:00Z' }
     const others = { id: 504, from_user_id: 2, to_user_id: 3, amount: 9, currency: 'USD', created_at: '2026-05-02T09:00:00Z' }

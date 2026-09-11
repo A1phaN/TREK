@@ -45,6 +45,52 @@ export function settlementDate(s: { settled_at?: string | null; created_at?: str
   return (s.settled_at || s.created_at || '').slice(0, 10)
 }
 
+/**
+ * What one participant fronted for an expense, in the expense's own currency.
+ *
+ * Several payers can share one bill, and the same person can appear only once,
+ * but the reduce covers a row that somehow carries them twice rather than
+ * picking one of the two. The caller converts the result — this file never
+ * touches exchange rates.
+ */
+export function paidByUser(
+  item: { payers?: { user_id: number; amount: number }[] | null },
+  userId: number,
+): number {
+  return (item.payers || []).filter(p => p.user_id === userId).reduce((a, p) => a + p.amount, 0)
+}
+
+/** The figures a final budget is made of, for someone the server left out of the ledger. */
+export function finalBudgetFor<F extends { user_id: number }>(
+  finals: F[],
+  member: { id: number; username: string },
+): F | { user_id: number; username: string; avatar_url: null; expenses: number; reimbursed: number; pending: number; final: number } {
+  // Absent means they neither fronted anything nor were split into an expense:
+  // the trip has cost them nothing, which is worth a row of its own.
+  return finals.find(f => f.user_id === member.id)
+    || { user_id: member.id, username: member.username, avatar_url: null, expenses: 0, reimbursed: 0, pending: 0, final: 0 }
+}
+
+/**
+ * The rows behind one traveler's final budget: the expenses they fronted, the
+ * transfers already recorded on their side, and the flows still open on it.
+ * `paidOf` converts what they fronted into the display currency — the shells
+ * each own their exchange rates, so this stays free of them.
+ */
+export function finalBudgetSources<I, S extends { from_user_id: number; to_user_id: number }, F extends { from: { user_id: number }; to: { user_id: number } }>(
+  userId: number,
+  items: I[],
+  settlements: S[],
+  flows: F[],
+  paidOf: (item: I) => number,
+): { fronted: { item: I; amount: number }[]; moved: S[]; outstanding: F[] } {
+  return {
+    fronted: items.map(item => ({ item, amount: paidOf(item) })).filter(x => x.amount !== 0),
+    moved: settlements.filter(s => s.from_user_id === userId || s.to_user_id === userId),
+    outstanding: flows.filter(f => f.from.user_id === userId || f.to.user_id === userId),
+  }
+}
+
 /** Sum the amounts of the selected payers. */
 export function payerSum(amounts: Record<number, string>, ids: Set<number>): number {
   return [...ids].reduce((a, id) => a + (Number.parseFloat(amounts[id]) || 0), 0)

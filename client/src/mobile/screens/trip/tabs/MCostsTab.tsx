@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   AlertCircle, ArrowDown, ArrowLeftRight, ArrowRight, ArrowUp, Check, ChevronDown, ChevronUp,
   Layers, Pencil, Plus, RotateCcw, StickyNote, Trash2, Receipt,
@@ -13,7 +13,7 @@ import { downloadBlob, openFile } from '../../../../utils/fileDownload'
 import { budgetApi } from '../../../../api/client'
 import MCostSheet from '../sheets/MCostSheet'
 import { ReceiptPreviewModal } from '../../../../components/Budget/ReceiptPreviewModal'
-import { readUserNote, settlementDate } from '../../../../components/Budget/CostsPanel.helpers'
+import { finalBudgetFor, finalBudgetSources, readUserNote, settlementDate } from '../../../../components/Budget/CostsPanel.helpers'
 import { catMeta, COST_CAT_META } from '../../../../components/Budget/costsCategories'
 import CustomSelect from '../../../../components/shared/CustomSelect'
 import { CustomDatePicker } from '../../../../components/shared/CustomDateTimePicker'
@@ -27,7 +27,7 @@ import { CountPill, TabScroller } from './tabChrome'
 import { STATUS_COLOR, type MTabScreenProps } from './tabModel'
 import {
   baseTotal, buildCostsCsv, categoryBreakdown, categoryFilterKeys, computeTotals, currencyOf,
-  dayFilterKeys, filterBudgetItems, filterSettlements, groupLedgerByDay, isUnfinished, memberShareOf, tint,
+  dayFilterKeys, filterBudgetItems, filterSettlements, groupLedgerByDay, isUnfinished, memberShareOf, paidByOf, tint,
   type CostsCtx, type CostsSegment, type CostsSettlement, type CostsSettlementResponse,
 } from './costsModel'
 import type { BudgetItem, BudgetItemReceipt, TripMember } from '../../../../types'
@@ -79,6 +79,8 @@ export default function MCostsTab({ planner, shell }: MTabScreenProps) {
   const [catOpen, setCatOpen] = useState(false)
   const [dayOpen, setDayOpen] = useState(false)
   const [settleOpen, setSettleOpen] = useState(true)
+  // One traveler's final-budget breakdown open at a time; the list stays scannable.
+  const [expandedFinalId, setExpandedFinalId] = useState<number | null>(null)
   const [addPaymentOpen, setAddPaymentOpen] = useState(false)
   const [editingSettlement, setEditingSettlement] = useState<CostsSettlement | null>(null)
   const [expenseModalOpen, setExpenseModalOpen] = useState(false)
@@ -304,6 +306,35 @@ export default function MCostsTab({ planner, shell }: MTabScreenProps) {
             })}
           </>
         )}
+      </div>
+
+      {/* Final budget — what the trip costs each traveler; the arithmetic opens on tap */}
+      <div className="mt-2 rounded-2xl border border-[color:var(--m-rowbr)] bg-m-card p-[13px]">
+        <div className="font-geist text-[0.625rem] font-bold uppercase tracking-[.09em] text-m-faint">{t('costs.finalBudget')}</div>
+        {tripMembers.map(p => {
+          const row = finalBudgetFor(settlement?.finalBudgets || [], p)
+          const open = expandedFinalId === p.id
+          return (
+            <div key={p.id} className="border-b border-[color:var(--m-rowbr)] last:border-b-0">
+              <button
+                type="button"
+                aria-expanded={open}
+                onClick={() => setExpandedFinalId(open ? null : p.id)}
+                className="flex w-full items-center gap-[9px] py-[7px] text-left font-[inherit]"
+              >
+                <MemberAvatar name={p.username} avatarUrl={p.avatar_url} isMe={p.id === me} variant="neutral" size={24} t={t} />
+                <span className="min-w-0 flex-1 truncate text-[0.78125rem] font-semibold text-m-ink">{personName(p.id)}</span>
+                <span className="ml-auto flex-none font-geist text-[0.75rem] font-extrabold tabular-nums text-m-ink">{formatMoney(row.final, base, locale)}</span>
+                {open
+                  ? <ChevronUp size={13} strokeWidth={2.2} className="flex-none text-m-faint" />
+                  : <ChevronDown size={13} strokeWidth={2.2} className="flex-none text-m-faint" />}
+              </button>
+              {open && (
+                <FinalBudgetBreakdown row={row} items={budgetItems} settlement={settlement} ctx={ctx} base={base} locale={locale} t={t} personName={personName} />
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {/* By category (spec §3.5) */}
@@ -753,6 +784,54 @@ function PaymentRow({ settlement, ctx, base, locale, t, personName, canEdit, onE
 }
 
 /** Avatar or initials circle; `variant` picks the accent (member chips) or neutral (balances) tone. */
+/**
+ * The three lines behind one traveler's final budget, then the rows they come
+ * from. The figures are the server's — netted with the balances — and each line
+ * is signed by what it does to the final, so the column reads as a subtraction.
+ */
+function FinalBudgetBreakdown({ row, items, settlement, ctx, base, locale, t, personName }: {
+  row: { user_id: number; expenses: number; reimbursed: number; pending: number }
+  items: BudgetItem[]
+  settlement: CostsSettlementResponse | null
+  ctx: CostsCtx
+  base: string
+  locale: string
+  t: TFn
+  personName: (id: number) => string
+}) {
+  const money = (v: number) => formatMoney(v, base, locale)
+  const signed = (v: number) => (v < 0 ? '−' : '+') + money(Math.abs(v))
+  const { fronted, moved, outstanding } = finalBudgetSources(
+    row.user_id, items, settlement?.settlements || [], settlement?.flows || [], e => paidByOf(e, row.user_id, ctx))
+  const line = (key: string, label: string, value: string) => (
+    <div key={key} className="flex items-baseline gap-2 py-[2px] font-geist text-[0.6875rem]">
+      <span className="min-w-0 flex-1 truncate text-m-muted">{label}</span>
+      <span className="flex-none font-semibold tabular-nums text-m-ink">{value}</span>
+    </div>
+  )
+  // Capped and scrollable so a long trip's list can't push the page away.
+  const section = (title: string, rows: ReactNode[]) => rows.length > 0 && (
+    <div className="mt-2">
+      <div className="font-geist text-[0.5625rem] font-bold uppercase tracking-[.09em] text-m-faint">{title}</div>
+      <div className="mt-1 max-h-[160px] overflow-y-auto">{rows}</div>
+    </div>
+  )
+  return (
+    <div className="mb-2 rounded-xl bg-[color:var(--m-ic)] px-[11px] py-[9px]">
+      {line('expenses', t('costs.finalExpenses'), signed(row.expenses))}
+      {line('reimbursed', t('costs.finalReimbursed'), signed(-row.reimbursed))}
+      {line('pending', t('costs.finalPending'), signed(-row.pending))}
+      {section(t('costs.finalExpenses'), fronted.map(({ item, amount }) => line(`e${item.id}`, item.name, money(amount))))}
+      {section(t('costs.finalReimbursed'), moved.map(s => line(
+        `s${s.id}`, `${personName(s.from_user_id)} → ${personName(s.to_user_id)}`, money(ctx.convert(s.amount, (s.currency || base).toUpperCase())),
+      )))}
+      {section(t('costs.finalPending'), outstanding.map((f, i) => line(
+        `f${i}`, `${personName(f.from.user_id)} → ${personName(f.to.user_id)}`, money(f.amount),
+      )))}
+    </div>
+  )
+}
+
 function MemberAvatar({ name, avatarUrl, isMe, variant, size, t }: {
   name: string
   avatarUrl?: string | null

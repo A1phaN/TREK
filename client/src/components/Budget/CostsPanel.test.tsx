@@ -11,6 +11,7 @@ import { usePermissionsStore } from '../../store/permissionsStore'
 import { clearExchangeRateCache } from '../../hooks/useExchangeRates'
 import { resetAllStores, seedStore } from '../../../tests/helpers/store'
 import { buildUser, buildTrip, buildBudgetItem, buildSettings } from '../../../tests/helpers/factories'
+import type { BudgetParticipantFinal } from '@trek/shared'
 import type { BudgetItem } from '../../types'
 import CostsPanel, { ExpenseModal } from './CostsPanel'
 import { splitEqualShares, calculateTicketShares, type TicketItem } from './CostsPanel.helpers'
@@ -19,6 +20,9 @@ const tripMembers = [
   { id: 1, username: 'alice', avatar_url: null },
   { id: 2, username: 'bob', avatar_url: null },
 ]
+
+/** Bob's buttons in the expense form — his final-budget row in the sidebar answers to his name too. */
+const bobInForm = () => screen.getAllByRole('button', { name: /bob/i }).filter(b => !b.hasAttribute('aria-expanded'))
 
 beforeEach(() => {
   resetAllStores()
@@ -610,7 +614,7 @@ describe('CostsPanel — settlements in the ledger', () => {
 
     await user.type(itemNames[1], 'chocolate cake')
     await user.type(itemPrices[2], '50')
-    const bobButtons = screen.getAllByRole('button', { name: /bob/i })
+    const bobButtons = bobInForm()
     await user.click(bobButtons[1])
 
     await user.type(itemNames[2], 'Milk')
@@ -749,7 +753,7 @@ const expense = (over: Partial<Omit<BudgetItem, 'members'>> & { members?: Member
 
 function mount(
   items: BudgetItem[],
-  settlement: { balances?: Balance[]; flows?: Flow[]; settlements?: Payment[] } = {},
+  settlement: { balances?: Balance[]; flows?: Flow[]; settlements?: Payment[]; finalBudgets?: BudgetParticipantFinal[] } = {},
   entries?: string[],
 ) {
   server.use(
@@ -826,8 +830,49 @@ describe('CostsPanel — overview', () => {
     mount([], { balances: [{ user_id: 1, username: 'alice', avatar_url: null, balance: 0 }] })
 
     // Both travellers appear; neither has a signed amount.
-    await screen.findByText('Balances')
-    expect(screen.getAllByText('0,00 €')).toHaveLength(2)
+    const balances = (await screen.findByText('Balances')).parentElement as HTMLElement
+    expect(within(balances).getAllByText('0,00 €')).toHaveLength(2)
+  })
+
+  it('FE-W5COSTS-004b: the final budget gives one amount per traveler and its arithmetic on click', async () => {
+    // Dinner 90 fronted by Alice, taxi 30 by Bob, both split evenly: the trip costs
+    // each of them 60. Bob has already sent 15 of the 30 he owes, 15 is still open.
+    const user = userEvent.setup()
+    mount([dinner(), taxi()], {
+      balances: [
+        { user_id: 1, username: 'alice', avatar_url: null, balance: 15 },
+        { user_id: 2, username: 'bob', avatar_url: null, balance: -15 },
+      ],
+      flows: [{ from: { user_id: 2, username: 'bob' }, to: { user_id: 1, username: 'alice' }, amount: 15 }],
+      settlements: [{ id: 9, from_user_id: 2, to_user_id: 1, amount: 15, currency: 'EUR', created_at: '2025-06-17 10:00:00' }],
+      finalBudgets: [
+        { user_id: 1, username: 'alice', avatar_url: null, expenses: 90, reimbursed: 15, pending: 15, final: 60 },
+        { user_id: 2, username: 'bob', avatar_url: null, expenses: 30, reimbursed: -15, pending: -15, final: 60 },
+      ],
+    })
+
+    const card = (await screen.findByText('Final budget')).parentElement as HTMLElement
+    await waitFor(() => expect(within(card).getAllByText('60,00 €')).toHaveLength(2))
+    // The main view stays one figure per person until someone asks for more.
+    expect(within(card).queryByText('Expenses paid')).toBeNull()
+
+    const alice = within(card).getByRole('button', { name: /You/ })
+    await user.click(alice)
+    expect(alice).toHaveAttribute('aria-expanded', 'true')
+    expect(within(card).getByText('+90,00 €')).toBeInTheDocument()
+    // Received and still pending both lower her cost.
+    expect(within(card).getAllByText('−15,00 €')).toHaveLength(2)
+    expect(within(card).getByText('Dinner')).toBeInTheDocument()
+    expect(within(card).queryByText('Taxi')).toBeNull()
+    expect(within(card).getAllByText(/^bob → /)).toHaveLength(2)
+
+    // Opening Bob closes Alice: what he sent back and what he still owes raise his.
+    await user.click(within(card).getByRole('button', { name: /bob/ }))
+    expect(alice).toHaveAttribute('aria-expanded', 'false')
+    expect(within(card).getByText('+30,00 €')).toBeInTheDocument()
+    expect(within(card).getAllByText('+15,00 €')).toHaveLength(2)
+    expect(within(card).getByText('Taxi')).toBeInTheDocument()
+    expect(within(card).queryByText('Dinner')).toBeNull()
   })
 
   it('FE-W5COSTS-005: the category breakdown ranks categories by spend', async () => {
@@ -980,8 +1025,8 @@ describe('CostsPanel — settle up', () => {
     render(<CostsPanel tripId={1} tripMembers={tripMembers} />)
 
     await screen.findByText('Balances')
-    // Settle up and Balances both hang off the one failed request.
-    await waitFor(() => expect(screen.getAllByText('Unknown error')).toHaveLength(2))
+    // Settle up, Balances and Final budget all hang off the one failed request.
+    await waitFor(() => expect(screen.getAllByText('Unknown error')).toHaveLength(3))
     expect(screen.queryByText("Everyone's square")).toBeNull()
   })
 
@@ -1360,7 +1405,7 @@ describe('CostsPanel — expense modal', () => {
     const rows = screen.getAllByPlaceholderText('Item name')
     await user.click(rows[1].parentElement!.parentElement!.querySelectorAll('button')[0])
     expect(screen.queryByDisplayValue('Cake')).not.toBeInTheDocument()
-    await user.click(screen.getAllByRole('button', { name: /bob/i })[0])
+    await user.click(bobInForm()[0])
 
     await user.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(put).toBeTruthy())
@@ -1401,7 +1446,8 @@ describe('CostsPanel — expense modal', () => {
     expect(screen.getByDisplayValue('30,00')).toBeInTheDocument()
 
     // Excluding Bob drops his amount; the split no longer matches the total.
-    await user.click(screen.getByRole('button', { name: /bob/i }))
+    expect(bobInForm()).toHaveLength(1)
+    await user.click(bobInForm()[0])
     expect(screen.getByText(/Sum of splits/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
 

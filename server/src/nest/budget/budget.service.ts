@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService, type TripAccess } from '../database/database.service';
-import type { TrekWsPayload, TrekWsTripEventName } from '@trek/shared';
+import type { BudgetParticipantFinal, TrekWsPayload, TrekWsTripEventName } from '@trek/shared';
 import { RealtimeService } from '../realtime/realtime.service';
 import { PermissionsService } from '../permissions/permissions.service';
 import { avatarUrl } from '../common/avatarUrl';
@@ -847,6 +847,18 @@ export class BudgetService {
     return shares;
   }
 
+  /**
+   * Who owes whom (`balances` + the simplified `flows`), the recorded transfers
+   * (`settlements`), and what the trip ends up costing each participant
+   * (`finalBudgets`).
+   *
+   * The final budget is the same ledger read from the other end. The balances
+   * answer "who still has to pay whom"; `finalBudgets` answers "what did the trip
+   * cost me", which no other figure on the Costs screen gives: a participant's
+   * gross outlay minus the reimbursements already recorded minus the ones still
+   * to come. It is derived from the same integer cents rather than recomputed, so
+   * a breakdown can never contradict the balance printed next to it.
+   */
   calculateSettlement(
     tripId: string | number,
     opts: { base?: string; rates?: Record<string, number> | null; tripCurrency?: string } = {},
@@ -930,6 +942,13 @@ export class BudgetService {
       if (!balances[id]) balances[id] = { user_id: id, username: src.username || '', avatar_url: avatarUrl(src), cents: 0 };
       return balances[id];
     };
+    // The two halves of the balance, kept apart so the per-person final budget can
+    // show its own arithmetic: what each person fronted, and what the recorded
+    // transfers have already moved back. Same trip cents as `balances`, filled by
+    // the same two loops, so the three figures cannot drift from the balance they
+    // are derived from.
+    const frontedCents: Record<number, number> = {};
+    const reimbursedCents: Record<number, number> = {};
 
     for (const item of items) {
       const members = allMembers.filter(m => m.budget_item_id === item.id);
@@ -961,6 +980,7 @@ export class BudgetService {
       for (const p of payers) {
         const paid = toTripCents(p.amount, item.currency, item.exchange_rate);
         ensure(p.user_id, p).cents += paid;
+        frontedCents[p.user_id] = (frontedCents[p.user_id] || 0) + paid;
         creditCents += paid;
       }
       // …and each split participant owes their share — a custom per-member amount
@@ -1000,6 +1020,11 @@ export class BudgetService {
       const inTrip = Math.round(settleToTrip(s.amount, s.currency, s.exchange_rate) * 100);
       ensureSettled(s.from_user_id, s.from_username, s.from_avatar_url).cents += inTrip;
       ensureSettled(s.to_user_id, s.to_username, s.to_avatar_url).cents -= inTrip;
+      // Net of the transfers in both directions: sending one back is a reimbursement
+      // received in reverse, and netting them is what keeps the final budget's
+      // subtraction equal to the balance it is taken from.
+      reimbursedCents[s.to_user_id] = (reimbursedCents[s.to_user_id] || 0) + inTrip;
+      reimbursedCents[s.from_user_id] = (reimbursedCents[s.from_user_id] || 0) - inTrip;
     }
 
     // Into the display currency as one set, then simplify — balances and flows are
@@ -1007,6 +1032,14 @@ export class BudgetService {
     // what "Settle up" offers to move, down to the last cent (#1382).
     const ledger = Object.values(balances);
     const displayCents = allocateDisplayCents(ledger.map(b => b.cents), displayFactor);
+    // Each component of the final budget is re-denominated as its own set, for the
+    // same reason the balances are: rounding one person at a time lets the column
+    // drift away from the figure it converted from. The final itself is then
+    // subtracted in display cents rather than converted separately, so the three
+    // lines the breakdown shows always add up to the total beside them, whatever
+    // currency the viewer picked.
+    const frontedDisplayCents = allocateDisplayCents(ledger.map(b => frontedCents[b.user_id] || 0), displayFactor);
+    const reimbursedDisplayCents = allocateDisplayCents(ledger.map(b => reimbursedCents[b.user_id] || 0), displayFactor);
 
     // Calculate optimized payment flows (greedy algorithm)
     const people = ledger
@@ -1042,6 +1075,13 @@ export class BudgetService {
       })),
       flows,
       settlements,
+      finalBudgets: ledger.map((b, i) => ({
+        user_id: b.user_id, username: b.username, avatar_url: b.avatar_url,
+        expenses: frontedDisplayCents[i] / 100,
+        reimbursed: reimbursedDisplayCents[i] / 100,
+        pending: displayCents[i] / 100,
+        final: (frontedDisplayCents[i] - reimbursedDisplayCents[i] - displayCents[i]) / 100,
+      })) satisfies BudgetParticipantFinal[],
     };
   }
 

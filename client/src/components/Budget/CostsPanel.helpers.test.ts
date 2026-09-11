@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calculateTicketShares, hasTicketSplit, payerSum, payersBalanced, readTicketItems, readUserNote, rebalancePayers, settlementDate, splitCents, splitEqualShares, writeTicketItems, type TicketItem } from './CostsPanel.helpers'
+import { calculateTicketShares, finalBudgetFor, finalBudgetSources, hasTicketSplit, paidByUser, payerSum, payersBalanced, readTicketItems, readUserNote, rebalancePayers, settlementDate, splitCents, splitEqualShares, writeTicketItems, type TicketItem } from './CostsPanel.helpers'
 
 describe('splitCents', () => {
   it('splits evenly when it divides cleanly', () => {
@@ -244,5 +244,65 @@ describe('calculateTicketShares', () => {
 
   it('is empty for an empty receipt', () => {
     expect(calculateTicketShares([])).toEqual({ shares: {}, total: 0 })
+  })
+})
+
+describe('paidByUser', () => {
+  it('adds up what one participant fronted and ignores the other payers', () => {
+    const item = { payers: [{ user_id: 1, amount: 30 }, { user_id: 2, amount: 70 }, { user_id: 1, amount: 5 }] }
+    expect(paidByUser(item, 1)).toBe(35)
+    expect(paidByUser(item, 2)).toBe(70)
+    expect(paidByUser(item, 3)).toBe(0)
+  })
+
+  it('is zero for an expense with no payer list', () => {
+    expect(paidByUser({ payers: null }, 1)).toBe(0)
+    expect(paidByUser({}, 1)).toBe(0)
+  })
+})
+
+describe('finalBudgetFor', () => {
+  const finals = [{ user_id: 1, username: 'alice', avatar_url: null, expenses: 100, reimbursed: 50, pending: 0, final: 50 }]
+
+  it("returns the server's row for a participant in the ledger", () => {
+    expect(finalBudgetFor(finals, { id: 1, username: 'alice' })).toBe(finals[0])
+  })
+
+  it('reads a participant the ledger left out as costing nothing', () => {
+    expect(finalBudgetFor(finals, { id: 2, username: 'bob' }))
+      .toEqual({ user_id: 2, username: 'bob', avatar_url: null, expenses: 0, reimbursed: 0, pending: 0, final: 0 })
+  })
+})
+
+describe('finalBudgetSources', () => {
+  const items = [
+    { id: 1, payers: [{ user_id: 1, amount: 60 }] },
+    { id: 2, payers: [{ user_id: 2, amount: 40 }] },
+    { id: 3, payers: [{ user_id: 1, amount: -10 }] },
+  ]
+  const settlements = [
+    { id: 1, from_user_id: 2, to_user_id: 1 },
+    { id: 2, from_user_id: 1, to_user_id: 3 },
+    { id: 3, from_user_id: 2, to_user_id: 3 },
+  ]
+  const flows = [
+    { from: { user_id: 3 }, to: { user_id: 1 }, amount: 5 },
+    { from: { user_id: 3 }, to: { user_id: 2 }, amount: 7 },
+  ]
+
+  it('keeps what the participant fronted, a refund they received included', () => {
+    const { fronted } = finalBudgetSources(1, items, settlements, flows, i => paidByUser(i, 1))
+    expect(fronted.map(f => [f.item.id, f.amount])).toEqual([[1, 60], [3, -10]])
+  })
+
+  it('keeps transfers and open flows on either side of the participant, and nobody else\'s', () => {
+    const { moved, outstanding } = finalBudgetSources(1, items, settlements, flows, i => paidByUser(i, 1))
+    expect(moved.map(s => s.id)).toEqual([1, 2])
+    expect(outstanding).toEqual([flows[0]])
+  })
+
+  it('finds nothing for a participant with no activity', () => {
+    expect(finalBudgetSources(9, items, settlements, flows, i => paidByUser(i, 9)))
+      .toEqual({ fronted: [], moved: [], outstanding: [] })
   })
 })

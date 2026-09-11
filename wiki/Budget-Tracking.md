@@ -83,10 +83,13 @@ An expense with no payer is flagged **Unfinished** on its row and counted into t
 
 ## Settlement calculator
 
-Costs works out the minimum number of transfers needed to settle all debts (using a greedy matching algorithm) and keeps the answer in the right-hand column, split across two cards:
+Costs works out the minimum number of transfers needed to settle all debts (using a greedy matching algorithm) and keeps the answer in the right-hand column, split across three cards:
 
 - **Settle up** — the transfer flows: who pays whom and how much. The number of open flows sits in the card header, and each flow has a **Settle** button that records it as done.
 - **Balances** — net balances: each member's overall surplus or deficit.
+- **Final budget** — what the trip costs each member once every reimbursement is accounted for: **expenses paid − reimbursements received − pending reimbursements**. Clicking a name opens that breakdown, with the expenses the member paid, the payments already recorded and the transfers still open on their side.
+
+The final budget equals each member's share of the paid expenses, so recording a payment moves an amount from *pending* to *received* without changing it. An expense nobody has paid yet stays out of it, as it stays out of the balances.
 
 **Settle up** in the panel header records every open flow at once. **Add payment** on the card records a single transfer by hand, for a repayment that did not follow a suggested flow. Recorded payments then appear in the expense ledger as their own rows, with edit and undo beside them.
 
