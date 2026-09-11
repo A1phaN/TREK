@@ -3,7 +3,7 @@ import { calculateRouteWithLegs, type RouteProfileKey } from './RouteCalculator'
 import { buildDayRouteRuns, type DayRoutePoint } from './dayRoutePlan'
 import { resolveLegMode } from '../Planner/legMode'
 import { useSettingsStore } from '../../store/settingsStore'
-import { TRACK_COLORS } from '@trek/shared'
+import { dayColor } from '../Roadtrip/dayColors'
 import type { Accommodation, AssignmentsMap, Day, Reservation, RouteSegment } from '../../types'
 
 /** One travel day of the overview: the roads it covers, in its own colour. */
@@ -12,7 +12,9 @@ export interface TripOverviewDay {
   dayNumber: number
   date: string | null
   title: string | null
-  color: string
+  /** The core and casing this day is drawn in — the road trip's palette, so a day is
+   *  the same colour whichever way the trip is being read. */
+  color: { line: string; casing: string }
   /** One polyline per run of the day, `[lat, lng]`. */
   lines: [number, number][][]
   segments: RouteSegment[]
@@ -28,7 +30,7 @@ export interface TripRouteOverview {
   /** Every day's polylines flattened in trip order — what the map draws. */
   lines: [number, number][][]
   /** The colour of each entry of `lines`, same index. */
-  lineColors: string[]
+  lineColors: { line: string; casing: string }[]
   segments: RouteSegment[]
   /** Every drawn coordinate, so the map can frame the whole trip at once. */
   focusPoints: [number, number][]
@@ -116,7 +118,7 @@ export function useTripRouteOverview(
     const controller = new AbortController()
     abortRef.current = controller
 
-    const colorFor = (day: Day) => TRACK_COLORS[Math.abs(day.day_number ?? 0) % TRACK_COLORS.length]
+    const colorFor = (day: Day) => dayColor(day.day_number ?? 0)
 
     // Chunk every day up front, so the routed answers can be filed by position and
     // reassembled in order however they come back.

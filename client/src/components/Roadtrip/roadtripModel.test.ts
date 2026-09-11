@@ -11,6 +11,7 @@ import {
   parseClock,
   splitIntoRuns,
   sumLegSeconds,
+  refuelStopTypeFor,
 } from './roadtripModel'
 
 describe('formatDurationShort', () => {
@@ -89,7 +90,10 @@ describe('computeSchedule', () => {
     expect(entries[2]).toMatchObject({ arrival: '12:55', departure: '13:40', anchored: false })
   })
 
-  it('leaves stops before the first pinned time blank rather than inventing one', () => {
+  it('works back from the first pinned time to say when to set off', () => {
+    // The museum opens at ten and we want an hour at the stop before it, an hour of
+    // driving in between: be there at eight. Answering that is the reason to pin a time
+    // on the second stop at all.
     const { entries } = computeSchedule(
       [
         { anchor: null, dwellMinutes: 60 },
@@ -97,8 +101,39 @@ describe('computeSchedule', () => {
       ],
       [hours(1)],
     )
-    expect(entries[0]).toMatchObject({ arrival: null, departure: null })
+    expect(entries[0]).toMatchObject({ arrival: '08:00', departure: '09:00', anchored: false })
     expect(entries[1]).toMatchObject({ arrival: '10:00', anchored: true })
+  })
+
+  it('stops working back at a leg that never routed rather than inventing one', () => {
+    const { entries } = computeSchedule(
+      [
+        { anchor: null, dwellMinutes: 60 },
+        { anchor: null, dwellMinutes: 30 },
+        { anchor: '10:00', dwellMinutes: 30 },
+      ],
+      [undefined, hours(1)],
+    )
+    expect(entries[0]).toMatchObject({ arrival: null, departure: null })
+    // Leaves at 09:00 to arrive at 10:00, and its own half hour puts it there at 08:30.
+    expect(entries[1]).toMatchObject({ arrival: '08:30', departure: '09:00' })
+    expect(entries[2]).toMatchObject({ arrival: '10:00', anchored: true })
+  })
+
+  it('keeps the earliest stop on day zero when working back crosses midnight', () => {
+    // Pinned at one in the morning with three hours of driving before it: the stop before
+    // is the evening before. The chain shifts up a day rather than printing a day below
+    // zero, so the boundary shows between the two stops instead of under the first one.
+    const { entries, warnings } = computeSchedule(
+      [
+        { anchor: null, dwellMinutes: 0 },
+        { anchor: '01:00', dwellMinutes: 0 },
+      ],
+      [hours(3)],
+    )
+    expect(entries[0]).toMatchObject({ arrival: '22:00', dayOffset: 0 })
+    expect(entries[1]).toMatchObject({ arrival: '01:00', dayOffset: 1, anchored: true })
+    expect(warnings).toContainEqual({ index: 1, code: 'overnight' })
   })
 
   it('restarts the cascade at a pinned stop instead of pushing it', () => {
@@ -543,5 +578,236 @@ describe('deriveDriveWarnings — what counts as driving', () => {
       0,
     )
     expect(out.warnings).toEqual([{ index: 1, code: 'leg', overMinutes: 30 }])
+  })
+})
+
+describe('deriveDriveWarnings — where the tank actually runs dry', () => {
+  const drive = (minutes: number, km: number) =>
+    ({ duration: minutes * 60, distance: km * 1000, mode: 'driving' })
+  const ferry = (minutes: number, km: number) =>
+    ({ duration: minutes * 60, distance: km * 1000, mode: 'ferry' })
+
+  it('FE-ROADTRIP-MODEL-089: the dry point sits where the fuel ends, not where somebody notices', () => {
+    // 300 km of range, two legs of 200. The warning lands on stop 2, which is 400 km in;
+    // the tank was empty 100 km earlier, halfway through the second leg. Suggesting a
+    // filling station at the warning would suggest one the car cannot reach.
+    const out = deriveDriveWarnings(
+      [drive(120, 200), drive(120, 200)],
+      [false, false, false],
+      { legMinutes: null, dayMinutes: null, rangeKm: 300 },
+      0,
+    )
+    expect(out.warnings).toEqual([{ index: 2, code: 'range', sinceKm: 400 }])
+    expect(out.emptyAt).toEqual([
+      { legIndex: 1, intoLegKm: 100, drivenMeters: 300000, sinceKm: 300 },
+    ])
+  })
+
+  it('FE-ROADTRIP-MODEL-090: one dry point per tank, however many warnings the stretch produces', () => {
+    // A long run with nothing on it warns at every stop on purpose, because a warning is
+    // not a fill-up. One refuel offer per warning would stack three identical offers for
+    // a single tank down one day.
+    const out = deriveDriveWarnings(
+      [drive(60, 400), drive(60, 400), drive(60, 400)],
+      [false, false, false, false],
+      { legMinutes: null, dayMinutes: null, rangeKm: 600 },
+      0,
+    )
+    expect(out.warnings).toHaveLength(2)
+    expect(out.emptyAt).toHaveLength(1)
+    expect(out.emptyAt[0]).toMatchObject({ legIndex: 1, drivenMeters: 600000 })
+  })
+
+  it('FE-ROADTRIP-MODEL-091: filling up starts a new tank, and the next one runs dry again', () => {
+    const out = deriveDriveWarnings(
+      [drive(60, 400), drive(60, 400), drive(60, 400)],
+      [false, false, true, false],
+      { legMinutes: null, dayMinutes: null, rangeKm: 600 },
+      0,
+    )
+    // Empty once before the fuel stop, then once more after it.
+    expect(out.emptyAt).toHaveLength(1)
+    expect(out.emptyAt[0].drivenMeters).toBe(600000)
+  })
+
+  it('FE-ROADTRIP-MODEL-092: a ferry carries the car without burning a drop', () => {
+    // The trap this field exists for. The budget skips a ferry, so the dry point must be
+    // counted in DRIVING metres only; measuring along the day's drawn line instead would
+    // overshoot by the whole crossing and put the marker out at sea.
+    const out = deriveDriveWarnings(
+      [drive(60, 200), ferry(120, 50), drive(60, 200)],
+      [false, false, false, false],
+      { legMinutes: null, dayMinutes: null, rangeKm: 300 },
+      0,
+    )
+    expect(out.emptyAt).toEqual([
+      { legIndex: 2, intoLegKm: 100, drivenMeters: 300000, sinceKm: 300 },
+    ])
+  })
+
+  it('FE-ROADTRIP-MODEL-093: a tank carried over midnight runs dry earlier the next day', () => {
+    const out = deriveDriveWarnings(
+      [drive(60, 200), drive(60, 200)],
+      [false, false, false],
+      { legMinutes: null, dayMinutes: null, rangeKm: 300 },
+      250,
+    )
+    // Only 50 km left on arrival, so it empties a quarter into the first leg.
+    expect(out.emptyAt).toEqual([
+      { legIndex: 0, intoLegKm: 50, drivenMeters: 50000, sinceKm: 300 },
+    ])
+  })
+
+  it('FE-ROADTRIP-MODEL-094: no range limit and no crossing produce no dry point at all', () => {
+    const noLimit = deriveDriveWarnings(
+      [drive(60, 900)],
+      [false, false],
+      { legMinutes: null, dayMinutes: null, rangeKm: null },
+      0,
+    )
+    expect(noLimit.emptyAt).toEqual([])
+
+    const withinRange = deriveDriveWarnings(
+      [drive(60, 100)],
+      [false, false],
+      { legMinutes: null, dayMinutes: null, rangeKm: 300 },
+      0,
+    )
+    expect(withinRange.emptyAt).toEqual([])
+  })
+
+  it('FE-ROADTRIP-MODEL-095: an unrouted leg gives the tank up rather than guessing where it ends', () => {
+    // The budget goes null and stays null, so there is no honest dry point to offer.
+    const out = deriveDriveWarnings(
+      [drive(60, 200), undefined, drive(60, 400)],
+      [false, false, false, false],
+      { legMinutes: null, dayMinutes: null, rangeKm: 300 },
+      0,
+    )
+    expect(out.emptyAt).toEqual([])
+    expect(out.carryKm).toBeNull()
+  })
+})
+
+describe('refuelsRange — what fills which tank', () => {
+  it('FE-ROADTRIP-MODEL-096: with no vehicle named, either kind fills up', () => {
+    // What TREK did before the setting existed, and the right answer for somebody who
+    // never opened the dialog. Anything else would quietly change their warnings.
+    expect(refuelsRange('fuel')).toBe(true)
+    expect(refuelsRange('charging')).toBe(true)
+    expect(refuelsRange('fuel', null)).toBe(true)
+    expect(refuelsRange('charging', null)).toBe(true)
+  })
+
+  it('FE-ROADTRIP-MODEL-097: a petrol station does not charge a battery', () => {
+    // The bug this exists for: an electric car pausing at a petrol station had its
+    // battery refilled on paper, the warnings went quiet for the rest of the day, and
+    // the driver was told nothing.
+    expect(refuelsRange('charging', 'electric')).toBe(true)
+    expect(refuelsRange('fuel', 'electric')).toBe(false)
+  })
+
+  it('FE-ROADTRIP-MODEL-098: and a charger does not fill a tank', () => {
+    expect(refuelsRange('fuel', 'combustion')).toBe(true)
+    expect(refuelsRange('charging', 'combustion')).toBe(false)
+  })
+
+  it('FE-ROADTRIP-MODEL-099: nothing else refuels anything, whatever is driven', () => {
+    for (const vehicle of [null, 'combustion', 'electric'] as const) {
+      expect(refuelsRange('rest_area', vehicle)).toBe(false)
+      expect(refuelsRange('restaurant', vehicle)).toBe(false)
+      expect(refuelsRange(null, vehicle)).toBe(false)
+    }
+  })
+
+  it('FE-ROADTRIP-MODEL-100: the search looks for what the vehicle actually takes', () => {
+    expect(refuelStopTypeFor('combustion')).toEqual(['fuel'])
+    expect(refuelStopTypeFor('electric')).toEqual(['charging'])
+    expect(refuelStopTypeFor(null)).toEqual(['fuel', 'charging'])
+  })
+})
+
+describe('deriveDriveWarnings — filling only part way', () => {
+  const drive = (minutes: number, km: number) =>
+    ({ duration: minutes * 60, distance: km * 1000, mode: 'driving' })
+
+  it('FE-ROADTRIP-MODEL-101: a stop that fills to 80 % leaves a fifth already used', () => {
+    // Nobody charges to 100 % on the road: the last fifth takes as long as the first
+    // four. Counting a stop as a full tank overstates what comes after it by that fifth.
+    const out = deriveDriveWarnings(
+      [drive(60, 100), drive(60, 450)],
+      [false, true, false],
+      { legMinutes: null, dayMinutes: null, rangeKm: 500, fillPercent: 80 },
+      0,
+    )
+    // After the stop the budget restarts at 100 km rather than 0, so the tank is dry
+    // 400 km into the second leg. Filled all the way it would have gone the whole 450.
+    expect(out.emptyAt).toHaveLength(1)
+    expect(out.emptyAt[0]).toMatchObject({ legIndex: 1, intoLegKm: 400 })
+  })
+
+  it('FE-ROADTRIP-MODEL-102: filling all the way is what absent, zero and 100 all mean', () => {
+    const legs = [drive(60, 100), drive(60, 450)]
+    const refuels = [false, true, false]
+    const full = { legMinutes: null, dayMinutes: null, rangeKm: 500 }
+    for (const fillPercent of [undefined, null, 0, 100]) {
+      const out = deriveDriveWarnings(legs, refuels, { ...full, fillPercent }, 0)
+      // A full tank after the stop covers the remaining 450 km without a finding.
+      expect(out.emptyAt).toEqual([])
+      expect(out.warnings).toEqual([])
+    }
+  })
+
+  it('FE-ROADTRIP-MODEL-103: with no range set, the fill level changes nothing', () => {
+    const out = deriveDriveWarnings(
+      [drive(60, 900)],
+      [true, false],
+      { legMinutes: null, dayMinutes: null, rangeKm: null, fillPercent: 50 },
+      0,
+    )
+    expect(out.warnings).toEqual([])
+    expect(out.emptyAt).toEqual([])
+  })
+
+  it('FE-ROADTRIP-MODEL-104: a stop that says how full it fills is read against itself', () => {
+    // The motorway charger tops up to 60 %; the traveller's own default is 80. Reading
+    // the default here would promise 100 km the car does not have.
+    const out = deriveDriveWarnings(
+      [drive(60, 100), drive(60, 450)],
+      [false, true, false],
+      { legMinutes: null, dayMinutes: null, rangeKm: 500, fillPercent: 80 },
+      0,
+      [null, 60, null],
+    )
+    // 60 % of 500 km is 300, so the tank is dry 300 km into the second leg rather than
+    // the 400 the traveller's own figure would have given.
+    expect(out.emptyAt).toHaveLength(1)
+    expect(out.emptyAt[0]).toMatchObject({ legIndex: 1, intoLegKm: 300 })
+  })
+
+  it('FE-ROADTRIP-MODEL-105: a stop with no opinion still follows the traveller', () => {
+    // Same day, same stop, nothing said about it: the default has to keep applying, or
+    // adding the field would have quietly changed every trip that never used it.
+    const out = deriveDriveWarnings(
+      [drive(60, 100), drive(60, 450)],
+      [false, true, false],
+      { legMinutes: null, dayMinutes: null, rangeKm: 500, fillPercent: 80 },
+      0,
+      [null, null, null],
+    )
+    expect(out.emptyAt[0]).toMatchObject({ legIndex: 1, intoLegKm: 400 })
+  })
+
+  it('FE-ROADTRIP-MODEL-106: a stop can also say it fills right up', () => {
+    // The charger at the hotel: the car stands there all night, so this one goes to 100
+    // even on a trip whose default stops at 80.
+    const out = deriveDriveWarnings(
+      [drive(60, 100), drive(60, 450)],
+      [false, true, false],
+      { legMinutes: null, dayMinutes: null, rangeKm: 500, fillPercent: 80 },
+      0,
+      [null, 100, null],
+    )
+    expect(out.emptyAt).toEqual([])
   })
 })

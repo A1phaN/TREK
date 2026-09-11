@@ -232,3 +232,111 @@ export function simplifyLine(line: LatLng[], toleranceKm: number): LatLng[] {
   const right = simplifyLine(line.slice(index), toleranceKm)
   return [...left.slice(0, -1), ...right]
 }
+
+/**
+ * The point that lies `metres` along a line, measured the way a car drives it.
+ *
+ * Every other helper in this file goes the other way: given a point, where on the line
+ * is it. This is the inverse, and it exists because the range budget produces a distance
+ * ("the tank is empty 340 km in") with no idea where that is on the map.
+ *
+ * Walked segment by segment rather than approximated, and interpolated inside the
+ * segment it lands in, because the answer becomes a marker somebody drives to. Past the
+ * end it returns the last point rather than null: a tank that runs out after the day's
+ * final stop still ran out somewhere, and the caller decides what to do about that.
+ */
+export function pointAtMeters(line: LatLng[], metres: number): LatLng | null {
+  if (!line.length) return null
+  if (line.length === 1 || metres <= 0) return line[0]
+
+  let covered = 0
+  for (let i = 1; i < line.length; i++) {
+    const step = haversineKm(line[i - 1], line[i]) * 1000
+    if (covered + step >= metres) {
+      // How far into this segment, as a fraction. A zero-length segment (two identical
+      // vertices, which a concatenated route line does produce) would divide by zero,
+      // and its start point is the right answer anyway.
+      const t = step > 0 ? (metres - covered) / step : 0
+      return {
+        lat: line[i - 1].lat + (line[i].lat - line[i - 1].lat) * t,
+        lng: line[i - 1].lng + (line[i].lng - line[i - 1].lng) * t,
+      }
+    }
+    covered += step
+  }
+  return line[line.length - 1]
+}
+
+/**
+ * How long a line is, in metres, measured the way `sliceAtMeters` walks it.
+ *
+ * Not the same figure the router reports for the same road: that comes off its own graph
+ * while this is great-circle hops between the vertices it sent back. Anything cutting a
+ * line at a distance has to measure it with this, or the last cut falls short of the end
+ * by the difference.
+ */
+export function lineMetres(line: LatLng[]): number {
+  let total = 0
+  for (let i = 1; i < line.length; i++) total += haversineKm(line[i - 1], line[i]) * 1000
+  return total
+}
+
+/**
+ * The stretch of a line between two distances along it, ends included.
+ *
+ * The router answers a whole run with one polyline and a leg list beside it, so the road
+ * belonging to any single leg has to be cut out afterwards. Which matters because a road
+ * trip draws its stops by the day they are REACHED: a drive across midnight hands its
+ * stops to the next card, and the road under them has to go with them — otherwise the
+ * day they set off from keeps a line nobody drives on it, and the corridor search along
+ * "day 2" looks at road that was covered yesterday.
+ *
+ * Both ends are interpolated inside the segment they fall in rather than snapped to the
+ * nearest vertex, so two adjacent slices meet exactly and concatenating them gives the
+ * original line back.
+ */
+export function sliceAtMeters(line: LatLng[], fromMetres: number, toMetres: number): LatLng[] {
+  if (line.length < 2 || toMetres <= fromMetres) return []
+  const from = Math.max(0, fromMetres)
+  const out: LatLng[] = []
+  let covered = 0
+  for (let i = 1; i < line.length; i++) {
+    const step = haversineKm(line[i - 1], line[i]) * 1000
+    const segStart = covered
+    const segEnd = covered + step
+    covered = segEnd
+    if (segEnd < from) continue
+    if (segStart > toMetres) break
+    // A zero-length segment divides by zero; both its ends are the same point, so the
+    // fraction does not matter and zero is the one that never produces NaN.
+    const at = (m: number): LatLng => {
+      const t = step > 0 ? (m - segStart) / step : 0
+      return {
+        lat: line[i - 1].lat + (line[i].lat - line[i - 1].lat) * t,
+        lng: line[i - 1].lng + (line[i].lng - line[i - 1].lng) * t,
+      }
+    }
+    if (!out.length) out.push(segStart >= from ? line[i - 1] : at(from))
+    out.push(segEnd <= toMetres ? line[i] : at(toMetres))
+  }
+  return out.length > 1 ? out : []
+}
+
+/**
+ * A box around a point, sized so its inscribed circle reaches `radiusKm`.
+ *
+ * The server turns a box into centre plus half the diagonal, so a box of ±r asks for
+ * r·√2 of reach and finds things in the corners that are further away than they look.
+ * Sized from the radius rather than guessed, and the caller still has to read the
+ * answer's own `clamped` flag: above 20 km the index narrows the search silently.
+ */
+export function boxAround(point: LatLng, radiusKm: number): Bbox {
+  const dLat = radiusKm / KM_PER_DEG_LAT
+  const dLng = radiusKm / (KM_PER_DEG_LAT * Math.max(0.01, Math.cos(toRad(point.lat))))
+  return {
+    south: point.lat - dLat,
+    west: point.lng - dLng,
+    north: point.lat + dLat,
+    east: point.lng + dLng,
+  }
+}

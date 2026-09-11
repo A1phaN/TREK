@@ -18,6 +18,9 @@ import { DatabaseService } from '../database/database.service';
 import { nominatimFetch, type GeoLane } from '../geo/nominatim.client';
 import {
   trekPlacesSearch,
+  indexHitsOnly,
+  isOsmHit,
+  osmPlaceId,
   trekPlacesById,
   trekPlacesArea,
   trekPlacesNearby,
@@ -1915,7 +1918,7 @@ export class MapsService {
           lat: locationBias?.lat,
           lng: locationBias?.lng,
           limit: 10,
-        }).catch((err: unknown) => {
+        }).then(indexHitsOnly).catch((err: unknown) => {
           console.warn('TREK Places search failed, falling back:', (err as Error).message);
           return [] as TrekPlace[];
         }),
@@ -2018,7 +2021,7 @@ export class MapsService {
     lang?: string,
     locationBias?: { low: { lat: number; lng: number }; high: { lat: number; lng: number } },
     sessionToken?: string,
-  ): Promise<{ suggestions: { placeId: string; mainText: string; secondaryText: string }[]; source: string }> {
+  ): Promise<MapsAutocompleteResult> {
     const { key: apiKey, source: keySource } = this.resolveMapsKey(userId);
 
     // This is the path that mattered most. Nominatim's usage policy names
@@ -2036,14 +2039,59 @@ export class MapsService {
               lng: (locationBias.low.lng + locationBias.high.lng) / 2,
             }
           : undefined;
-        const found = await trekPlacesSearch(input, { lat: centre?.lat, lng: centre?.lng, limit: 8 });
+        // Both layers here, unlike the explicit search above. That path asks
+        // Nominatim in parallel and would get the same OpenStreetMap places
+        // twice; this one asks nobody else, because Nominatim's usage policy
+        // names autocomplete as unacceptable use. So the layer is not a second
+        // opinion here, it is the only place the missing names live.
+        //
+        // Measured on the case that surfaced it: "Tokio station" typed from
+        // Tokyo returned a weigh station in Ritzville and a station in Mexico
+        // from the index alone, and "Tokio Hauptbahnhof" in second place with
+        // the layer. The index holds businesses; stations, temples and bridges
+        // are in OpenStreetMap, and so is every exonym a traveller types.
+        const found = await trekPlacesSearch(input, {
+          lat: centre?.lat,
+          lng: centre?.lng,
+          limit: 8,
+          sources: 'index,osm',
+        });
         if (found.length > 0) {
           return {
-            suggestions: found.map(p => ({
-              placeId: `gers:${p.gers}`,
-              mainText: p.name,
-              secondaryText: [p.address?.locality, p.address?.country].filter(Boolean).join(', '),
-            })),
+            suggestions: found.map(p =>
+              isOsmHit(p)
+                ? {
+                    // The service's own id form, translated into the one this
+                    // file already resolves. Leaving it as `osm:node/123` would
+                    // hand the client an id getPlaceDetails does not know, and
+                    // the failure would land after the user had picked it.
+                    placeId: osmPlaceId(p),
+                    mainText: p.name,
+                    // The layer carries no address. The local name is what the
+                    // place is called on the spot, which is more use under a
+                    // translated label than an empty line.
+                    secondaryText: p.local_name && p.local_name !== p.name ? p.local_name : '',
+                    // Per row, because this list is two indexes interleaved.
+                    // The name above the list says `trek-places`, which is true
+                    // of the call and false of half the rows in it — the layer
+                    // is OpenStreetMap, and a reader deciding whether to trust
+                    // a suggestion is asking exactly that.
+                    source: 'openstreetmap',
+                    // Both indexes hand these over with the row. Carried rather
+                    // than dropped so picking a suggestion has something to fall
+                    // back on when the details lookup cannot answer.
+                    lat: p.lat,
+                    lng: p.lng,
+                  }
+                : {
+                    placeId: `gers:${p.gers}`,
+                    mainText: p.name,
+                    secondaryText: [p.address?.locality, p.address?.country].filter(Boolean).join(', '),
+                    source: 'trek-places',
+                    lat: p.lat,
+                    lng: p.lng,
+                  },
+            ),
             source: 'trek-places',
           };
         }
@@ -2109,7 +2157,7 @@ export class MapsService {
   private async autocompleteNominatim(
     input: string,
     lang?: string,
-  ): Promise<{ suggestions: { placeId: string; mainText: string; secondaryText: string }[]; source: string }> {
+  ): Promise<MapsAutocompleteResult> {
     try {
       const places = await this.searchNominatim(input, lang);
       const suggestions = places

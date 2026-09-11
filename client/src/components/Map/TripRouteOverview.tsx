@@ -94,7 +94,7 @@ export function TripRouteOverviewPanel({ overview, unit, selectedDayId, onSelect
           const label = day.title || t('dayplan.dayN', { n: day.dayNumber })
           const row = (
             <>
-              <span style={{ width: 8, height: 8, borderRadius: 999, background: day.color, flexShrink: 0 }} aria-hidden />
+              <span style={{ width: 8, height: 8, borderRadius: 999, background: day.color.line, flexShrink: 0 }} aria-hidden />
               <span className="text-content" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {label}
               </span>

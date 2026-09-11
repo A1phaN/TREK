@@ -48,6 +48,7 @@ import type { Accommodation, TripMember, Day, Place, Reservation, PackingItem, T
 import { ListTodo, Download, Plus, Trash2, FolderPlus } from 'lucide-react'
 import { useTripPlanner } from './tripPlanner/useTripPlanner'
 import { usePoiExplore } from '../components/Map/usePoiExplore'
+import { useMergedMapPois } from '../components/Map/useMergedMapPois'
 import PoiCategoryPill from '../components/Map/PoiCategoryPill'
 import { useTouchDragBridge } from '../hooks/useTouchDragBridge'
 
@@ -252,7 +253,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
     selectedDayId, isLoading, tripActions, can, canUploadFiles,
     pushUndo, undo, canUndo, lastActionLabel, handleUndo,
     enabledAddons, collabFeatures, tripAccommodations, setTripAccommodations,
-    roadtripMode, toggleRoadtripMode, roadtripActive, roadtripRoutes, roadtripCorridor,
+    roadtripMode, toggleRoadtripMode, roadtripActive, roadtripRoutes, roadtripLineColors, roadtripMapLines, roadtripMapPlaces, collapsedRoadtripDays, toggleRoadtripDay, roadtripCorridor,
     overviewActive, tripOverview, toggleOverview, overviewShown,
     followTrack, roadtripViaCounts,
     allowedFileTypes, tripMembers, setTripMembers, refreshMembers, loadAccommodations,
@@ -266,9 +267,10 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
     prefillCoords, setPrefillCoords, editingAssignmentId, setEditingAssignmentId,
     stopDraft, setStopDraft, saveStopDraft, saveStopDraftAsNight, stopDraftToForm, stopDraftDuplicate, reorderRoadtripStop,
     setRoadtripStopKind,
+    setRoadtripStopFill,
     saveRoadtripLimit,
     roadtripVias, addRoadtripVia, moveRoadtripVia, removeRoadtripVia,
-    routeAlternatives, askRouteAlternatives, chooseRouteAlternative, alternativeOverlays, alternativeFocusPoints,
+    routeAlternatives, askRouteAlternatives, refuel, askRefuel, acceptRefuel, chooseRouteAlternative, alternativeOverlays, alternativeFocusPoints, mapFocusPoints,
     stayDraft, setStayDraft, setRoadtripStay,
     highlightedAlternative, setHighlightedAlternative,
     moveRoadtripStopToDay,
@@ -322,7 +324,14 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
   const [glMap, setGlMap] = useState<CompassMap | null>(null)
   // The corridor search draws into the same map channel and answers the same question for
   // a drive, so the explore pill stands down while road trip mode is on.
-  const poiPillEnabled = useSettingsStore(s => s.settings.map_poi_pill_enabled) !== false && !roadtripActive
+  // Also in road trip mode: searching the view is a different question from searching the
+  // drive ("is there a hotel at tonight's stop" versus "what is along the way"), and the
+  // two answers are drawn side by side rather than one hiding the other.
+  const poiPillEnabled = useSettingsStore(s => s.settings.map_poi_pill_enabled) !== false
+  // The refuel offers ride the same channel: in road trip mode this is the only way a
+  // POI reaches the map, so without them somebody is asked to accept a stop they cannot
+  // see. They vanish with the offer rather than lingering as a search result.
+  const mapPois = useMergedMapPois(roadtripActive ? roadtripCorridor.visible : null, poi.pois, refuel.offered)
 
   // Costs expense editor opened from a booking modal (save-then-open). Lives at the
   // page level so it has tripMembers / base currency / current user available.
@@ -397,10 +406,10 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
           <div style={{ position: 'absolute', inset: 0 }}>
             <MapView
               tripId={tripId}
-              places={mapPlaces}
+              places={roadtripActive ? roadtripMapPlaces : mapPlaces}
               dayPlaces={dayPlaces}
-              route={roadtripActive ? roadtripRoutes.lines : overviewActive ? tripOverview.lines : route}
-              routeColors={overviewActive ? tripOverview.lineColors : undefined}
+              route={roadtripActive ? roadtripMapLines : overviewActive ? tripOverview.lines : route}
+              routeColors={roadtripActive ? roadtripLineColors : overviewActive ? tripOverview.lineColors : undefined}
               routeVias={roadtripActive ? roadtripRoutes.vias : routeVias}
               accessLines={roadtripActive ? roadtripRoutes.accessLines : undefined}
               showTransitRoutes={transitRoutesShown}
@@ -429,12 +438,11 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
                 const r = reservations.find(x => x.id === rid)
                 if (r) setMapTransportDetail(r)
               }}
-              pois={roadtripActive
-                /* `visible`, not `search.results`: the map is the picture of this very
-                   list, and filtering the list while seventy pins stay on the map no
-                   longer answers "which of these". */
-                ? roadtripCorridor.visible
-                : poi.pois}
+              /* In road trip mode the corridor's `visible` (not `search.results`: the map is
+                 the picture of that very list, and filtering the list while seventy pins stay
+                 on the map no longer answers "which of these") plus whatever the category
+                 pill found in view. Outside it, only the pill's hits. */
+              pois={mapPois}
               onPoiClick={handlePoiClick}
               // Only while road trip mode is on: outside it there is no drive to drop onto.
               onPoiDropOnRoute={roadtripActive ? dropPoiOnRoute : undefined}
@@ -443,7 +451,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
               onRouteClick={roadtripActive && can('day_edit', trip) ? addRoadtripVia : undefined}
               roadtripVias={roadtripActive ? roadtripVias.byDay : undefined}
               alternativeRoutes={alternativeOverlays}
-              focusPoints={overviewActive ? tripOverview.focusPoints : alternativeFocusPoints}
+              focusPoints={overviewActive ? tripOverview.focusPoints : mapFocusPoints}
               clusterLoosely={roadtripActive}
               activeAlternative={highlightedAlternative}
               onChooseAlternative={chooseRouteAlternative}
@@ -568,9 +576,15 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
                       openAlternatives={routeAlternatives.open}
                       onEditStay={can('place_edit', trip) ? setStayDraft : undefined}
                       onSetStopKind={can('place_edit', trip) ? setRoadtripStopKind : undefined}
+                      onSetStopFill={can('place_edit', trip) ? setRoadtripStopFill : undefined}
                       onFollowTrack={can('day_edit', trip) && followTrack.available ? followTrack.open : undefined}
                       viaCounts={roadtripViaCounts}
                       trackNames={followTrack.namesByDay}
+                      refuel={refuel}
+                      onAskRefuel={askRefuel}
+                      onAcceptRefuel={can('day_edit', trip) ? acceptRefuel : undefined}
+                      collapsedDayIds={collapsedRoadtripDays}
+                      onToggleDay={toggleRoadtripDay}
                     />
                   </LazyPanel>
                 ) : (
@@ -707,6 +721,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
                     assignments={assignments}
                     accommodations={tripAccommodations}
                     selectedDayId={selectedDayId}
+                    onClearSelectedDay={() => handleSelectDay(null)}
                     selectedPlaceId={selectedPlaceId}
                     onPlaceClick={handlePlaceClick}
                     onAddPlace={() => { setEditingPlace(null); setPlaceFormDayId(null); setShowPlaceForm(true) }}
@@ -874,7 +889,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
                   <div style={{ flex: 1, overflow: 'auto', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
                     {mobileSidebarOpen === 'left'
                       ? <DayPlanSidebar tripId={tripId} trip={trip} days={days} places={places} categories={categories} assignments={assignments} selectedDayId={selectedDayId} selectedPlaceId={selectedPlaceId} selectedAssignmentId={selectedAssignmentId} onSelectDay={(id) => { handleSelectDay(id); setMobileSidebarOpen(null) }} onPlaceClick={(placeId, assignmentId) => { handlePlaceClick(placeId, assignmentId) }} onReorder={handleReorder} onReorderDays={handleReorderDays} onAddDay={handleAddDay} onUpdateDayTitle={handleUpdateDayTitle} onAssignToDay={handleAssignToDay} onRouteCalculated={(r) => { if (r) { setRoute([r.coordinates]); setRouteInfo(r) } else { setRoute(null); setRouteInfo(null) } }} reservations={reservations} visibleConnectionIds={visibleConnections} onToggleConnection={toggleConnection} allConnectionsShown={allConnectionsShown} onToggleAllConnections={toggleAllConnections} onAddReservation={(dayId) => { setEditingReservation(null); tripActions.setSelectedDay(dayId); setShowReservationModal(true); setMobileSidebarOpen(null) }} onAddTransport={can('day_edit', trip) ? (dayId) => { setTransportModalDayId(dayId); setEditingTransport(null); setTransitPrefill(null); setTransportModalAutomated(false); setShowTransportModal(true); setMobileSidebarOpen(null) } : undefined} onOpenTransit={(r) => { setTransitJourney(r); setMobileSidebarOpen(null) }} onPlanTransit={can('day_edit', trip) && tripHasDates ? (dayId) => { setTransportModalDayId(dayId); setEditingTransport(null); setTransitPrefill(null); setTransportModalAutomated(true); setShowTransportModal(true); setMobileSidebarOpen(null) } : undefined} onPlanTransitLeg={can('day_edit', trip) && tripHasDates ? ({ dayId, from, to, time }) => { setTransportModalDayId(dayId); setEditingTransport(null); setTransitPrefill({ from, to, time }); setTransportModalAutomated(true); setShowTransportModal(true); setMobileSidebarOpen(null) } : undefined} onAddPlace={() => { setEditingPlace(null); setPlaceFormDayId(null); setShowPlaceForm(true); setMobileSidebarOpen(null) }} onCreatePlaceForDay={can('place_edit', trip) ? (dayId) => { setEditingPlace(null); setPlaceFormDayId(dayId); setShowPlaceForm(true); setMobileSidebarOpen(null) } : undefined} onDayDetail={(day) => { setShowDayDetail(day); setSelectedPlaceId(null); selectAssignment(null) }} onRemoveAssignment={handleRemoveAssignment} onEditPlace={(place, assignmentId) => { setEditingPlace(place); setEditingAssignmentId(assignmentId || null); setPlaceFormDayId(null); setShowPlaceForm(true); setMobileSidebarOpen(null) }} onDeletePlace={(placeId) => handleDeletePlace(placeId)} accommodations={tripAccommodations} routeShown={routeShown} routeProfile={routeProfile} onToggleRoute={() => setRouteShown(v => !v)} onSetRouteProfile={setRouteProfile} onNavigateToFiles={() => { setMobileSidebarOpen(null); handleTabChange('dateien') }} onExpandedDaysChange={setExpandedDayIds} pushUndo={pushUndo} canUndo={canUndo} lastActionLabel={lastActionLabel} onUndo={handleUndo} onEditTransport={can('day_edit', trip) ? (reservation) => { setEditingTransport(reservation); setTransportModalDayId(reservation.day_id ?? null); setShowTransportModal(true); setMobileSidebarOpen(null) } : undefined} onEditReservation={can('reservation_edit', trip) ? (r) => { setEditingReservation(r); setShowReservationModal(true); setMobileSidebarOpen(null) } : undefined} initialScrollTop={mobilePlanScrollTopRef.current} onScrollTopChange={(top) => { mobilePlanScrollTopRef.current = top }} showRouteToolsWhenExpanded isMobile />
-                      : <PlacesSidebar tripId={tripId} places={places} categories={categories} assignments={assignments} accommodations={tripAccommodations} selectedDayId={selectedDayId} selectedPlaceId={selectedPlaceId} onPlaceClick={(placeId) => { handlePlaceClick(placeId); setMobileSidebarOpen(null) }} onAddPlace={() => { setEditingPlace(null); setPlaceFormDayId(null); setShowPlaceForm(true); setMobileSidebarOpen(null) }} onAssignToDay={handleAssignToDay} onEditPlace={(place) => { openPlaceEditor(place); setMobileSidebarOpen(null) }} onDeletePlace={(placeId) => handleDeletePlace(placeId)} onBulkDeletePlaces={(ids) => setDeletePlaceIds(ids)} onBulkDeleteConfirm={(ids) => confirmDeletePlaces(ids)} onBulkChangeCategory={(ids, catId) => confirmChangeCategory(ids, catId)} days={days} isMobile pushUndo={pushUndo} initialScrollTop={mobilePlacesScrollTopRef.current} onScrollTopChange={(top) => { mobilePlacesScrollTopRef.current = top }} />
+                      : <PlacesSidebar tripId={tripId} places={places} categories={categories} assignments={assignments} accommodations={tripAccommodations} selectedDayId={selectedDayId} onClearSelectedDay={() => handleSelectDay(null)} selectedPlaceId={selectedPlaceId} onPlaceClick={(placeId) => { handlePlaceClick(placeId); setMobileSidebarOpen(null) }} onAddPlace={() => { setEditingPlace(null); setPlaceFormDayId(null); setShowPlaceForm(true); setMobileSidebarOpen(null) }} onAssignToDay={handleAssignToDay} onEditPlace={(place) => { openPlaceEditor(place); setMobileSidebarOpen(null) }} onDeletePlace={(placeId) => handleDeletePlace(placeId)} onBulkDeletePlaces={(ids) => setDeletePlaceIds(ids)} onBulkDeleteConfirm={(ids) => confirmDeletePlaces(ids)} onBulkChangeCategory={(ids, catId) => confirmChangeCategory(ids, catId)} days={days} isMobile pushUndo={pushUndo} initialScrollTop={mobilePlacesScrollTopRef.current} onScrollTopChange={(top) => { mobilePlacesScrollTopRef.current = top }} />
                     }
                   </div>
                 </div>

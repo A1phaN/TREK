@@ -4,6 +4,8 @@
  * on its own and reused by the map, the rail and (later) the MCP tool.
  */
 
+import type { RouteAvoidClass } from '../../types'
+
 /**
  * The stop kinds that interrupt a drive rather than end it.
  *
@@ -121,9 +123,32 @@ export interface ScheduleWarning {
  */
 export const REFUELLING_STOP_TYPES = ['fuel', 'charging'] as const
 
-/** Whether stopping here starts the range budget over. */
-export function refuelsRange(stopType: string | null | undefined): boolean {
-  return (REFUELLING_STOP_TYPES as readonly string[]).includes(stopType ?? '')
+/**
+ * What the traveller drives, which decides what actually fills the tank.
+ *
+ * Absent means both count, which is what TREK did before the setting existed and is the
+ * right answer for somebody who never said. It is only wrong once a vehicle IS named:
+ * a petrol station does not charge a battery, and a charger does not fill a tank.
+ */
+export type VehicleKind = 'combustion' | 'electric'
+
+/** The stop kind that refills the named vehicle, for filtering a search. */
+export function refuelStopTypeFor(vehicle: VehicleKind | null | undefined): readonly string[] {
+  if (vehicle === 'combustion') return ['fuel']
+  if (vehicle === 'electric') return ['charging']
+  return REFUELLING_STOP_TYPES
+}
+
+/**
+ * Whether stopping here starts the range budget over.
+ *
+ * With no vehicle named, either kind does — a plain reading of "I filled up". Once one is
+ * named the other stops counting, because the alternative is arithmetic that is simply
+ * wrong: an electric car pausing at a petrol station had its battery refilled on paper,
+ * the warnings went quiet for the rest of the day, and the driver was told nothing.
+ */
+export function refuelsRange(stopType: string | null | undefined, vehicle?: VehicleKind | null): boolean {
+  return refuelStopTypeFor(vehicle).includes(stopType ?? '')
 }
 
 /**
@@ -131,6 +156,15 @@ export function refuelsRange(stopType: string | null | undefined): boolean {
  * rather than a sentinel: zero is a legal thing to type and means the same as unset.
  */
 export interface DriveLimits {
+  /**
+   * How full a fill-up actually goes, 1 to 100, or null for "all the way".
+   *
+   * Nobody charges an electric car to 100 % on the road: the last fifth takes as long as
+   * the first four and the manual says not to. Treating every stop as a full tank
+   * overstates the range after it by exactly that fifth, which is a whole leg on a long
+   * day.
+   */
+  fillPercent?: number | null
   /** Longest single drive between two stops, in minutes. */
   legMinutes: number | null
   /** Longest total driving in one day, in minutes. */
@@ -212,8 +246,10 @@ function resolveArrival(
 }
 
 export function computeSchedule(stops: ScheduleStop[], legSeconds: (number | undefined)[]): Schedule {
-  const entries: ScheduleEntry[] = []
   const warnings: ScheduleWarning[] = []
+  // Arrivals in minutes, so the chain can be walked twice before anything is formatted.
+  const arrivals: (number | null)[] = new Array(stops.length).fill(null)
+  const anchored: boolean[] = new Array(stops.length).fill(false)
   // Minutes since the first stop's midnight, so a chain crossing midnight keeps counting.
   let cursor: number | null = null
   let dayOffset = 0
@@ -224,28 +260,57 @@ export function computeSchedule(stops: ScheduleStop[], legSeconds: (number | und
     const { arrival, lateBy } = resolveArrival(anchor, cursor, dayOffset)
     if (lateBy !== null) warnings.push({ index: i, code: 'late', minutes: lateBy })
 
-    if (arrival === null) {
+    if (arrival === null) continue
+
+    const offset = Math.floor(arrival / DAY_MINUTES)
+    if (offset > dayOffset) dayOffset = offset
+
+    arrivals[i] = arrival
+    anchored[i] = anchor !== null
+
+    const leg = legSeconds[i]
+    cursor = leg === undefined ? null : arrival + (stop.dwellMinutes ?? 0) + Math.round(leg / 60)
+  }
+
+  // Then backwards, for the stops the forward walk left blank because nobody had pinned
+  // a time yet. Pinning a time on the second stop is the ordinary way to plan: the museum
+  // opens at ten, so when do we have to leave? Working back from the first known arrival
+  // answers it — departure = the next arrival minus the drive, arrival = that minus the
+  // stay — and it stops at the first leg that never routed rather than inventing one.
+  const firstKnown = arrivals.findIndex(a => a !== null)
+  for (let i = firstKnown - 1; i >= 0; i--) {
+    const leg = legSeconds[i]
+    const next = arrivals[i + 1]
+    if (leg === undefined || next === null) break
+    arrivals[i] = next - Math.round(leg / 60) - (stops[i].dwellMinutes ?? 0)
+  }
+
+  // Working back can land before the anchor day's midnight, which would print as a
+  // negative day. `dayOffset` counts days past the FIRST stop, so the whole chain shifts
+  // up instead until the earliest stop sits on day zero again.
+  const earliest = arrivals.reduce<number | null>((m, a) => (a === null ? m : m === null || a < m ? a : m), null)
+  const shift = earliest === null || earliest >= 0 ? 0 : -Math.floor(earliest / DAY_MINUTES) * DAY_MINUTES
+
+  const entries: ScheduleEntry[] = []
+  let lastOffset = 0
+  for (let i = 0; i < stops.length; i++) {
+    const raw = arrivals[i]
+    if (raw === null) {
       entries.push({ arrival: null, departure: null, anchored: false, dayOffset: 0 })
       continue
     }
-
-    const offset = Math.floor(arrival / (24 * 60))
-    if (offset > dayOffset) {
-      dayOffset = offset
-      warnings.push({ index: i, code: 'overnight' })
-    }
-
-    const dwell = stop.dwellMinutes ?? 0
-    const departure = arrival + dwell
+    const arrival = raw + shift
+    const offset = Math.floor(arrival / DAY_MINUTES)
+    // Read off the finished chain rather than during the forward walk, so a midnight the
+    // backward pass introduced is marked too.
+    if (offset > lastOffset) warnings.push({ index: i, code: 'overnight' })
+    lastOffset = offset
     entries.push({
       arrival: formatClock(arrival),
-      departure: formatClock(departure),
-      anchored: anchor !== null,
+      departure: formatClock(arrival + (stops[i].dwellMinutes ?? 0)),
+      anchored: anchored[i],
       dayOffset: offset,
     })
-
-    const leg = legSeconds[i]
-    cursor = leg === undefined ? null : departure + Math.round(leg / 60)
   }
 
   return { entries, warnings }
@@ -309,6 +374,29 @@ export function sumLegSeconds(legSeconds: (number | undefined)[]): number {
  * a rounding edge and not a missing leg.
  */
 /**
+ * Where a tank runs dry, in the day's own driving coordinates.
+ *
+ * A separate thing from the range WARNING, and the difference is the whole point. The
+ * warning is filed against the stop the car arrives at, which is where somebody finds
+ * out; this is where the fuel actually runs out, which can be most of a leg earlier and
+ * is the only place worth suggesting a filling station.
+ *
+ * `drivenMeters` counts DRIVING legs only, so it is not an offset into the day's drawn
+ * line: that line also carries ferry and walking runs. Converting it to a coordinate
+ * means walking the driving legs, which `dryPointOn` does.
+ */
+export interface DryPoint {
+  /** Index into the day's legs, i.e. the leg the car is on when the tank empties. */
+  legIndex: number
+  /** How far into that leg, in kilometres. */
+  intoLegKm: number
+  /** Metres of driving from the start of the day to that point. */
+  drivenMeters: number
+  /** The range limit that was crossed, which is what the traveller set. */
+  sinceKm: number
+}
+
+/**
  * The findings about the driving itself: too long at the wheel, too long in one day, and
  * the tank running out before anywhere to fill it.
  *
@@ -344,13 +432,45 @@ export function deriveDriveWarnings(
   limits: DriveLimits,
   /** Kilometres already on the tank when the day starts; null when that is unknown. */
   carryKm: number | null,
-): { warnings: ScheduleWarning[]; day: DayWarning | null; carryKm: number | null } {
+  /**
+   * Per stop, how full THAT stop fills up, 1-100. Absent follows `limits.fillPercent`.
+   *
+   * A property of the stop rather than of the traveller: a motorway rapid charger is
+   * worth about 80 % because the last fifth costs as long again, while the one at the
+   * hotel is worth all of it because the car stands there all night. One figure for the
+   * whole trip cannot say both, and the difference between them is a leg.
+   *
+   * Last and optional so the four-argument call, which is every caller that has no
+   * per-stop opinion, keeps meaning exactly what it did.
+   */
+  fillAt: readonly (number | null | undefined)[] = [],
+): { warnings: ScheduleWarning[]; day: DayWarning | null; carryKm: number | null; emptyAt: DryPoint[] } {
   const warnings: ScheduleWarning[] = []
+  const emptyAt: DryPoint[] = []
   let budget = carryKm
   let totalSeconds = 0
+  // Metres of DRIVING covered so far. Not the same as metres along the day's line: the
+  // line carries every run, and a ferry or a walk in the middle of a day adds to it
+  // without adding to this. Whatever converts a dry point back into a coordinate has to
+  // walk the driving legs only, which is why this is counted here rather than derived.
+  let drivenMeters = 0
+
+  /**
+   * What is already on the clock the moment the car pulls away from stop `i`.
+   *
+   * A tank filled to 80 % has used a fifth of its range before it moves, which is how a
+   * budget that counts upwards says "not full". Zero, absent and 100 all mean it filled
+   * right up, so all three land on nothing used.
+   */
+  const usedAfterFilling = (i: number): number => {
+    const percent = fillAt[i] ?? limits.fillPercent
+    return limits.rangeKm && percent && percent > 0 && percent < 100
+      ? limits.rangeKm * (1 - percent / 100)
+      : 0
+  }
 
   for (let i = 0; i < legs.length; i++) {
-    if (refuelsAt[i]) budget = 0
+    if (refuelsAt[i]) budget = usedAfterFilling(i)
     const leg = legs[i]
     // The stop this leg arrives at. Both findings are about what is true on arrival.
     const at = i + 1
@@ -370,7 +490,25 @@ export function deriveDriveWarnings(
     if (typeof metres !== 'number') {
       budget = null
     } else if (budget !== null) {
+      const before = budget
       budget += metres / 1000
+      // Where the tank actually runs dry, as opposed to where somebody notices. The
+      // warning below sits on the arriving stop, which can be a hundred kilometres past
+      // the point the fuel ran out; a suggestion has to be offered at the point, or it
+      // suggests filling up somewhere the car cannot reach.
+      //
+      // Once per tank, not once per warning. A long stretch with nothing on it produces
+      // a run of warnings on purpose (see the note above), and one refuel offer per
+      // warning would stack three identical offers down one day for a single fill-up.
+      if (limits.rangeKm && before <= limits.rangeKm && budget > limits.rangeKm) {
+        const intoLegKm = limits.rangeKm - before
+        emptyAt.push({
+          legIndex: i,
+          intoLegKm,
+          drivenMeters: drivenMeters + intoLegKm * 1000,
+          sinceKm: Math.round(limits.rangeKm),
+        })
+      }
       // Not on a stop that fills up: arriving at a petrol station with an empty tank is
       // the plan working, not a problem, and a warning there would sit on the one stop
       // that answers it. No reset either — a warning is not a fill-up, and the figure has
@@ -378,18 +516,19 @@ export function deriveDriveWarnings(
       if (limits.rangeKm && budget > limits.rangeKm && !refuelsAt[at]) {
         warnings.push({ index: at, code: 'range', sinceKm: Math.round(budget) })
       }
+      drivenMeters += metres
     }
   }
   // The last stop of the day counts too: filling up on arrival is what makes the next
   // morning start with a full tank.
-  if (refuelsAt[legs.length]) budget = 0
+  if (refuelsAt[legs.length]) budget = usedAfterFilling(legs.length)
 
   const minutes = Math.round(totalSeconds / 60)
   const day = limits.dayMinutes && minutes > limits.dayMinutes
     ? { code: 'dayDriving' as const, minutes, limitMinutes: limits.dayMinutes }
     : null
 
-  return { warnings, day, carryKm: budget }
+  return { warnings, day, carryKm: budget, emptyAt }
 }
 
 export function legIndexForAlong(legEndMeters: number[], alongMeters: number): number {
@@ -638,4 +777,27 @@ export function reanchorAfterReorder(
 /** Whether a re-anchoring has anything to write at all. */
 export function isEmptyReanchoring(r: Reanchoring): boolean {
   return r.vias.length === 0 && r.remove.length === 0
+}
+
+/**
+ * The road classes a stored setting asks to leave out, validated.
+ *
+ * Parsed rather than trusted. A per-user setting has no server-side validation at all —
+ * the write route stores any key with any value and says so — so an unknown word here
+ * would travel straight into a costing option the router does not have. Unknown entries
+ * are dropped, the order is fixed so two equal settings produce one cache key, and
+ * anything that is not a non-empty list reads as "route normally".
+ */
+export function parseAvoid(raw: unknown): RouteAvoidClass[] {
+  if (typeof raw !== 'string' || !raw.trim()) return []
+  const asked = new Set(raw.split(',').map(part => part.trim().toLowerCase()))
+  return AVOIDABLE.filter(cls => asked.has(cls))
+}
+
+/** Every class that can be avoided, in the order they are offered and stored. */
+export const AVOIDABLE: readonly RouteAvoidClass[] = ['toll', 'motorway', 'ferry']
+
+/** The setting value for a set of classes, in the fixed order. */
+export function serializeAvoid(classes: readonly RouteAvoidClass[]): string {
+  return AVOIDABLE.filter(cls => classes.includes(cls)).join(',')
 }

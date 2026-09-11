@@ -18,7 +18,13 @@ const mapMock = vi.hoisted(() => ({
   on: vi.fn(),
   off: vi.fn(),
   panBy: vi.fn(),
-  latLngToContainerPoint: vi.fn(() => ({ x: 0, y: 0, distanceTo: () => 1000 })),
+  // A flat projection, 1000 px per degree: far enough apart that every
+  // booking line clears its declutter floor, which is measured along the
+  // projected line (#2275) rather than read off a canned distanceTo.
+  latLngToContainerPoint: vi.fn(([lat, lng]: [number, number]) => ({
+    x: lng * 1000, y: lat * 1000,
+    distanceTo(other: { x: number; y: number }) { return Math.hypot(lng * 1000 - other.x, lat * 1000 - other.y) },
+  })),
   // Panes: jsdom has none, so keep them in a map the pane tests can read back.
   panes: new Map<string, HTMLElement>(),
   getPane: vi.fn(function (this: void, name: string) { return mapMock.panes.get(name) }),
@@ -221,15 +227,22 @@ describe('MapView', () => {
     expect(screen.getAllByTestId('polyline').length).toBeGreaterThan(0)
   })
 
-  it('FE-COMP-MAPVIEW-006b: the whole-trip overview colours each line, on a white casing', () => {
-    render(<MapView route={[[[48.0, 2.0], [49.0, 3.0]]]} routeColors={['#ea580c']} />)
+  it('FE-COMP-MAPVIEW-006b: a caller-coloured route takes its own core and casing', () => {
+    render(<MapView route={[[[48.0, 2.0], [49.0, 3.0]]]} routeColors={[{ line: '#ff9f0a', casing: '#c2740a' }]} />)
 
     const [casing, core] = screen.getAllByTestId('polyline')
       .map(el => JSON.parse(el.getAttribute('data-path-options') as string))
-    // White under the colour, the same trick the coloured GPX tracks use to stay
-    // readable on satellite and dark basemaps.
-    expect(casing.color).toBe('#ffffff')
-    expect(core.color).toBe('#ea580c')
+    expect(casing.color).toBe('#c2740a')
+    expect(core.color).toBe('#ff9f0a')
+  })
+
+  it('FE-COMP-MAPVIEW-006c: a line with no colour of its own keeps the route blue', () => {
+    render(<MapView route={[[[48.0, 2.0], [49.0, 3.0]]]} routeColors={[undefined]} />)
+
+    const [casing, core] = screen.getAllByTestId('polyline')
+      .map(el => JSON.parse(el.getAttribute('data-path-options') as string))
+    expect(casing.color).toBe('#0a5cc2')
+    expect(core.color).toBe('#0a84ff')
   })
 
   it('FE-COMP-MAPVIEW-007: does not render polyline when route is null', () => {

@@ -606,8 +606,10 @@ export const MapView = memo(function MapView({
   places = [],
   dayPlaces = [],
   route = null,
+  // One colour pair per entry of `route`, or absent for the blue the route has always
+  // been. Only the road trip passes these, and only while colouring by day is on.
+  routeColors = null,
   routeSegments = [],
-  routeColors,
   selectedPlaceId = null,
   hoverDisabled = false,
   onMarkerClick,
@@ -1028,15 +1030,12 @@ export const MapView = memo(function MapView({
 
       {/* Apple-Maps style: darker-blue casing under a bright-blue core, rounded.
           The casing carries the click when the route can be reshaped: it is the wider of
-          the two, so it is the one a pointer actually lands on.
-          In the whole-trip overview each day is drawn in its own colour (#1736), and the
-          casing goes white — the same trick the coloured GPX tracks use to stay readable
-          on satellite and dark basemaps, where a per-colour dark casing would not. */}
+          the two, so it is the one a pointer actually lands on. */}
       {route && route.length > 0 && route.flatMap((seg, i) => seg.length > 1 ? [
         <Polyline
           key={`${i}-casing`}
           positions={seg}
-          pathOptions={{ color: routeColors?.[i] ? '#ffffff' : '#0a5cc2', weight: 8, opacity: 1, lineCap: 'round', lineJoin: 'round' }}
+          pathOptions={{ color: routeColors?.[i]?.casing ?? '#0a5cc2', weight: 8, opacity: 1, lineCap: 'round', lineJoin: 'round' }}
           interactive={!!onRouteClick}
           eventHandlers={onRouteClick ? {
             click: (e: { latlng: { lat: number; lng: number }; originalEvent: MouseEvent }) => {
@@ -1050,7 +1049,7 @@ export const MapView = memo(function MapView({
         <Polyline
           key={`${i}-core`}
           positions={seg}
-          pathOptions={{ color: routeColors?.[i] ?? '#0a84ff', weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }}
+          pathOptions={{ color: routeColors?.[i]?.line ?? '#0a84ff', weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }}
           interactive={false}
         />,
       ] : [])}

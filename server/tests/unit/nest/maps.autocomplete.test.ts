@@ -55,6 +55,24 @@ const hit = (over: Record<string, unknown> = {}) => ({
 });
 
 /**
+ * A row from the service's OpenStreetMap layer. A different shape from the
+ * index rows above, which is the whole point of the two tests below: no `gers`,
+ * no address block, and an id in the service's own `osm:<type>/<id>` form.
+ */
+const osmHit = (over: Record<string, unknown> = {}) => ({
+  id: 'osm:node/9712313',
+  osm_type: 'node',
+  osm_id: 9712313,
+  name: 'Tokio Hauptbahnhof',
+  local_name: '東京駅丸の内駅舎',
+  lat: 35.6811816,
+  lng: 139.76598265,
+  category: 'sehenswuerdigkeit',
+  source: 'openstreetmap',
+  ...over,
+});
+
+/**
  * `enabled` drives the admin kill switch, which is read straight off
  * app_settings; an unset row reads as on, because the switch is fail-open.
  *
@@ -111,7 +129,8 @@ describe('MapsService.autocompletePlaces', () => {
     });
 
     // Eight, not ten: the suggestion list is what a person reads while typing.
-    expect(mockSearch).toHaveBeenCalledWith(INPUT, { lat: 54.1, lng: 12.2, limit: 8 });
+    expect(mockSearch).toHaveBeenCalledWith(INPUT,
+      { lat: 54.1, lng: 12.2, limit: 8, sources: 'index,osm' });
   });
 
   it('MAPS-AUTO-004: without a bias the index is asked without coordinates rather than with zeroes', async () => {
@@ -122,7 +141,8 @@ describe('MapsService.autocompletePlaces', () => {
     // A 0/0 bias is a point in the Atlantic, and the index treats a bias as
     // permission to relax the match — which is how the shops around a landmark
     // start outranking the landmark.
-    expect(mockSearch).toHaveBeenCalledWith(INPUT, { lat: undefined, lng: undefined, limit: 8 });
+    expect(mockSearch).toHaveBeenCalledWith(INPUT,
+      { lat: undefined, lng: undefined, limit: 8, sources: 'index,osm' });
   });
 
   it('MAPS-AUTO-005: an index that found nothing falls through instead of answering empty', async () => {
@@ -142,6 +162,63 @@ describe('MapsService.autocompletePlaces', () => {
 
     expect(console.warn).toHaveBeenCalledWith('TREK Places autocomplete failed, falling back:', 'places api down');
     expect(result.source).not.toBe('trek-places');
+  });
+
+  it('MAPS-AUTO-008: a hit from the OpenStreetMap layer carries an id the details lookup can read', async () => {
+    mockSearch.mockResolvedValue([osmHit()]);
+
+    const { suggestions } = await make().autocompletePlaces(1, INPUT);
+
+    // `osm:node/9712313` is the service's form; this file resolves `node:123`.
+    // Passing the service's form through would hand the client an id nothing
+    // downstream recognises, and it would fail after the user had picked it.
+    expect(suggestions[0].placeId).toBe('node:9712313');
+    expect(suggestions[0].mainText).toBe('Tokio Hauptbahnhof');
+    // The layer has no address. The name written on the building is more use
+    // under a translated label than an empty second line.
+    expect(suggestions[0].secondaryText).toBe('東京駅丸の内駅舎');
+  });
+
+  it('MAPS-AUTO-009: index and layer hits keep their own id form in one list', async () => {
+    mockSearch.mockResolvedValue([hit(), osmHit(), hit({ gers: 'def-456' })]);
+
+    const { suggestions } = await make().autocompletePlaces(1, INPUT);
+
+    expect(suggestions.map(s => s.placeId)).toEqual([
+      'gers:abc-123',
+      'node:9712313',
+      'gers:def-456',
+    ]);
+    // A local name equal to the label would be a repeated line, not a hint.
+    const same = osmHit({ local_name: 'Tokio Hauptbahnhof' });
+    mockSearch.mockResolvedValue([same]);
+    const second = await make().autocompletePlaces(1, INPUT);
+    expect(second.suggestions[0].secondaryText).toBe('');
+  });
+
+  it('MAPS-AUTO-010: each row says which index it came from, because the list is two', async () => {
+    mockSearch.mockResolvedValue([hit(), osmHit()]);
+
+    const { suggestions, source } = await make().autocompletePlaces(1, INPUT);
+
+    // The name above the list describes the call, and the call asked both. Only
+    // the row can say which of the two answered it — without that the reader is
+    // told a place from OpenStreetMap came out of the TREK index, which is the
+    // one thing the mark beside a suggestion exists to answer.
+    expect(source).toBe('trek-places');
+    expect(suggestions.map(s => s.source)).toEqual(['trek-places', 'openstreetmap']);
+  });
+
+  it('MAPS-AUTO-011: a suggestion carries the coordinates the index already gave, so the pick needs no second hop', async () => {
+    mockSearch.mockResolvedValue([hit(), osmHit()]);
+
+    const { suggestions } = await make().autocompletePlaces(1, INPUT);
+
+    // Without these the client, when the details lookup cannot answer, searches
+    // for the label instead — and for a layer row that label is a name plus its
+    // local spelling, which is not a query anybody typed.
+    expect(suggestions[0]).toMatchObject({ lat: 54.0879, lng: 12.1408 });
+    expect(suggestions[1]).toMatchObject({ lat: 35.6811816, lng: 139.76598265 });
   });
 
   it('MAPS-AUTO-007: the keystroke never leaves for the index while the admin has it off', async () => {

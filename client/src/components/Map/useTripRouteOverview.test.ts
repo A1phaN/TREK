@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { TRACK_COLORS } from '@trek/shared'
+import { dayColor } from '../Roadtrip/dayColors'
 import { useTripRouteOverview } from './useTripRouteOverview'
 import { buildAssignment, buildDay, buildPlace } from '../../../tests/helpers/factories'
 import type { AssignmentsMap, RouteSegment } from '../../types'
@@ -64,16 +64,18 @@ describe('useTripRouteOverview', () => {
     expect(result.current.totalDuration).toBe(1800)
   })
 
-  it('FE-MAP-TRO-003: gives each day its own colour from the map palette', async () => {
+  it('FE-MAP-TRO-003: gives each day the colour the road trip draws it in', async () => {
     const { result } = render()
 
     await waitFor(() => expect(result.current.loading).toBe(false))
     const colors = result.current.days.map(d => d.color)
-    expect(colors[0]).toBe(TRACK_COLORS[1])
-    expect(colors[1]).toBe(TRACK_COLORS[2])
+    // The same palette either way, so a day does not change colour when the trip is
+    // read as a road trip instead of an overview.
+    expect(colors[0]).toEqual(dayColor(1))
+    expect(colors[1]).toEqual(dayColor(2))
     // Every drawn line is labelled with the colour of the day it belongs to.
     expect(result.current.lineColors).toHaveLength(result.current.lines.length)
-    expect(new Set(result.current.lineColors).size).toBe(2)
+    expect(new Set(result.current.lineColors.map(c => c.line)).size).toBe(2)
   })
 
   it('FE-MAP-TRO-004: reports the modes each day is travelled in', async () => {

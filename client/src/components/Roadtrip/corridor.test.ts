@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
+  boxAround,
   corridorTiles,
   distanceToSegmentKm,
   haversineKm,
+  pointAtMeters,
   projectOntoRoute,
+  sliceAtMeters,
   simplifyLine,
   type LatLng,
 } from './corridor'
@@ -153,5 +156,108 @@ describe('simplifyLine', () => {
 
   it('leaves a two-point line alone', () => {
     expect(simplifyLine([BERLIN, DRESDEN], 5)).toEqual([BERLIN, DRESDEN])
+  })
+})
+
+describe('pointAtMeters', () => {
+  // A straight run due east along one parallel, so the arithmetic is checkable by hand:
+  // at 52° north a degree of longitude is about 68.5 km.
+  const WEST: LatLng = { lat: 52, lng: 13 }
+  const EAST: LatLng = { lat: 52, lng: 14 }
+  const LEG = haversineKm(WEST, EAST) * 1000
+
+  it('lands halfway along a single segment', () => {
+    const mid = pointAtMeters([WEST, EAST], LEG / 2)!
+    expect(mid.lat).toBeCloseTo(52, 5)
+    expect(mid.lng).toBeCloseTo(13.5, 3)
+  })
+
+  it('walks past the first segment into the second', () => {
+    const line = [WEST, EAST, { lat: 52, lng: 15 }]
+    const at = pointAtMeters(line, LEG * 1.5)!
+    // One and a half segments in, so halfway through the second.
+    expect(at.lng).toBeGreaterThan(14)
+    expect(at.lng).toBeLessThan(15)
+  })
+
+  it('returns the last point past the end rather than nothing', () => {
+    // A tank that runs out after the day's final stop still ran out somewhere; the
+    // caller decides what to do about that, so this must not answer null.
+    expect(pointAtMeters([WEST, EAST], LEG * 10)).toEqual(EAST)
+  })
+
+  it('answers the first point for zero, and nothing for an empty line', () => {
+    expect(pointAtMeters([WEST, EAST], 0)).toEqual(WEST)
+    expect(pointAtMeters([WEST, EAST], -5)).toEqual(WEST)
+    expect(pointAtMeters([], 100)).toBeNull()
+    expect(pointAtMeters([WEST], 100)).toEqual(WEST)
+  })
+
+  it('survives a repeated vertex without dividing by zero', () => {
+    // A route line concatenated from several runs does contain these.
+    const at = pointAtMeters([WEST, WEST, EAST], LEG / 2)!
+    expect(at.lng).toBeCloseTo(13.5, 3)
+  })
+})
+
+describe('boxAround', () => {
+  it('reaches the asked radius on all four sides', () => {
+    const box = boxAround(BERLIN, 10)
+    // North and south are the easy ones: a degree of latitude is constant.
+    expect(haversineKm(BERLIN, { lat: box.north, lng: BERLIN.lng })).toBeCloseTo(10, 0)
+    expect(haversineKm(BERLIN, { lat: BERLIN.lat, lng: box.east })).toBeCloseTo(10, 0)
+  })
+
+  it('widens the longitude span the further north it sits', () => {
+    // The same radius is more degrees of longitude in Tromsø than in Berlin.
+    const berlin = boxAround(BERLIN, 10)
+    const tromso = boxAround({ lat: 69.65, lng: 18.96 }, 10)
+    expect(tromso.east - tromso.west).toBeGreaterThan(berlin.east - berlin.west)
+  })
+})
+
+describe('sliceAtMeters', () => {
+  // A degree of latitude is about 111 km, so this line is roughly 111 km long and every
+  // figure below can be read off it without a calculator.
+  const line: LatLng[] = [{ lat: 52, lng: 13 }, { lat: 53, lng: 13 }]
+
+  it('cuts a stretch out of the middle and interpolates both ends', () => {
+    const out = sliceAtMeters(line, 30_000, 60_000)
+    expect(out).toHaveLength(2)
+    expect(haversineKm(out[0], out[1]) * 1000).toBeGreaterThan(29_000)
+    expect(haversineKm(out[0], out[1]) * 1000).toBeLessThan(31_000)
+  })
+
+  it('two adjacent slices meet exactly, so the parts rebuild the whole', () => {
+    // The reason this exists: a day's line is its legs end to end, and a night drive
+    // takes its own leg to the next card. A gap at the join would draw as a break in
+    // the road.
+    const first = sliceAtMeters(line, 0, 40_000)
+    const second = sliceAtMeters(line, 40_000, 80_000)
+    const end = first[first.length - 1]
+    expect(haversineKm(end, second[0])).toBeLessThan(0.001)
+  })
+
+  it('clamps to the line rather than running past its end', () => {
+    const out = sliceAtMeters(line, 0, 999_000_000)
+    expect(out[out.length - 1]).toEqual(line[line.length - 1])
+  })
+
+  it('is empty for a zero-length or backwards range', () => {
+    expect(sliceAtMeters(line, 50_000, 50_000)).toEqual([])
+    expect(sliceAtMeters(line, 60_000, 30_000)).toEqual([])
+  })
+
+  it('is empty for a line that is not one', () => {
+    expect(sliceAtMeters([], 0, 100)).toEqual([])
+    expect(sliceAtMeters([{ lat: 52, lng: 13 }], 0, 100)).toEqual([])
+  })
+
+  it('survives a repeated vertex without producing NaN', () => {
+    // A concatenated route line really does contain these, and dividing by a zero-length
+    // segment is how a route full of NaN reaches the map.
+    const doubled: LatLng[] = [{ lat: 52, lng: 13 }, { lat: 52, lng: 13 }, { lat: 53, lng: 13 }]
+    const out = sliceAtMeters(doubled, 10_000, 20_000)
+    expect(out.every(p => Number.isFinite(p.lat) && Number.isFinite(p.lng))).toBe(true)
   })
 })

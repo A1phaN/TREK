@@ -5,8 +5,8 @@ import type { TripRouteOverview } from './useTripRouteOverview'
 
 const overview = (over: Partial<TripRouteOverview> = {}): TripRouteOverview => ({
   days: [
-    { dayId: 1, dayNumber: 1, date: '2025-06-01', title: null, color: '#1d4ed8', lines: [], segments: [], distance: 82000, duration: 3600, modes: ['driving'] },
-    { dayId: 2, dayNumber: 2, date: '2025-06-02', title: 'Coast road', color: '#ea580c', lines: [], segments: [], distance: 140500, duration: 7200, modes: ['driving', 'walking'] },
+    { dayId: 1, dayNumber: 1, date: '2025-06-01', title: null, color: { line: '#0a84ff', casing: '#0a5cc2' }, lines: [], segments: [], distance: 82000, duration: 3600, modes: ['driving'] },
+    { dayId: 2, dayNumber: 2, date: '2025-06-02', title: 'Coast road', color: { line: '#ff9f0a', casing: '#c2740a' }, lines: [], segments: [], distance: 140500, duration: 7200, modes: ['driving', 'walking'] },
   ],
   lines: [], lineColors: [], segments: [], focusPoints: [],
   totalDistance: 222500, totalDuration: 10800, loading: false,
