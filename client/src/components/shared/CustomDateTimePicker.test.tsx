@@ -577,9 +577,12 @@ describe('CustomDatePicker branches', () => {
       render(<CustomDatePicker value="2026-03-15" onChange={onChange} />);
       openCalendar();
       const dialog = screen.getByRole('dialog');
-      // vw < 360 centres the 268px popup; the popup flips above the trigger
+      // vw < 360 centres the 268px popup; the popup flips above the trigger,
+      // anchored from the trigger's own top edge via `bottom` (not a `top`
+      // computed by subtracting a guessed popup height — see FE-W5DP-024).
       expect(dialog.style.left).toBe('26px');
-      expect(dialog.style.top).toBe('336px');
+      expect(dialog.style.top).toBe('');
+      expect(dialog.style.bottom).toBe('72px');
     } finally {
       Element.prototype.getBoundingClientRect = originalRect;
       Object.defineProperty(window, 'innerWidth', { value: originalWidth, configurable: true });
@@ -602,6 +605,31 @@ describe('CustomDatePicker branches', () => {
     } finally {
       Element.prototype.getBoundingClientRect = originalRect;
       Object.defineProperty(window, 'visualViewport', { value: undefined, configurable: true });
+    }
+  });
+
+  it('FE-W5DP-024: a flipped popup stays flush against its trigger instead of a fixed guessed offset (#2334)', () => {
+    // A settle-up-style form: the trigger sits low enough that the popup can't
+    // fit below it, but there is plenty of room above — a shorter gap than the
+    // worst-case guess would previously leave the popup floating over unrelated
+    // fields higher up the form instead of right above its own trigger.
+    const originalRect = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = function () {
+      return { left: 440, top: 529, right: 803, bottom: 566, width: 363, height: 37, x: 440, y: 529, toJSON: () => ({}) } as DOMRect;
+    };
+
+    try {
+      render(<CustomDatePicker value="2026-03-15" onChange={onChange} />);
+      openCalendar();
+      const dialog = screen.getByRole('dialog');
+      // jsdom's default innerHeight (768) leaves 768-566=202px below the
+      // trigger — short of the flip threshold — so it flips, anchored to the
+      // trigger's own top edge (768-529+4=243), not a `top` derived from
+      // subtracting a guessed popup height.
+      expect(dialog.style.top).toBe('');
+      expect(dialog.style.bottom).toBe('243px');
+    } finally {
+      Element.prototype.getBoundingClientRect = originalRect;
     }
   });
 
