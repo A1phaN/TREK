@@ -62,8 +62,6 @@ export default function DayWindowFields({ start, end, endMode = 'route', onSave 
           ))}
         </div>
         <p id="roadtrip-end-mode-hint" className="text-caption text-content-faint">{t(`roadtrip.window.${endMode === 'stop' ? 'stopHint' : 'routeHint'}`)}</p>
-        <p className="text-caption text-content-faint">{t('roadtrip.window.endHereHint')}</p>
-        {!!dayWindow(shownStart, shownEnd) && <p className="text-caption text-content-faint">{t('roadtrip.window.dragHint')}</p>}
       </fieldset>
     </fieldset>
   )
