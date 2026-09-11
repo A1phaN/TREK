@@ -1,3 +1,4 @@
+import { useRoadtripSettings } from '../../hooks/useRoadtripSettings'
 import { assembleRoadtrip, foldRouteRun, type RoadtripStop, type RoadtripRoutes, type PlanDay, type QuietDay, type RoutedLeg } from '@trek/shared/roadtrip'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { calculateRouteWithLegs, RoutingRefusedError } from '../Map/RouteCalculator'
@@ -144,9 +145,9 @@ export function useRoadtripRoutes(
   const [loading, setLoading] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
-  const legMinutes = useSettingsStore(s => s.settings.roadtrip_leg_minutes)
-  const dayMinutes = useSettingsStore(s => s.settings.roadtrip_day_minutes)
-  const fillPercent = useSettingsStore(s => s.settings.roadtrip_fill_percent)
+  const legMinutes = useRoadtripSettings(s => s.roadtrip_leg_minutes, tripId)
+  const dayMinutes = useRoadtripSettings(s => s.roadtrip_day_minutes, tripId)
+  const fillPercent = useRoadtripSettings(s => s.roadtrip_fill_percent, tripId)
   /**
    * Road classes to weight away, as the settings row stores them: a comma list.
    *
@@ -155,7 +156,7 @@ export function useRoadtripRoutes(
    * any value — and an unknown word here would become a costing option the router does
    * not have.
    */
-  const avoidSetting = useSettingsStore(s => s.settings.roadtrip_avoid)
+  const avoidSetting = useRoadtripSettings(s => s.roadtrip_avoid, tripId)
   /**
    * Whether the gaps between days are driven too.
    *
@@ -164,16 +165,16 @@ export function useRoadtripRoutes(
    * the trip one continuous drive — every one of those gaps is routed, drawn, and counted
    * towards the day it ARRIVES on, which is the same rule a night drive already follows.
    */
-  const connectSetting = useSettingsStore(s => !!s.settings.roadtrip_connect_days)
-  const startTime = useSettingsStore(s => s.settings.roadtrip_day_start)
-  const endTime = useSettingsStore(s => s.settings.roadtrip_day_end)
-  const endMode = useSettingsStore(s => s.settings.roadtrip_day_end_mode)
+  const connectSetting = useRoadtripSettings(s => !!s.roadtrip_connect_days, tripId)
+  const startTime = useRoadtripSettings(s => s.roadtrip_day_start, tripId)
+  const endTime = useRoadtripSettings(s => s.roadtrip_day_end, tripId)
+  const endMode = useRoadtripSettings(s => s.roadtrip_day_end_mode, tripId)
   const window = useMemo(() => dayWindow(startTime, endTime, endMode), [startTime, endTime, endMode])
   const connectDays = connectSetting || window !== null
   const avoid = useMemo(() => parseAvoid(avoidSetting), [avoidSetting])
   // What the car is and how far it goes on one fill, assembled in one place because the
   // rail needs the same answer to say what a given fill buys at a given stop.
-  const { vehicleKind, rangeKm: planningRangeKm } = useVehicleRange()
+  const { vehicleKind, rangeKm: planningRangeKm } = useVehicleRange(tripId)
   const avoidKey = avoid.join(',')
   // Zero and absent both mean "no limit": zero is a legal thing to type and says the
   // same thing, so it is folded here rather than guarded at every reading.

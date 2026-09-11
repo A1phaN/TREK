@@ -258,8 +258,9 @@ export const TREK_WS_EVENTS = {
   // ── Memories ─────────────────────────────────────────────────────────────
   'memories:updated': { scope: 'trip', payload: z.object({ userId: id }) },
 
+  'roadtripPreferences:changed': { scope: 'trip', payload: z.object({ preferences: roadtripPreferencesSchema }) },
+
   // ── Notifications (user-scoped) ──────────────────────────────────────────
-  'roadtripPreferences:changed': { scope: 'user', payload: z.object({ preferences: roadtripPreferencesSchema }) },
   'notification:new': { scope: 'user', payload: z.object({ notification: entity }) },
   'notification:updated': { scope: 'user', payload: z.object({ notification: entity }) },
 

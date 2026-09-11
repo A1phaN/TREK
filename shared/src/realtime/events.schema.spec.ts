@@ -144,11 +144,11 @@ const DRIFT_VARIANTS: Partial<Record<TrekWsEventName, Record<string, unknown>[]>
 };
 
 describe('@trek/shared realtime event registry', () => {
-  it('WSEVT-REG-001: pins the authoritative inventory counts (72 trip + 33 user = 105)', () => {
+  it('WSEVT-REG-001: pins the authoritative inventory counts (73 trip + 32 user = 105)', () => {
     // 67th to 69th trip event: the three collab:link:* a shared link emits.
     // 70th and 71st: the road trip's vias and tracks, which used to be written silently.
-    expect(TREK_WS_TRIP_EVENT_NAMES).toHaveLength(72);
-    expect(TREK_WS_USER_EVENT_NAMES).toHaveLength(33);
+    expect(TREK_WS_TRIP_EVENT_NAMES).toHaveLength(73);
+    expect(TREK_WS_USER_EVENT_NAMES).toHaveLength(32);
     expect(TREK_WS_EVENT_NAMES).toHaveLength(105);
   });
 

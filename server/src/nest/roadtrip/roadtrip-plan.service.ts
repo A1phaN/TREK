@@ -74,7 +74,7 @@ export class RoadtripPlanService {
     return {
       days,
       visits,
-      settings: this.preferences.read(userId),
+      settings: this.preferences.read(tripId),
       profiles: this.router.profiles(),
       vias: this.roadtrip.listForTrip(tripId),
       tracks: this.roadtrip.tracksForTrip(tripId),

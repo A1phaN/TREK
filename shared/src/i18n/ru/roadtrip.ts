@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "В сети перетащите конец дня по маршруту или на место; щёлкните правой кнопкой для возврата к автоматическому завершению.",
-  'roadtrip.window.resetBoundaries': "Восстановить автоматические окончания дней",
+  'roadtrip.stops.section': 'Сервисные остановки',
+  'roadtrip.stops.inDays': 'Показывать также в разделе «Дни»',
+  'roadtrip.stops.daysHint':
+    'Применяется ко всем сервисным остановкам поездки. Если выключено, они остаются только в Roadtrip. Включите, чтобы снова показывать их в разделе «Дни».',
+  'roadtrip.window.dragHint':
+    'В сети перетащите конец дня по маршруту или на место; щёлкните правой кнопкой для возврата к автоматическому завершению.',
+  'roadtrip.window.resetBoundaries': 'Восстановить автоматические окончания дней',
   'roadtrip.window.endHere': 'Завершить день здесь',
   'roadtrip.window.endHereHint':
     'В сведениях о месте можно завершить день на выбранной остановке, когда активны режим Roadtrip и ежедневное время поездки.',
@@ -93,11 +98,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Платные дороги',
   'roadtrip.avoid.motorway': 'Автомагистрали',
   'roadtrip.avoid.ferry': 'Паромы',
-  'roadtrip.avoid.hint': 'Это понижение веса, а не запрет. Если у поездки нет обхода, она всё равно пройдёт там, и день это покажет.',
-  'roadtrip.avoid.unavailable': 'Недоступно: этот экземпляр использует собственный движок, который не умеет исключать класс дорог.',
+  'roadtrip.avoid.hint':
+    'Это понижение веса, а не запрет. Если у поездки нет обхода, она всё равно пройдёт там, и день это покажет.',
+  'roadtrip.avoid.unavailable':
+    'Недоступно: этот экземпляр использует собственный движок, который не умеет исключать класс дорог.',
   'roadtrip.avoid.badge': '{count} в обход',
   'roadtrip.avoid.missed': '{classes} не обойти',
-  'roadtrip.avoid.missedHint': 'В этот день объезда нет, поэтому поездка идёт через это. Остальные дни по-прежнему обходят, что могут.',
+  'roadtrip.avoid.missedHint':
+    'В этот день объезда нет, поэтому поездка идёт через это. Остальные дни по-прежнему обходят, что могут.',
   'roadtrip.refuel.dry': 'Здесь кончится топливо',
   'roadtrip.refuel.after': 'через {distance}',
   'roadtrip.limit.vehicleLabel': 'На чём вы едете',
@@ -139,11 +147,13 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': 'длина {distance}',
   'roadtrip.track.gap': 'в {distance} от этого дня',
   'roadtrip.track.onDay': 'вдоль этого дня',
-  'roadtrip.track.explain': 'Маршрут притягивается к треку несколькими промежуточными точками. Существующие точки на этих участках заменяются.',
+  'roadtrip.track.explain':
+    'Маршрут притягивается к треку несколькими промежуточными точками. Существующие точки на этих участках заменяются.',
   'roadtrip.track.action': 'Идти по этому треку',
   'roadtrip.track.working': 'Подгоняем маршрут к треку, круг {round}',
   'roadtrip.track.done': 'Поставлено промежуточных точек: {count}. Маршрут держится в пределах {distance} от трека.',
-  'roadtrip.track.capped': 'Поставлено промежуточных точек: {count}. В худшем месте маршрут отходит от трека на {distance}.',
+  'roadtrip.track.capped':
+    'Поставлено промежуточных точек: {count}. В худшем месте маршрут отходит от трека на {distance}.',
   'roadtrip.track.already': 'Маршрут уже шёл по этому треку.',
   'roadtrip.track.errorRoute': 'Сервис маршрутов не ответил.',
   'roadtrip.track.errorSave': 'Не удалось сохранить промежуточные точки.',
@@ -158,7 +168,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'По пути ничего не соответствует «{name}».',
   'roadtrip.poi.noneMatchFilters': 'На маршруте нет ничего, что подходит под эти фильтры.',
   'roadtrip.poi.foundFiltered': '{count} из {total} по пути',
-  'roadtrip.poi.truncated': 'На {count} участках нашлось больше, чем помещается в один ответ — сузьте коридор, чтобы увидеть остальное.',
+  'roadtrip.poi.truncated':
+    'На {count} участках нашлось больше, чем помещается в один ответ — сузьте коридор, чтобы увидеть остальное.',
   'roadtrip.poi.search': 'Искать',
   'roadtrip.poi.searching': 'Поиск {done} из {total}',
   'roadtrip.poi.capped': 'Маршрут длинный — просмотрен только первый участок.',

@@ -624,6 +624,7 @@ export class TripsService {
         }
       }
 
+      this.db.prepare('INSERT INTO roadtrip_preferences (trip_id, key, value) SELECT ?, key, value FROM roadtrip_preferences WHERE trip_id = ?').run(newTripId, sourceTripId);
       const oldBoundaries = this.db.prepare('SELECT * FROM roadtrip_day_boundaries WHERE trip_id = ?').all(sourceTripId) as {
         day_number: number; from_assignment_id: number; to_assignment_id: number | null; fraction: number;
       }[];

@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "Khi trực tuyến, kéo điểm kết thúc ngày dọc tuyến đường hoặc đến một địa điểm; nhấp chuột phải để khôi phục kết thúc tự động.",
-  'roadtrip.window.resetBoundaries': "Khôi phục kết thúc ngày tự động",
+  'roadtrip.stops.section': 'Điểm dừng dịch vụ',
+  'roadtrip.stops.inDays': 'Hiển thị cả trong Ngày',
+  'roadtrip.stops.daysHint':
+    'Áp dụng cho mọi điểm dừng dịch vụ của chuyến đi. Khi tắt, chúng chỉ xuất hiện trong Roadtrip. Bật để hiển thị lại trong Ngày.',
+  'roadtrip.window.dragHint':
+    'Khi trực tuyến, kéo điểm kết thúc ngày dọc tuyến đường hoặc đến một địa điểm; nhấp chuột phải để khôi phục kết thúc tự động.',
+  'roadtrip.window.resetBoundaries': 'Khôi phục kết thúc ngày tự động',
   'roadtrip.window.endHere': 'Kết thúc ngày tại đây',
   'roadtrip.window.endHereHint':
     'Bạn có thể kết thúc ngày tại một điểm dừng trong chi tiết địa điểm khi chế độ Roadtrip và giờ di chuyển hằng ngày đang bật.',
@@ -92,11 +97,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Đường thu phí',
   'roadtrip.avoid.motorway': 'Đường cao tốc',
   'roadtrip.avoid.ferry': 'Phà',
-  'roadtrip.avoid.hint': 'Đây là hạ trọng số, không phải cấm. Khi một chặng không có đường vòng, nó vẫn đi qua và ngày đó sẽ báo.',
-  'roadtrip.avoid.unavailable': 'Không khả dụng: bản cài này dùng máy chủ định tuyến riêng, vốn không bỏ qua được một loại đường.',
+  'roadtrip.avoid.hint':
+    'Đây là hạ trọng số, không phải cấm. Khi một chặng không có đường vòng, nó vẫn đi qua và ngày đó sẽ báo.',
+  'roadtrip.avoid.unavailable':
+    'Không khả dụng: bản cài này dùng máy chủ định tuyến riêng, vốn không bỏ qua được một loại đường.',
   'roadtrip.avoid.badge': 'tránh {count}',
   'roadtrip.avoid.missed': '{classes} không tránh được',
-  'roadtrip.avoid.missedHint': 'Ngày này không có tuyến đường vòng, nên chặng đi qua đó. Những ngày khác vẫn tránh những gì có thể.',
+  'roadtrip.avoid.missedHint':
+    'Ngày này không có tuyến đường vòng, nên chặng đi qua đó. Những ngày khác vẫn tránh những gì có thể.',
   'roadtrip.refuel.dry': 'Hết xăng ở đây',
   'roadtrip.refuel.after': 'sau {distance}',
   'roadtrip.limit.vehicleLabel': 'Bạn lái xe gì',
@@ -138,7 +146,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': 'dài {distance}',
   'roadtrip.track.gap': 'cách ngày này {distance}',
   'roadtrip.track.onDay': 'dọc theo ngày này',
-  'roadtrip.track.explain': 'Hành trình được kéo về tuyến bằng một vài điểm trung gian. Các điểm hiện có trên những chặng đó sẽ bị thay thế.',
+  'roadtrip.track.explain':
+    'Hành trình được kéo về tuyến bằng một vài điểm trung gian. Các điểm hiện có trên những chặng đó sẽ bị thay thế.',
   'roadtrip.track.action': 'Đi theo tuyến này',
   'roadtrip.track.working': 'Đang khớp hành trình với tuyến, vòng {round}',
   'roadtrip.track.done': 'Đã đặt {count} điểm trung gian. Hành trình bám tuyến trong phạm vi {distance}.',
@@ -157,7 +166,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Không có gì trên đường khớp với “{name}”.',
   'roadtrip.poi.noneMatchFilters': 'Không có gì trên đường phù hợp với các bộ lọc này.',
   'roadtrip.poi.foundFiltered': '{count} trong {total} trên đường',
-  'roadtrip.poi.truncated': 'Có {count} đoạn nhiều hơn mức một phản hồi chứa được — thu hẹp hành lang để xem phần còn lại.',
+  'roadtrip.poi.truncated':
+    'Có {count} đoạn nhiều hơn mức một phản hồi chứa được — thu hẹp hành lang để xem phần còn lại.',
   'roadtrip.poi.search': 'Tìm kiếm',
   'roadtrip.poi.searching': 'Đang tìm {done}/{total}',
   'roadtrip.poi.capped': 'Lộ trình dài — chỉ đoạn đầu được tìm kiếm.',

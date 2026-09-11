@@ -1,3 +1,4 @@
+import { ROADTRIP_PREFERENCE_KEYS } from '@trek/shared';
 import { readEnv } from '../app-config';
 import { encrypt_api_key } from '../nest/common/crypto/apiKeyCrypto';
 
@@ -4549,6 +4550,11 @@ function runMigrations(db: Database.Database): void {
         fraction REAL NOT NULL CHECK (fraction BETWEEN 0 AND 1),
         PRIMARY KEY (trip_id, day_number)
       )`);
+    },
+    () => {
+      db.exec('CREATE TABLE IF NOT EXISTS roadtrip_preferences (trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE, key TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY (trip_id, key))');
+      const inherit = db.prepare('INSERT OR IGNORE INTO roadtrip_preferences (trip_id, key, value) SELECT t.id, s.key, s.value FROM trips t JOIN settings s ON s.user_id = t.user_id WHERE s.key = ? AND s.value IS NOT NULL');
+      for (const key of ROADTRIP_PREFERENCE_KEYS) inherit.run(key);
     },
   ];
 

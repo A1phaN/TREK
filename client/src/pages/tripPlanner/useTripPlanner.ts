@@ -1,3 +1,6 @@
+import { useLoadRoadtripSettings, useRoadtripSettings } from '../../hooks/useRoadtripSettings'
+import { roadtripPreferencesRepo } from '../../repo/roadtripPreferencesRepo'
+import { publishRoadtripPreferences } from '../../store/roadtripPreferencesStore'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router'
 import { useTripStore } from '../../store/tripStore'
@@ -41,7 +44,7 @@ import {
   reanchorAfterInsert,
   reanchorAfterRemove,
   reanchorByStopOrder,
-  reanchorAfterReorder, type DryPoint } from '../../components/Roadtrip/roadtripModel'
+  isServiceStopType, refuelStopTypeFor, reanchorAfterReorder, type DryPoint } from '../../components/Roadtrip/roadtripModel'
 import type { RoadtripStopDraft } from '../../components/Roadtrip/RoadtripStopPopup'
 import type { RoadtripStopType } from '@trek/shared'
 import { usePlaceSelection } from '../../hooks/usePlaceSelection'
@@ -49,7 +52,7 @@ import { usePlannerHistory } from '../../hooks/usePlannerHistory'
 import { useAirtrailConnection } from '../../hooks/useAirtrailConnection'
 import { useIsTouch } from '../../hooks/useIsTouch'
 import { usePluginStore } from '../../store/pluginStore'
-import type { Accommodation, TripMember, Day, Place, Reservation, Settings } from '../../types'
+import type { Accommodation, TripMember, Day, Place, Reservation } from '../../types'
 import { OFM_POSITRON, DEFAULT_MAP_LAT, DEFAULT_MAP_LNG, DEFAULT_MAP_ZOOM } from '../../constants/mapDefaults'
 import { useTileUrl } from '../../hooks/useTileUrl'
 import { resolvePoolAssignmentId } from './tripPlannerModel'
@@ -82,15 +85,16 @@ export function useTripPlanner() {
   const navigate = useNavigate()
   const toast = useToast()
   const { t, language } = useTranslation()
-  const { settings, updateSettings } = useSettingsStore()
+  const { settings } = useSettingsStore()
+  const roadtripSettings = useRoadtripSettings(s => s, tripId)
   // trip-page plugins mount as tabs inside this trip planner (tripId-scoped).
   const allPlugins = usePluginStore(s => s.plugins)
   const pluginsLoaded = usePluginStore(s => s.loaded)
   const placesPhotosEnabled = useAuthStore(s => s.placesPhotosEnabled)
   const trip = useTripStore(s => s.trip)
   const days = useTripStore(s => s.days)
-  const places = useTripStore(s => s.places)
-  const assignments = useTripStore(s => s.assignments)
+  const allPlaces = useTripStore(s => s.places)
+  const storedAssignments = useTripStore(s => s.assignments)
   const packingItems = useTripStore(s => s.packingItems)
   const todoItems = useTripStore(s => s.todoItems)
   const categories = useTripStore(s => s.categories)
@@ -121,6 +125,10 @@ export function useTripPlanner() {
   // someone planning a road trip stays in it across reloads without it leaking into
   // their next, non-driving trip.
   const [roadtripMode, setRoadtripMode] = useState<boolean>(() => sessionStorage.getItem(`trip-roadtrip-${tripId}`) === '1')
+  const assignments = useMemo(() => roadtripMode || roadtripSettings.roadtrip_service_stops_in_days !== false ? storedAssignments : Object.fromEntries(
+    Object.entries(storedAssignments).map(([dayId, visits]) => [dayId, visits.filter(visit => !isServiceStopType(visit.place?.stop_type))]),
+  ), [roadtripMode, roadtripSettings.roadtrip_service_stops_in_days, storedAssignments])
+  const places = useMemo(() => roadtripMode || roadtripSettings.roadtrip_service_stops_in_days !== false ? allPlaces : allPlaces.filter(place => !isServiceStopType(place.stop_type)), [roadtripMode, roadtripSettings.roadtrip_service_stops_in_days, allPlaces])
   const toggleRoadtripMode = useCallback(() => {
     setRoadtripMode(prev => {
       const next = !prev
@@ -544,7 +552,11 @@ export function useTripPlanner() {
   // Road trip mode reads the whole trip, not the selected day, so it owns its own legs.
   // Passing no days while the mode is off keeps it inert — no routing requests, no state.
   const roadtripActive = !!enabledAddons.roadtrip && roadtripMode
-  const dailyTimesActive = !!dayWindow(settings.roadtrip_day_start, settings.roadtrip_day_end)
+  const roadtripPreferencesState = useLoadRoadtripSettings(tripId, !!enabledAddons.roadtrip)
+  useEffect(() => {
+    if (roadtripPreferencesState.failed) toast.error(t('common.error'))
+  }, [roadtripPreferencesState.failed, toast, t])
+  const dailyTimesActive = !!dayWindow(roadtripSettings.roadtrip_day_start, roadtripSettings.roadtrip_day_end)
   const dayBoundaries = useDayBoundaries(tripId, roadtripActive && dailyTimesActive, assignments)
   useEffect(() => { if (dayBoundaries.stale) toast.error(t('trip.toast.loadError')) }, [dayBoundaries.stale, toast, t])
   const resetDayBoundaries = dayBoundaries.editable && dayBoundaries.boundaries.length && can('day_edit', trip) ? async () => {
@@ -556,7 +568,7 @@ export function useTripPlanner() {
   const refuel = useRefuelSearch()
   const roadtripRoutes = useRoadtripRoutes(
     tripId,
-    roadtripActive ? days : EMPTY_DAYS,
+    roadtripActive && roadtripPreferencesState.ready ? days : EMPTY_DAYS,
     assignments,
     routeProfile,
     roadtripVias.byDay,
@@ -858,22 +870,26 @@ export function useTripPlanner() {
 
   const roadtripLineColors = useMemo(
     () => {
-      if (!settings.roadtrip_day_colors) return undefined
+      if (!roadtripSettings.roadtrip_day_colors) return undefined
       const hidden = new Set(
         roadtripRoutes.days.filter(d => collapsedRoadtripDays.has(d.dayId)).map(d => d.dayNumber),
       )
       return roadtripRoutes.lineDays.filter(n => !hidden.has(n)).map(n => dayColor(n))
     },
-    [settings.roadtrip_day_colors, roadtripRoutes.lineDays, roadtripRoutes.days, collapsedRoadtripDays],
+    [roadtripSettings.roadtrip_day_colors, roadtripRoutes.lineDays, roadtripRoutes.days, collapsedRoadtripDays],
   )
 
   const saveRoadtripLimit = useCallback(async (key: string, value: number | string | boolean) => {
     try {
-      await updateSettings({ [key]: value } as Partial<Settings>)
+      if (!can('day_edit', trip) || !roadtripPreferencesState.ready) return
+      const userId = useAuthStore.getState().user?.id
+      if (!userId) return
+      const preferences = await roadtripPreferencesRepo.update(tripId, { [key]: value })
+      publishRoadtripPreferences(userId, tripId, preferences)
     } catch {
       toast.error(t('places.saveError'))
     }
-  }, [updateSettings, toast, t])
+  }, [tripId, trip, can, roadtripPreferencesState.ready, toast, t])
 
   const saveStopDraft = useCallback(async ({ stopType, dwellMinutes }: { stopType: RoadtripStopType | null; dwellMinutes: number }) => {
     if (!stopDraft) return
@@ -1421,14 +1437,24 @@ export function useTripPlanner() {
     if (!day) return
     const line = (day.drivingGeometry ?? day.geometry).map(([lat, lng]) => ({ lat, lng }))
     if (line.length < 2) return
+    const vehicle = roadtripSettings.roadtrip_vehicle
+    const refuelTypes = refuelStopTypeFor(vehicle === 'electric' || vehicle === 'combustion' ? vehicle : null)
+    let fromAlongKm = 0
+    let drivenKm = 0
+    for (let i = 0; i <= dry.legIndex; i++) {
+      if (refuelTypes.includes(day.stops[i]?.stopType as 'fuel' | 'charging')) fromAlongKm = drivenKm
+      const leg = day.legs[i]
+      if (leg?.mode === 'driving') drivenKm += (leg.distance ?? 0) / 1000
+    }
     void refuel.ask(
       `${dayId}:${dry.legIndex}`,
       { lat: dry.lat, lng: dry.lng },
       line,
       dry.drivenMeters / 1000,
       day.stops.map(stop => ({ lat: stop.lat, lng: stop.lng })),
+      fromAlongKm,
     )
-  }, [roadtripRoutes.days, refuel])
+  }, [roadtripRoutes.days, refuel, roadtripSettings.roadtrip_vehicle])
 
   /**
    * Accepting one hands it to the same popup a corridor hit goes through.
@@ -1446,7 +1472,13 @@ export function useTripPlanner() {
     // Before the stop the tank would have run out on, which is the leg the dry point
     // names. A station reached after the day's last stop is tomorrow's problem, and
     // clamping it onto the final leg would re-route the arrival through it.
-    const at = Math.min(dry.legIndex + 1, day.stops.length - 1)
+    let drivenKm = 0
+    const stationLeg = day.legs.findIndex(leg => {
+      if (leg?.mode !== 'driving') return false
+      drivenKm += (leg.distance ?? 0) / 1000
+      return poi.alongKm <= drivenKm
+    })
+    const at = Math.min((stationLeg >= 0 ? stationLeg : dry.legIndex) + 1, day.stops.length - 1)
     // That index counts along the CARD, and after a night drive a card is not one stored
     // day: its first stops belong to yesterday. The new stop goes in front of the one it
     // was measured against, so it is that stop's own day and position that place it —
@@ -1767,11 +1799,14 @@ export function useTripPlanner() {
     // pinned behind instead of being shifted arithmetically. Without this the
     // day's detours stayed on their old numbers and the drive quietly took a
     // different road, persisted and visible to every collaborator.
+    const visible = new Set(orderedIds)
+    let nextVisible = 0
+    const completeOrder = prevIds.map(id => visible.has(id) ? orderedIds[nextVisible++] : id)
     const stopIdsBefore = roadtripStopsOf(dayId).map(a => a.id)
-    const stopIdsAfter = orderedIds.filter(id => stopIdsBefore.includes(id))
+    const stopIdsAfter = completeOrder.filter(id => stopIdsBefore.includes(id))
     const plan = reanchorByStopOrder(roadtripVias.byDay[dayId] ?? [], stopIdsBefore, stopIdsAfter)
     try {
-      tripActions.reorderAssignments(tripId, dayId, orderedIds)
+      tripActions.reorderAssignments(tripId, dayId, completeOrder)
         .then(async () => {
           if (plan.vias.length || plan.remove.length) await roadtripVias.reanchor(dayId, plan)
           const capturedDayId = dayId
@@ -2069,7 +2104,7 @@ export function useTripPlanner() {
 
   return {
     tripId, navigate, toast, t, language, settings, placesPhotosEnabled,
-    trip, days, places, assignments, packingItems, todoItems, categories, reservations, budgetItems, files,
+    trip, days, places, assignments, storedAssignments, packingItems, todoItems, categories, reservations, budgetItems, files,
     selectedDayId, isLoading, tripActions, can, canUploadFiles,
     pushUndo, undo, canUndo, lastActionLabel, handleUndo,
     enabledAddons, collabFeatures, tripAccommodations, setTripAccommodations,
@@ -2088,7 +2123,8 @@ export function useTripPlanner() {
     stopDraft, setStopDraft, saveStopDraft, saveStopDraftAsNight, stopDraftToForm, stopDraftDuplicate, reorderRoadtripStop,
     setRoadtripStopKind,
     setRoadtripStopFill,
-    saveRoadtripLimit,
+    roadtripSettingsLoading: !roadtripPreferencesState.ready && !roadtripPreferencesState.failed,
+    saveRoadtripLimit: roadtripPreferencesState.ready && can('day_edit', trip) ? saveRoadtripLimit : undefined,
     roadtripVias, addRoadtripVia, moveRoadtripVia, removeRoadtripVia, dayBoundaryControls, resetDayBoundaries,
     refuel, askRefuel, acceptRefuel,
     routeAlternatives, askRouteAlternatives, chooseRouteAlternative, alternativeOverlays, alternativeFocusPoints, mapFocusPoints, roadtripMapVias, focusRoadtripPoint,

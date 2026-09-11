@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "Онлайн перетягніть кінець дня вздовж маршруту або на місце; клацніть правою кнопкою, щоб відновити автоматичне завершення.",
-  'roadtrip.window.resetBoundaries': "Відновити автоматичні завершення днів",
+  'roadtrip.stops.section': 'Сервісні зупинки',
+  'roadtrip.stops.inDays': 'Показувати також у розділі «Дні»',
+  'roadtrip.stops.daysHint':
+    'Застосовується до всіх сервісних зупинок подорожі. Якщо вимкнено, вони залишаються лише в Roadtrip. Увімкніть, щоб знову показувати їх у розділі «Дні».',
+  'roadtrip.window.dragHint':
+    'Онлайн перетягніть кінець дня вздовж маршруту або на місце; клацніть правою кнопкою, щоб відновити автоматичне завершення.',
+  'roadtrip.window.resetBoundaries': 'Відновити автоматичні завершення днів',
   'roadtrip.window.endHere': 'Завершити день тут',
   'roadtrip.window.endHereHint':
     'У деталях місця можна завершити день на вибраній зупинці, коли активні режим Roadtrip і щоденний час подорожі.',
@@ -92,11 +97,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Платні дороги',
   'roadtrip.avoid.motorway': 'Автомагістралі',
   'roadtrip.avoid.ferry': 'Пороми',
-  'roadtrip.avoid.hint': 'Це зниження ваги, а не заборона. Якщо в поїздки немає обходу, вона все одно пройде там, і день це покаже.',
-  'roadtrip.avoid.unavailable': 'Недоступно: цей екземпляр використовує власний рушій, який не вміє виключати клас доріг.',
+  'roadtrip.avoid.hint':
+    'Це зниження ваги, а не заборона. Якщо в поїздки немає обходу, вона все одно пройде там, і день це покаже.',
+  'roadtrip.avoid.unavailable':
+    'Недоступно: цей екземпляр використовує власний рушій, який не вміє виключати клас доріг.',
   'roadtrip.avoid.badge': '{count} в обхід',
   'roadtrip.avoid.missed': '{classes} не обійти',
-  'roadtrip.avoid.missedHint': 'Цього дня об’їзду немає, тому поїздка йде через це. Решта днів і далі обходять те, що можуть.',
+  'roadtrip.avoid.missedHint':
+    'Цього дня об’їзду немає, тому поїздка йде через це. Решта днів і далі обходять те, що можуть.',
   'roadtrip.refuel.dry': 'Тут закінчиться пальне',
   'roadtrip.refuel.after': 'через {distance}',
   'roadtrip.limit.vehicleLabel': 'Чим ви їдете',
@@ -138,11 +146,13 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': 'довжина {distance}',
   'roadtrip.track.gap': 'за {distance} від цього дня',
   'roadtrip.track.onDay': 'уздовж цього дня',
-  'roadtrip.track.explain': 'Маршрут притягується до треку кількома проміжними точками. Наявні точки на цих ділянках буде замінено.',
+  'roadtrip.track.explain':
+    'Маршрут притягується до треку кількома проміжними точками. Наявні точки на цих ділянках буде замінено.',
   'roadtrip.track.action': 'Іти за цим треком',
   'roadtrip.track.working': 'Підганяємо маршрут до треку, коло {round}',
   'roadtrip.track.done': 'Поставлено проміжних точок: {count}. Маршрут тримається в межах {distance} від треку.',
-  'roadtrip.track.capped': 'Поставлено проміжних точок: {count}. У найширшому місці маршрут відходить від треку на {distance}.',
+  'roadtrip.track.capped':
+    'Поставлено проміжних точок: {count}. У найширшому місці маршрут відходить від треку на {distance}.',
   'roadtrip.track.already': 'Маршрут уже йшов за цим треком.',
   'roadtrip.track.errorRoute': 'Сервіс маршрутів не відповів.',
   'roadtrip.track.errorSave': 'Не вдалося зберегти проміжні точки.',
@@ -157,7 +167,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Дорогою ніщо не відповідає «{name}».',
   'roadtrip.poi.noneMatchFilters': 'На маршруті немає нічого, що відповідає цим фільтрам.',
   'roadtrip.poi.foundFiltered': '{count} з {total} дорогою',
-  'roadtrip.poi.truncated': 'На {count} відрізках знайшлося більше, ніж уміщується в одну відповідь — звузьте коридор, щоб побачити решту.',
+  'roadtrip.poi.truncated':
+    'На {count} відрізках знайшлося більше, ніж уміщується в одну відповідь — звузьте коридор, щоб побачити решту.',
   'roadtrip.poi.search': 'Шукати',
   'roadtrip.poi.searching': 'Пошук {done} з {total}',
   'roadtrip.poi.capped': 'Маршрут довгий — переглянуто лише перший відрізок.',

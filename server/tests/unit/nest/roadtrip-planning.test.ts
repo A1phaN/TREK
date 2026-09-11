@@ -13,7 +13,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 const ctx = { userId: 5 } as McpContext;
 function setup() {
-  let settings: Record<string, unknown> = {
+  const settings: Record<string, unknown> = {
     roadtrip_day_start: '08:00',
     roadtrip_day_end: '10:00',
     roadtrip_vehicle: 'electric',
@@ -24,12 +24,18 @@ function setup() {
   };
   const store = {
     getUserSettings: vi.fn(() => settings),
-    bulkUpsertSettings: vi.fn((_id: number, patch: Record<string, unknown>) => {
-      settings = { ...settings, ...patch };
-    }),
   };
-  const realtime = { broadcastToUser: vi.fn() };
-  const preferences = new RoadtripPreferencesService(store as never, realtime as never);
+  const realtime = { broadcast: vi.fn() };
+  const tripSettings = new Map<number, Record<string, unknown>>([[10, { ...settings }]]);
+  const preferenceDb = {
+    all: (_sql: string, tripId: number) =>
+      Object.entries(tripSettings.get(tripId) ?? {}).map(([key, value]) => ({ key, value: JSON.stringify(value) })),
+    run: vi.fn((_sql: string, tripId: number, key: string, value: string) =>
+      tripSettings.set(tripId, { ...tripSettings.get(tripId), [key]: JSON.parse(value) }),
+    ),
+    transaction: (fn: () => unknown) => fn(),
+  };
+  const preferences = new RoadtripPreferencesService(preferenceDb as never, realtime as never);
   const days = [{ id: 1, day_number: 1, title: null, date: '2026-09-11', default_transport_mode: 'driving' }];
   const visits = [1, 2, 3].map((id) => ({
     id,
@@ -82,25 +88,24 @@ function setup() {
     roadtrip as never,
     boundaries as never,
   );
-  return { preferences, store, realtime, db, plans, router, visits, days, boundaries };
+  return { preferenceDb, preferences, store, realtime, db, plans, router, visits, days, boundaries };
 }
 
 describe('roadtrip preferences', () => {
   it('reads only public driving preferences and never endpoint URLs or credentials', () => {
     const s = setup();
-    expect(s.preferences.read(5)).toMatchObject({ roadtrip_range_km: 100 });
-    expect(JSON.stringify(s.preferences.read(5))).not.toMatch(/secret|private.example|routing_base_url/);
+    expect(s.preferences.read(10)).toMatchObject({ roadtrip_range_km: 100 });
+    expect(JSON.stringify(s.preferences.read(10))).not.toMatch(/secret|private.example|routing_base_url/);
   });
-  it('validates the complete window before an atomic write and broadcasts only to its owner', () => {
+  it('validates the complete window before an atomic write and broadcasts to every member of its trip', () => {
     const s = setup();
-    expect(() => s.preferences.update(5, { roadtrip_day_end: '06:00', roadtrip_range_km: 200 })).toThrow();
-    expect(s.store.bulkUpsertSettings).not.toHaveBeenCalled();
-    s.preferences.update(5, { roadtrip_day_start: '06:00', roadtrip_day_end: '09:00' });
-    expect(s.realtime.broadcastToUser).toHaveBeenCalledWith(5, {
-      type: 'roadtripPreferences:changed',
-      preferences: s.preferences.read(5),
+    expect(() => s.preferences.update(10, { roadtrip_day_end: '06:00', roadtrip_range_km: 200 })).toThrow();
+    expect(s.preferenceDb.run).not.toHaveBeenCalled();
+    s.preferences.update(10, { roadtrip_day_start: '06:00', roadtrip_day_end: '09:00' });
+    expect(s.realtime.broadcast).toHaveBeenCalledWith('10', 'roadtripPreferences:changed', {
+      preferences: s.preferences.read(10),
     });
-    expect(s.preferences.read(5).roadtrip_range_km).toBe(100);
+    expect(s.preferences.read(10).roadtrip_range_km).toBe(100);
   });
   it.each([
     { llm_api_key: 'x' },
@@ -114,12 +119,18 @@ describe('roadtrip preferences', () => {
   });
   it('allows clearing daily times and limits and refuses demo writes', async () => {
     const s = setup();
-    s.preferences.update(5, { roadtrip_day_start: '', roadtrip_range_km: 0 });
-    expect(s.preferences.read(5).roadtrip_day_start).toBe('');
-    const mcp = new RoadtripPreferencesMcp(s.preferences, { isDemoUser: () => true } as never, {} as never);
-    s.store.bulkUpsertSettings.mockClear();
-    await mcp.update({ settings: { roadtrip_range_km: 300 } }, ctx);
-    expect(s.store.bulkUpsertSettings).not.toHaveBeenCalled();
+    s.preferences.update(10, { roadtrip_day_start: '', roadtrip_range_km: 0 });
+    expect(s.preferences.read(10).roadtrip_day_start).toBe('');
+    const mcp = new RoadtripPreferencesMcp(
+      s.preferences,
+      { isDemoUser: () => true } as never,
+      {} as never,
+      s.db as never,
+      {} as never,
+    );
+    s.preferenceDb.run.mockClear();
+    await mcp.update({ tripId: 10, settings: { roadtrip_range_km: 300 } }, ctx);
+    expect(s.preferenceDb.run).not.toHaveBeenCalled();
   });
 });
 
@@ -138,8 +149,8 @@ describe('browser-independent roadtrip calculation', () => {
   it('previews settings without saving them', async () => {
     const s = setup();
     await s.plans.calculate(10, 5, { roadtrip_day_end: '20:00' });
-    expect(s.preferences.read(5).roadtrip_day_end).toBe('10:00');
-    expect(s.store.bulkUpsertSettings).not.toHaveBeenCalled();
+    expect(s.preferences.read(10).roadtrip_day_end).toBe('10:00');
+    expect(s.preferenceDb.run).not.toHaveBeenCalled();
   });
   it('checks trip access before reading or routing', async () => {
     const s = setup();
@@ -212,7 +223,7 @@ describe('Roadtrip MCP registration and search', () => {
     const addons = { isAddonEnabled: vi.fn(() => true) };
     const registry = createTestRegistry(
       [
-        new RoadtripPreferencesMcp(s.preferences, {} as never, addons as never),
+        new RoadtripPreferencesMcp(s.preferences, {} as never, addons as never, s.db as never, {} as never),
         new RoadtripPlanningMcp(s.plans, {} as never, addons as never),
       ],
       { accessPolicy: trekMcpAccessPolicy, validateAccess: trekMcpValidateAccess },
@@ -223,8 +234,9 @@ describe('Roadtrip MCP registration and search', () => {
         names.push(name);
       },
     };
-    registry.attach(registrar as never, { ...ctx, scopes: ['settings:read'] });
-    expect(names).toEqual(['get_roadtrip_settings']);
+    registry.attach(registrar as never, { ...ctx, scopes: ['trips:read'] });
+    expect(names).toContain('get_roadtrip_settings');
+    expect(names).not.toContain('update_roadtrip_settings');
     names.length = 0;
     addons.isAddonEnabled.mockReturnValue(false);
     registry.attach(registrar as never, { ...ctx, scopes: null });

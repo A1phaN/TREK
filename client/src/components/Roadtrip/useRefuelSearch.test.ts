@@ -10,8 +10,8 @@ const { pois, offline, stored } = vi.hoisted(() => ({
 vi.mock('../../api/client', () => ({ mapsApi: { pois } }))
 vi.mock('../../i18n', () => ({ useTranslation: () => ({ locale: 'en-US' }) }))
 vi.mock('../../sync/networkMode', () => ({ isEffectivelyOffline: offline }))
-vi.mock('../../store/settingsStore', () => ({
-  useSettingsStore: (select: (state: typeof stored) => unknown) => select(stored),
+vi.mock('../../hooks/useRoadtripSettings', () => ({
+  useRoadtripSettings: (select: (settings: typeof stored.settings) => unknown) => select(stored.settings),
 }))
 
 import { useRefuelSearch } from './useRefuelSearch'
@@ -279,4 +279,21 @@ describe('useRefuelSearch', () => {
     expect(result.current.outcome).toBeNull()
     expect(result.current.loading).toBe(false)
   })
+})
+
+it('searches farther back when nearby chargers cannot be reached', async () => {
+  pois.mockResolvedValueOnce(answer([station('too-late', 58)]))
+    .mockResolvedValueOnce(answer([station('earlier', 25)]))
+  const { result } = renderHook(() => useRefuelSearch())
+  await act(async () => { await result.current.ask('4:1', DRY, LINE, DRY_KM, []) })
+  expect(pois).toHaveBeenCalledTimes(2)
+  expect(result.current.results.map(p => p.osm_id)).toEqual(['earlier'])
+  expect(result.current.outcome).toBe('found')
+})
+it('does not offer stations behind the last refuelling stop', async () => {
+  pois.mockResolvedValue(answer([station('behind', 20)]))
+  const { result } = renderHook(() => useRefuelSearch())
+  await act(async () => { await result.current.ask('4:1', DRY, LINE, DRY_KM, [], 30) })
+  expect(result.current.results).toEqual([])
+  expect(pois).toHaveBeenCalledTimes(2)
 })

@@ -1840,7 +1840,7 @@ export function MapViewGL({
       poiMarkersRef.current = []
       poiCleanupRef.current.forEach(off => off())
       poiCleanupRef.current = []
-      const groups = clusterLoosely ? clusterPois(pois, poi => map.project([poi.lng, poi.lat])) : pois.map(poi => ({ pois: [poi], lat: poi.lat, lng: poi.lng }))
+      const groups = clusterLoosely ? clusterPois(pois, poi => map.project([poi.lng, poi.lat]), map.getZoom()) : pois.map(poi => ({ pois: [poi], lat: poi.lat, lng: poi.lng }))
       for (const group of groups) {
         if (group.pois.length > 1) {
           const el = document.createElement('button')

@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "Online przeciągnij koniec dnia wzdłuż trasy lub na miejsce; kliknij prawym przyciskiem, aby przywrócić automatyczny koniec.",
-  'roadtrip.window.resetBoundaries': "Przywróć automatyczne końce dni",
+  'roadtrip.stops.section': 'Postoje serwisowe',
+  'roadtrip.stops.inDays': 'Pokaż także w Dniach',
+  'roadtrip.stops.daysHint':
+    'Dotyczy wszystkich postojów serwisowych tej podróży. Po wyłączeniu pozostają tylko w Roadtrip. Włącz, aby ponownie pokazać je w Dniach.',
+  'roadtrip.window.dragHint':
+    'Online przeciągnij koniec dnia wzdłuż trasy lub na miejsce; kliknij prawym przyciskiem, aby przywrócić automatyczny koniec.',
+  'roadtrip.window.resetBoundaries': 'Przywróć automatyczne końce dni',
   'roadtrip.window.endHere': 'Zakończ dzień tutaj',
   'roadtrip.window.endHereHint':
     'Możesz wybrać przystanek jako koniec dnia w szczegółach miejsca, gdy tryb Roadtrip i dzienne godziny podróży są aktywne.',
@@ -92,11 +97,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Drogi płatne',
   'roadtrip.avoid.motorway': 'Autostrady',
   'roadtrip.avoid.ferry': 'Promy',
-  'roadtrip.avoid.hint': 'To obniżenie wagi, nie zakaz. Gdy przejazd nie ma jak ominąć, i tak z tego korzysta, a dzień to pokazuje.',
-  'roadtrip.avoid.unavailable': 'Niedostępne: ta instancja korzysta z własnego silnika, który nie potrafi pominąć klasy drogi.',
+  'roadtrip.avoid.hint':
+    'To obniżenie wagi, nie zakaz. Gdy przejazd nie ma jak ominąć, i tak z tego korzysta, a dzień to pokazuje.',
+  'roadtrip.avoid.unavailable':
+    'Niedostępne: ta instancja korzysta z własnego silnika, który nie potrafi pominąć klasy drogi.',
   'roadtrip.avoid.badge': '{count} omijane',
   'roadtrip.avoid.missed': '{classes} nie do ominięcia',
-  'roadtrip.avoid.missedHint': 'Tego dnia nie ma trasy w objazd, więc przejazd z tego korzysta. Pozostałe dni nadal omijają, co się da.',
+  'roadtrip.avoid.missedHint':
+    'Tego dnia nie ma trasy w objazd, więc przejazd z tego korzysta. Pozostałe dni nadal omijają, co się da.',
   'roadtrip.refuel.dry': 'Tu kończy się paliwo',
   'roadtrip.refuel.after': 'po {distance}',
   'roadtrip.limit.vehicleLabel': 'Czym jeździsz',
@@ -138,7 +146,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '{distance} długości',
   'roadtrip.track.gap': '{distance} od tego dnia',
   'roadtrip.track.onDay': 'wzdłuż tego dnia',
-  'roadtrip.track.explain': 'Trasa zostaje naciągnięta na ślad kilkoma punktami pośrednimi. Istniejące punkty na tych odcinkach zostaną zastąpione.',
+  'roadtrip.track.explain':
+    'Trasa zostaje naciągnięta na ślad kilkoma punktami pośrednimi. Istniejące punkty na tych odcinkach zostaną zastąpione.',
   'roadtrip.track.action': 'Podążaj za tym śladem',
   'roadtrip.track.working': 'Dopasowywanie trasy do śladu, runda {round}',
   'roadtrip.track.done': 'Ustawiono {count} punktów pośrednich. Trasa trzyma się śladu w promieniu {distance}.',
@@ -157,7 +166,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Nic po drodze nie pasuje do „{name}”.',
   'roadtrip.poi.noneMatchFilters': 'Nic po drodze nie pasuje do tych filtrów.',
   'roadtrip.poi.foundFiltered': '{count} z {total} po drodze',
-  'roadtrip.poi.truncated': 'Na {count} odcinkach było więcej, niż mieści się w jednej odpowiedzi — zawęź korytarz, aby zobaczyć resztę.',
+  'roadtrip.poi.truncated':
+    'Na {count} odcinkach było więcej, niż mieści się w jednej odpowiedzi — zawęź korytarz, aby zobaczyć resztę.',
   'roadtrip.poi.search': 'Szukaj',
   'roadtrip.poi.searching': 'Szukanie {done} z {total}',
   'roadtrip.poi.capped': 'Trasa jest długa — przeszukano tylko pierwszy odcinek.',

@@ -276,3 +276,16 @@ describe('RoadtripLimitsCard', () => {
     })
   })
 })
+
+vi.mock('../../hooks/useRoadtripSettings', () => ({
+  useRoadtripSettings: (select: (preferences: import('@trek/shared').RoadtripPreferences) => unknown) => useSettingsStore(state => select(state.settings as import('@trek/shared').RoadtripPreferences)),
+}))
+
+it('shares service stops with Days by default and lets the trip turn it off', () => {
+  const onSave = vi.fn()
+  open(onSave)
+  const toggle = screen.getByRole('button', { name: 'Show in Days too' })
+  expect(toggle).toHaveAttribute('aria-pressed', 'true')
+  fireEvent.click(toggle)
+  expect(onSave).toHaveBeenCalledWith('roadtrip_service_stops_in_days', false)
+})

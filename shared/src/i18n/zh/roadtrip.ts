@@ -1,8 +1,12 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "在线时可沿路线拖动当天终点或将其拖到某个地点，右键点击可恢复自动终点。",
-  'roadtrip.window.resetBoundaries': "恢复自动每日终点",
+  'roadtrip.stops.section': '服务停靠点',
+  'roadtrip.stops.inDays': '也显示于每日行程',
+  'roadtrip.stops.daysHint':
+    '适用于此旅程的所有服务停靠点。关闭后只会显示在 Roadtrip 计划中。开启即可再次显示于每日行程。',
+  'roadtrip.window.dragHint': '在线时可沿路线拖动当天终点或将其拖到某个地点，右键点击可恢复自动终点。',
+  'roadtrip.window.resetBoundaries': '恢复自动每日终点',
   'roadtrip.window.endHere': '在此结束当天行程',
   'roadtrip.window.endHereHint': '启用 Roadtrip 模式和每日出行时间后，可在地点详情中将指定停留点设为当天行程终点。',
   'roadtrip.window.endAt': '一天的结束地点',

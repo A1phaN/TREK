@@ -1,3 +1,4 @@
+import { useRoadtripSettings } from '../../hooks/useRoadtripSettings'
 import React, { useState } from 'react'
 import {
   CarFront, Footprints, Bike, Zap, AlertTriangle,
@@ -771,7 +772,7 @@ function ServiceStop({ stop, entry, late, driveFindings, selected, onSelect, onE
   const { t } = useTranslation()
   // Read here rather than threaded down: both stop shapes need the same two, and the
   // badge is the only thing in the rail that depends on them.
-  const fillPercent = useSettingsStore(st => st.settings.roadtrip_fill_percent)
+  const fillPercent = useRoadtripSettings(s => s.roadtrip_fill_percent)
   const { vehicleKind } = useVehicleRange()
   const kind = STOP_KIND_BY_KEY[stop.stopType ?? '']
   const Icon = kind?.Icon ?? ParkingSquare
@@ -1020,7 +1021,7 @@ function Stop({ stop, number, entry, late, driveFindings, selected, continues, s
   const { t } = useTranslation()
   // Read here rather than threaded down: both stop shapes need the same two, and the
   // badge is the only thing in the rail that depends on them.
-  const fillPercent = useSettingsStore(st => st.settings.roadtrip_fill_percent)
+  const fillPercent = useRoadtripSettings(s => s.roadtrip_fill_percent)
   const { vehicleKind } = useVehicleRange()
   return (
     <button
@@ -1325,7 +1326,7 @@ function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, on
   const distanceUnit = useSettingsStore(s => s.settings.distance_unit)
   // The colour the map draws this day in, or none at all while the map is drawing one
   // blue line for the whole trip.
-  const dayColorsOn = useSettingsStore(s => !!s.settings.roadtrip_day_colors)
+  const dayColorsOn = useRoadtripSettings(s => !!s.roadtrip_day_colors)
   const tint = dayColorsOn ? dayColor(day.dayNumber).line : null
   const last = day.stops.length - 1
   /**

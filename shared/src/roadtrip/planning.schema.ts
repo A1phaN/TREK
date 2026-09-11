@@ -6,7 +6,7 @@ import { z } from 'zod';
 export const roadtripPlanRequestSchema = z.object({
   tripId: idSchema,
   includeGeometry: z.boolean().optional().default(false),
-  settings: roadtripPreferencesSchema.optional().describe('Preview these personal preferences without saving them'),
+  settings: roadtripPreferencesSchema.optional().describe('Preview these trip preferences without saving them'),
 });
 export const roadtripCorridorRequestSchema = z.object({
   tripId: idSchema,

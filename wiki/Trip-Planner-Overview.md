@@ -49,7 +49,7 @@ The active tab is saved in `sessionStorage` per trip, so switching between trips
 
 Nearby station search results group into count badges when zoomed out. Click a badge to zoom into its stations. Stations that still overlap at close zoom appear in a selectable list. Planned stops, including photo markers, also group into count badges when zoomed out. Day endings remain separate. This works with all supported map providers in Roadtrip mode.
 
-In the Roadtrip view, open **Driving settings** and enter a **Day start** and **Day end** in HH:mm format. Both values enable automatic daily scheduling and connect the drives between days. Clear either field to return to the existing schedule. These are personal driving preferences and apply to your Roadtrip views.
+In the Roadtrip view, open **Driving settings** and enter a **Day start** and **Day end** in HH:mm format. Both values enable automatic daily scheduling and connect the drives between days. Clear either field to return to the existing schedule. These preferences belong to the trip. All travellers see the same daily schedule, vehicle settings and driving limits. Members with permission to edit days can change them. Existing trips inherit their owner's previous values once; later changes affect only that trip.
 
 Driving pauses at the end time and resumes from the same location at the next day's start time. Stops and visit durations determine where each pause falls. Editing, adding or removing stops recalculates the pauses and subsequent arrivals. If a visit crosses the end time, the remaining visit continues there the next morning before driving resumes.
 
@@ -67,7 +67,7 @@ While online, drag an end-of-day map label along the driving route or onto a vis
 
 The map marks pauses with a moon and day number beside a place or above the route. These markers disappear when zoomed out beyond level 6.
 
-> **AI / MCP:** `get_roadtrip_context` reads saved days, visits, pins, stays, vias, followed tracks and day endings. `calculate_roadtrip` calculates arrivals, day splits, driving limits and vehicle-range warnings on the server, using the same planning logic as the browser. No open TREK tab is needed. Pauses remain calculated markers, never places or bookings. `get_roadtrip_settings` and `update_roadtrip_settings` read and change your personal driving preferences; these apply to all your trips and update connected views. Place and assignment tools edit stops, stay durations, times and ordering. `set_assignment_end_day` and `set_day_boundary` set or clear individual day endings. `search_roadtrip_corridor` finds stops along a calculated day, with name, charging and route-section filters. `import_trip_gpx` imports tracks; the via tools edit their routing handles. See [MCP-Addon-Tools](MCP-Addon-Tools) for units, scopes and incomplete results.
+> **AI / MCP:** `get_roadtrip_context` reads saved days, visits, pins, stays, vias, followed tracks and day endings. `calculate_roadtrip` calculates arrivals, day splits, driving limits and vehicle-range warnings on the server, using the same planning logic as the browser. No open TREK tab is needed. Pauses remain calculated markers, never places or bookings. `get_roadtrip_settings` and `update_roadtrip_settings` read and change the shared driving preferences for the specified trip; changes update connected views for all its travellers. Place and assignment tools edit stops, stay durations, times and ordering. `set_assignment_end_day` and `set_day_boundary` set or clear individual day endings. `search_roadtrip_corridor` finds stops along a calculated day, with name, charging and route-section filters. `import_trip_gpx` imports tracks; the via tools edit their routing handles. See [MCP-Addon-Tools](MCP-Addon-Tools) for units, scopes and incomplete results.
 
 ## Mobile Layout
 
@@ -99,3 +99,5 @@ When you first open a trip, a brief loading screen appears while the planner dat
 - [Weather-Forecasts](Weather-Forecasts)
 - [Reservations-and-Bookings](Reservations-and-Bookings)
 - [Admin-Addons](Admin-Addons)
+
+Driving settings also controls **Show in Days too** under **Service stops**. It is on by default and applies to every service stop in the trip, including existing stops. Turn it off to keep service stops exclusively in the Roadtrip view and omit them from the normal Days view and its route. Turning it on restores their visibility without creating duplicates. The setting is shared with fellow travellers and can also be changed through `update_roadtrip_settings` using `roadtrip_service_stops_in_days`.

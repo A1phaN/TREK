@@ -10,6 +10,12 @@ const station = (id: string, lng: number): Poi => ({
 const project = (poi: Poi) => ({ x: poi.lng, y: poi.lat })
 
 describe('station clusters', () => {
+  it('only clusters in the distant overview, even for coincident stations', () => {
+    const pois = [station('a', 1), station('b', 1)]
+    expect(clusterPois(pois, project, 8)).toHaveLength(1)
+    expect(clusterPois(pois, project, 9)).toHaveLength(2)
+    expect(clusterPois(pois, project, 14)).toHaveLength(2)
+  })
   it('groups across grid edges, counts unique stations and preserves the originals', () => {
     const a = station('a', 47), b = station('b', 49), c = station('c', 150)
     const groups = clusterPois([c, b, a, a], project)
@@ -40,4 +46,10 @@ describe('station clusters', () => {
     list.querySelector('button')!.click()
     expect(select).toHaveBeenCalledWith(poi)
   })
+})
+
+it('combines nearby small groups into one overview cluster', () => {
+  const pois = [station('a', 0), station('b', 3), station('c', 20), station('d', 23), station('e', 40), station('f', 43)]
+  expect(clusterPois(pois, project, 8).map(group => group.pois.length)).toEqual([6])
+  expect(clusterPois(pois, project, 9)).toHaveLength(6)
 })

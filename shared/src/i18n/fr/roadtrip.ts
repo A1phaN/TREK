@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "En ligne, faites glisser la fin de journée sur le trajet ou sur un lieu ; un clic droit rétablit la fin automatique.",
-  'roadtrip.window.resetBoundaries': "Rétablir les fins de journée automatiques",
+  'roadtrip.stops.section': 'Arrêts de service',
+  'roadtrip.stops.inDays': 'Afficher aussi dans Jours',
+  'roadtrip.stops.daysHint':
+    'Concerne tous les arrêts de service du voyage. Si désactivé, ils restent uniquement dans Roadtrip. Activez cette option pour les afficher à nouveau dans Jours.',
+  'roadtrip.window.dragHint':
+    'En ligne, faites glisser la fin de journée sur le trajet ou sur un lieu ; un clic droit rétablit la fin automatique.',
+  'roadtrip.window.resetBoundaries': 'Rétablir les fins de journée automatiques',
   'roadtrip.window.endHere': 'Terminer la journée ici',
   'roadtrip.window.endHereHint':
     'Vous pouvez terminer une journée à une étape précise dans ses détails lorsque le mode Roadtrip et les horaires quotidiens sont actifs.',
@@ -93,11 +98,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Routes à péage',
   'roadtrip.avoid.motorway': 'Autoroutes',
   'roadtrip.avoid.ferry': 'Ferries',
-  'roadtrip.avoid.hint': 'Ce sont des pondérations, pas des interdictions. Quand un trajet n’a aucun moyen de contourner, il l’emprunte quand même et la journée le signale.',
-  'roadtrip.avoid.unavailable': 'Indisponible : cette instance utilise son propre moteur, qui ne sait pas écarter une classe de route.',
+  'roadtrip.avoid.hint':
+    'Ce sont des pondérations, pas des interdictions. Quand un trajet n’a aucun moyen de contourner, il l’emprunte quand même et la journée le signale.',
+  'roadtrip.avoid.unavailable':
+    'Indisponible : cette instance utilise son propre moteur, qui ne sait pas écarter une classe de route.',
   'roadtrip.avoid.badge': '{count} évité(s)',
   'roadtrip.avoid.missed': '{classes} inévitable(s)',
-  'roadtrip.avoid.missedHint': 'Cette journée n’a aucun itinéraire de contournement, le trajet l’emprunte donc. Les autres journées évitent toujours ce qu’elles peuvent.',
+  'roadtrip.avoid.missedHint':
+    'Cette journée n’a aucun itinéraire de contournement, le trajet l’emprunte donc. Les autres journées évitent toujours ce qu’elles peuvent.',
   'roadtrip.refuel.dry': 'Réservoir vide ici',
   'roadtrip.refuel.after': 'après {distance}',
   'roadtrip.limit.vehicleLabel': 'Ce que vous conduisez',
@@ -139,7 +147,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '{distance} de long',
   'roadtrip.track.gap': 'à {distance} de ce jour',
   'roadtrip.track.onDay': 'le long de ce jour',
-  'roadtrip.track.explain': 'Le trajet est ramené sur la trace à l’aide de quelques points de passage. Les points existants sur ces étapes sont remplacés.',
+  'roadtrip.track.explain':
+    'Le trajet est ramené sur la trace à l’aide de quelques points de passage. Les points existants sur ces étapes sont remplacés.',
   'roadtrip.track.action': 'Suivre cette trace',
   'roadtrip.track.working': 'Ajustement du trajet à la trace, tour {round}',
   'roadtrip.track.done': '{count} points de passage placés. Le trajet reste à moins de {distance} de la trace.',
@@ -158,7 +167,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Rien sur le trajet ne correspond à « {name} ».',
   'roadtrip.poi.noneMatchFilters': 'Rien sur le trajet ne correspond à ces filtres.',
   'roadtrip.poi.foundFiltered': '{count} sur {total} sur le trajet',
-  'roadtrip.poi.truncated': 'Sur {count} tronçons, il y en avait plus que ce qu’une réponse peut contenir : réduisez le corridor pour voir le reste.',
+  'roadtrip.poi.truncated':
+    'Sur {count} tronçons, il y en avait plus que ce qu’une réponse peut contenir : réduisez le corridor pour voir le reste.',
   'roadtrip.poi.search': 'Rechercher',
   'roadtrip.poi.searching': 'Recherche {done} sur {total}',
   'roadtrip.poi.capped': 'L’itinéraire est long : seule la première portion a été parcourue.',

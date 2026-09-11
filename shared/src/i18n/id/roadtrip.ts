@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "Saat online, seret akhir hari di sepanjang rute atau ke suatu tempat; klik kanan untuk memulihkan akhir otomatis.",
-  'roadtrip.window.resetBoundaries': "Pulihkan akhir hari otomatis",
+  'roadtrip.stops.section': 'Perhentian layanan',
+  'roadtrip.stops.inDays': 'Tampilkan juga di Hari',
+  'roadtrip.stops.daysHint':
+    'Berlaku untuk semua perhentian layanan perjalanan ini. Jika dinonaktifkan, perhentian hanya muncul di Roadtrip. Aktifkan untuk menampilkannya kembali di Hari.',
+  'roadtrip.window.dragHint':
+    'Saat online, seret akhir hari di sepanjang rute atau ke suatu tempat; klik kanan untuk memulihkan akhir otomatis.',
+  'roadtrip.window.resetBoundaries': 'Pulihkan akhir hari otomatis',
   'roadtrip.window.endHere': 'Akhiri hari di sini',
   'roadtrip.window.endHereHint':
     'Anda dapat mengakhiri hari di pemberhentian tertentu melalui detail tempat saat mode Roadtrip dan waktu perjalanan harian aktif.',
@@ -93,11 +98,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Jalan tol',
   'roadtrip.avoid.motorway': 'Jalan bebas hambatan',
   'roadtrip.avoid.ferry': 'Feri',
-  'roadtrip.avoid.hint': 'Ini pembobotan, bukan larangan. Kalau satu perjalanan tidak punya jalan memutar, ia tetap melewatinya dan hari itu memberi tahu.',
-  'roadtrip.avoid.unavailable': 'Tidak tersedia: instans ini memakai mesinnya sendiri, yang tidak bisa mengecualikan kelas jalan.',
+  'roadtrip.avoid.hint':
+    'Ini pembobotan, bukan larangan. Kalau satu perjalanan tidak punya jalan memutar, ia tetap melewatinya dan hari itu memberi tahu.',
+  'roadtrip.avoid.unavailable':
+    'Tidak tersedia: instans ini memakai mesinnya sendiri, yang tidak bisa mengecualikan kelas jalan.',
   'roadtrip.avoid.badge': '{count} dihindari',
   'roadtrip.avoid.missed': '{classes} tak terhindarkan',
-  'roadtrip.avoid.missedHint': 'Hari ini tidak ada rute memutarnya, jadi perjalanan melewatinya. Hari lain tetap menghindari yang bisa dihindari.',
+  'roadtrip.avoid.missedHint':
+    'Hari ini tidak ada rute memutarnya, jadi perjalanan melewatinya. Hari lain tetap menghindari yang bisa dihindari.',
   'roadtrip.refuel.dry': 'Tangki habis di sini',
   'roadtrip.refuel.after': 'setelah {distance}',
   'roadtrip.limit.vehicleLabel': 'Kamu mengemudi apa',
@@ -139,11 +147,13 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': 'panjang {distance}',
   'roadtrip.track.gap': '{distance} dari hari ini',
   'roadtrip.track.onDay': 'sepanjang hari ini',
-  'roadtrip.track.explain': 'Perjalanan ditarik ke jalur dengan beberapa titik lintas. Titik lintas yang ada di etape tersebut akan diganti.',
+  'roadtrip.track.explain':
+    'Perjalanan ditarik ke jalur dengan beberapa titik lintas. Titik lintas yang ada di etape tersebut akan diganti.',
   'roadtrip.track.action': 'Ikuti jalur ini',
   'roadtrip.track.working': 'Menyesuaikan perjalanan dengan jalur, putaran {round}',
   'roadtrip.track.done': '{count} titik lintas ditempatkan. Perjalanan tetap dalam {distance} dari jalur.',
-  'roadtrip.track.capped': '{count} titik lintas ditempatkan. Di titik terlebar, perjalanan berjarak {distance} dari jalur.',
+  'roadtrip.track.capped':
+    '{count} titik lintas ditempatkan. Di titik terlebar, perjalanan berjarak {distance} dari jalur.',
   'roadtrip.track.already': 'Perjalanan sudah mengikuti jalur ini.',
   'roadtrip.track.errorRoute': 'Layanan rute tidak menjawab.',
   'roadtrip.track.errorSave': 'Titik lintas tidak dapat disimpan.',
@@ -158,7 +168,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Tidak ada di rute yang cocok dengan “{name}”.',
   'roadtrip.poi.noneMatchFilters': 'Tidak ada di sepanjang rute yang cocok dengan filter ini.',
   'roadtrip.poi.foundFiltered': '{count} dari {total} di rute',
-  'roadtrip.poi.truncated': 'Di {count} ruas ada lebih banyak daripada yang muat dalam satu jawaban — persempit koridor untuk melihat sisanya.',
+  'roadtrip.poi.truncated':
+    'Di {count} ruas ada lebih banyak daripada yang muat dalam satu jawaban — persempit koridor untuk melihat sisanya.',
   'roadtrip.poi.search': 'Cari',
   'roadtrip.poi.searching': 'Mencari {done} dari {total}',
   'roadtrip.poi.capped': 'Rute panjang — hanya bagian pertama yang dicari.',

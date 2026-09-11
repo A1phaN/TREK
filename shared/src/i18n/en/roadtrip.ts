@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "While online, drag a day ending along the route or onto a place; right-click it to restore the automatic ending.",
-  'roadtrip.window.resetBoundaries': "Restore automatic day endings",
+  'roadtrip.stops.section': 'Service stops',
+  'roadtrip.stops.inDays': 'Show in Days too',
+  'roadtrip.stops.daysHint':
+    'Applies to all service stops in this trip. When off, they stay exclusively in the Roadtrip plan. Turn on to show them in Days again.',
+  'roadtrip.window.dragHint':
+    'While online, drag a day ending along the route or onto a place; right-click it to restore the automatic ending.',
+  'roadtrip.window.resetBoundaries': 'Restore automatic day endings',
   'roadtrip.window.endHere': 'End the day here',
   'roadtrip.window.endHereHint':
     'You can end a day at a specific stop in its place details while Roadtrip mode and daily travel times are active.',
@@ -92,11 +97,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Toll roads',
   'roadtrip.avoid.motorway': 'Motorways',
   'roadtrip.avoid.ferry': 'Ferries',
-  'roadtrip.avoid.hint': 'These are weighted down, not banned. Where a drive has no way around one, it still uses it and the day says so.',
-  'roadtrip.avoid.unavailable': 'Not available: this instance routes through its own engine, which cannot leave a road class out.',
+  'roadtrip.avoid.hint':
+    'These are weighted down, not banned. Where a drive has no way around one, it still uses it and the day says so.',
+  'roadtrip.avoid.unavailable':
+    'Not available: this instance routes through its own engine, which cannot leave a road class out.',
   'roadtrip.avoid.badge': '{count} avoided',
   'roadtrip.avoid.missed': '{classes} unavoidable',
-  'roadtrip.avoid.missedHint': 'This day has no route around it, so the drive uses it. Every other day still avoids what it can.',
+  'roadtrip.avoid.missedHint':
+    'This day has no route around it, so the drive uses it. Every other day still avoids what it can.',
   'roadtrip.refuel.dry': 'Tank runs out here',
   'roadtrip.refuel.after': 'after {distance}',
   'roadtrip.limit.vehicleLabel': 'What you drive',
@@ -138,7 +146,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '{distance} long',
   'roadtrip.track.gap': '{distance} off this day',
   'roadtrip.track.onDay': 'along this day',
-  'roadtrip.track.explain': 'The drive is pulled onto the track with a handful of via points. Existing via points on those legs are replaced.',
+  'roadtrip.track.explain':
+    'The drive is pulled onto the track with a handful of via points. Existing via points on those legs are replaced.',
   'roadtrip.track.action': 'Follow this track',
   'roadtrip.track.working': 'Fitting the drive to the track, round {round}',
   'roadtrip.track.done': '{count} via points placed. The drive stays within {distance} of the track.',

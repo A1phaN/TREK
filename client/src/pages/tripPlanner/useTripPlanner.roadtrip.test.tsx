@@ -1,3 +1,4 @@
+import { roadtripPreferencesRepo } from '../../repo/roadtripPreferencesRepo'
 // FE-TP-ROAD-001 to FE-TP-ROAD-074
 import React from 'react'
 import { renderHook, act, waitFor } from '@testing-library/react'
@@ -859,15 +860,15 @@ describe('useTripPlanner road trip: one stop at a time', () => {
 
   it('FE-TP-ROAD-033: a driving limit goes straight to the settings, and a failure is said', async () => {
     oneStop()
-    const updateSettings = vi.fn(async () => {})
-    useSettingsStore.setState({ updateSettings } as never)
+    const updateSettings = vi.mocked(roadtripPreferencesRepo.update)
+    updateSettings.mockResolvedValue({})
     const { result } = await renderRoadtrip()
 
-    await act(async () => { await result.current.saveRoadtripLimit('roadtrip_max_leg_minutes', 180) })
-    expect(updateSettings).toHaveBeenCalledWith({ roadtrip_max_leg_minutes: 180 })
+    await act(async () => { await result.current.saveRoadtripLimit?.('roadtrip_leg_minutes', 180) })
+    expect(updateSettings).toHaveBeenCalledWith(42, { roadtrip_leg_minutes: 180 })
 
     updateSettings.mockRejectedValue(new Error('nope'))
-    await act(async () => { await result.current.saveRoadtripLimit('roadtrip_max_leg_minutes', 90) })
+    await act(async () => { await result.current.saveRoadtripLimit?.('roadtrip_leg_minutes', 90) })
     expect(toasts.some(t => t.type === 'error')).toBe(true)
   })
 })
@@ -1492,6 +1493,7 @@ describe('useTripPlanner road trip: somewhere to fill up', () => {
       stops: [drawn(1201, 53, 10, 5, 1), drawn(1202, 52, 10, 5, 2), drawn(1203, 51, 10, 6, 0)],
       geometry: [[53, 10], [52, 10], [51, 10]],
       drivingGeometry: [[53, 10], [52, 10], [51, 10]],
+      legs: [{ mode: 'driving', distance: 111000 }, { mode: 'driving', distance: 111000 }],
     }]
   }
 
@@ -1598,4 +1600,37 @@ describe('useTripPlanner road trip: somewhere to fill up', () => {
 
     expect(result.current.stopDraft).toBeNull()
   })
+})
+
+vi.mock('../../hooks/useRoadtripSettings', () => ({
+  useRoadtripSettings: (select: (preferences: import('@trek/shared').RoadtripPreferences) => unknown) => useSettingsStore(state => select(state.settings as import('@trek/shared').RoadtripPreferences)),
+  useLoadRoadtripSettings: () => ({ ready: true, failed: false }),
+}))
+vi.mock('../../repo/roadtripPreferencesRepo', () => ({ roadtripPreferencesRepo: { update: vi.fn(async () => ({})) } }))
+
+it('keeps exclusive service stops in Roadtrip, hides them in Days and restores them without duplicates', async () => {
+  const normal = buildPlace({ id: 101, name: 'Berlin' })
+  const charging = buildPlace({ id: 102, name: 'Charger', stop_type: 'charging' })
+  const visits = [buildAssignment({ id: 11, day_id: 5, place: normal }), buildAssignment({ id: 12, day_id: 5, place: charging })]
+  seedTrip({ places: [normal, charging], days: [buildDay({ id: 5 })], assignments: { '5': visits } })
+  useSettingsStore.setState(s => ({ settings: { ...s.settings, roadtrip_service_stops_in_days: false } }))
+  const { result } = await renderRoadtrip()
+  expect(result.current.assignments['5']).toHaveLength(2)
+  act(() => result.current.toggleRoadtripMode())
+  expect(result.current.assignments['5'].map(a => a.id)).toEqual([11])
+  expect(result.current.places.map(p => p.id)).toEqual([101])
+  expect(useTripStore.getState().assignments['5']).toHaveLength(2)
+  act(() => useSettingsStore.setState(s => ({ settings: { ...s.settings, roadtrip_service_stops_in_days: true } })))
+  expect(result.current.assignments['5']).toHaveLength(2)
+  expect(result.current.places).toHaveLength(2)
+})
+
+it('preserves exclusive service stops when reordering the visible Days stops', async () => {
+  const visits = [stopAt(11, 5, 0), stopAt(12, 5, 1, { place: buildPlace({ stop_type: 'charging' }) }), stopAt(13, 5, 2)]
+  seedTrip({ days: [buildDay({ id: 5 })], assignments: { '5': visits } })
+  useSettingsStore.setState(s => ({ settings: { ...s.settings, roadtrip_service_stops_in_days: false } }))
+  const { result } = await renderRoadtrip()
+  act(() => result.current.toggleRoadtripMode())
+  await act(async () => result.current.handleReorder(5, [13, 11]))
+  expect(actions.reorderAssignments).toHaveBeenCalledWith(42, 5, [13, 12, 11])
 })

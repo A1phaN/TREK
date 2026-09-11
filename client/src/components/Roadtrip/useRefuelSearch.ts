@@ -1,27 +1,11 @@
+import { useRoadtripSettings } from '../../hooks/useRoadtripSettings'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { mapsApi } from '../../api/client'
 import { useTranslation } from '../../i18n'
 import { isEffectivelyOffline } from '../../sync/networkMode'
-import { useSettingsStore } from '../../store/settingsStore'
 import { refuelStopTypeFor, type VehicleKind } from './roadtripModel'
 import { boxAround, pointAtMeters, type LatLng } from './corridor'
 import { reachableRefuels, outcomeOf, type RefuelCandidate, type RefuelOutcome } from './refuelSuggestion'
-
-/**
- * Somewhere to fill up before the tank runs out, asked for once, when asked for.
- *
- * Deliberately NOT automatic, for the same reason the corridor search next door is not:
- * every run is a real request against a shared service. It is also not the corridor
- * search itself, although it looks like a smaller version of it. Three reasons, all
- * about behaviour rather than tidiness:
- *
- *  - that search is bound to the day the panel has selected, so it cannot answer a
- *    warning on day five while the panel shows day one;
- *  - starting it clears the panel's results and the traveller's own name filter;
- *  - it asks up to sixteen boxes along a whole day. This question needs one small circle.
- *
- * One request, one day, no shared state touched.
- */
 
 /**
  * How far around the search point to look, in kilometres.
@@ -41,6 +25,8 @@ const LOOK_KM = 14
  * reach, so it is pulled back far enough that the useful half becomes the whole of it.
  */
 const LOOK_BACK_KM = 12
+const SEARCH_STEP_KM = 20
+const MAX_SEARCHES = 8
 
 /** Nothing on offer, as one stable array, so an idle search never redraws the map. */
 const NONE: RefuelCandidate[] = []
@@ -60,8 +46,8 @@ export interface RefuelSearch {
    * reference changes.
    */
   offered: RefuelCandidate[]
-  /** Runs the one request. `key` identifies the dry point, so only one is open at a time. */
-  ask: (key: string, at: LatLng, line: LatLng[], dryAlongKm: number, existing: LatLng[]) => Promise<void>
+  /** Searches backwards until an available stop is found. `key` identifies the dry point, so only one is open at a time. */
+  ask: (key: string, at: LatLng, line: LatLng[], dryAlongKm: number, existing: LatLng[], fromAlongKm?: number) => Promise<void>
   close: () => void
 }
 
@@ -69,7 +55,7 @@ export function useRefuelSearch(): RefuelSearch {
   const { locale } = useTranslation()
   // What to look for. Somebody who said they drive an electric car has no use for a
   // petrol station in the list, and the other way round; with nothing said, both.
-  const vehicle = useSettingsStore(s => s.settings.roadtrip_vehicle)
+  const vehicle = useRoadtripSettings(s => s.roadtrip_vehicle)
   const [openFor, setOpenFor] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [outcome, setOutcome] = useState<RefuelOutcome | null>(null)
@@ -91,6 +77,7 @@ export function useRefuelSearch(): RefuelSearch {
     line: LatLng[],
     dryAlongKm: number,
     existing: LatLng[],
+    fromAlongKm = 0,
   ) => {
     abortRef.current?.abort()
     const controller = new AbortController()
@@ -99,6 +86,7 @@ export function useRefuelSearch(): RefuelSearch {
     setResults([])
     setOutcome(null)
 
+    setLoading(false)
     // Offline the answer would be a list of places that cannot be saved: the place write
     // queues offline but the day assignment does not, so accepting one would leave an
     // orphan. Say so instead of offering it.
@@ -115,12 +103,25 @@ export function useRefuelSearch(): RefuelSearch {
       // Pulled back along the road, because only what lies before the dry point can be
       // reached. `at` stays the dry point itself: it is what the band names and what the
       // map is asked to show.
-      const centre = pointAtMeters(line, Math.max(0, (dryAlongKm - LOOK_BACK_KM) * 1000)) ?? at
-      const answer = await mapsApi.pois(wanted, boxAround(centre, LOOK_KM), locale, controller.signal)
-      if (controller.signal.aborted) return
-      const candidates = reachableRefuels(answer.pois, line, dryAlongKm, { existing })
-      setResults(candidates)
-      setOutcome(outcomeOf(candidates, answer))
+      let incomplete = false
+      for (let attempt = 0; attempt < MAX_SEARCHES; attempt++) {
+        const along = Math.max(fromAlongKm, dryAlongKm - LOOK_BACK_KM - attempt * SEARCH_STEP_KM)
+        const centre = pointAtMeters(line, along * 1000) ?? at
+        const answer = await mapsApi.pois(wanted, boxAround(centre, LOOK_KM), locale, controller.signal)
+        if (controller.signal.aborted) return
+        incomplete ||= !!answer.truncated
+        const candidates = reachableRefuels(answer.pois, line, dryAlongKm, { existing }).filter(p => p.alongKm >= fromAlongKm)
+        if (candidates.length) {
+          setResults(candidates)
+          setOutcome('found')
+          return
+        }
+        if (along === fromAlongKm) {
+          setOutcome(outcomeOf([], { truncated: incomplete }))
+          return
+        }
+      }
+      setOutcome('incomplete')
     } catch {
       if (!controller.signal.aborted) setOutcome('failed')
     } finally {

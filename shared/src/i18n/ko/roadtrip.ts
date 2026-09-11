@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "온라인에서 하루 종료 지점을 경로나 장소로 드래그하고, 오른쪽 클릭으로 자동 종료를 복원할 수 있습니다.",
-  'roadtrip.window.resetBoundaries': "자동 하루 종료 복원",
+  'roadtrip.stops.section': '편의시설 경유지',
+  'roadtrip.stops.inDays': '일별 보기에도 표시',
+  'roadtrip.stops.daysHint':
+    '이 여행의 모든 편의시설 경유지에 적용됩니다. 끄면 Roadtrip 계획에만 표시됩니다. 켜면 일별 보기에도 다시 표시됩니다.',
+  'roadtrip.window.dragHint':
+    '온라인에서 하루 종료 지점을 경로나 장소로 드래그하고, 오른쪽 클릭으로 자동 종료를 복원할 수 있습니다.',
+  'roadtrip.window.resetBoundaries': '자동 하루 종료 복원',
   'roadtrip.window.endHere': '여기서 하루 종료',
   'roadtrip.window.endHereHint':
     'Roadtrip 모드와 일일 이동 시간이 활성화된 경우 장소 상세에서 특정 경유지를 하루의 종점으로 설정할 수 있습니다.',
@@ -92,8 +97,10 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': '유료 도로',
   'roadtrip.avoid.motorway': '고속도로',
   'roadtrip.avoid.ferry': '페리',
-  'roadtrip.avoid.hint': '금지가 아니라 가중치를 낮추는 것입니다. 우회로가 없으면 그대로 지나가고, 해당 날짜에 그렇게 표시됩니다.',
-  'roadtrip.avoid.unavailable': '사용할 수 없습니다. 이 인스턴스는 자체 엔진으로 경로를 계산하며, 도로 종류를 제외하지 못합니다.',
+  'roadtrip.avoid.hint':
+    '금지가 아니라 가중치를 낮추는 것입니다. 우회로가 없으면 그대로 지나가고, 해당 날짜에 그렇게 표시됩니다.',
+  'roadtrip.avoid.unavailable':
+    '사용할 수 없습니다. 이 인스턴스는 자체 엔진으로 경로를 계산하며, 도로 종류를 제외하지 못합니다.',
   'roadtrip.avoid.badge': '{count}개 회피',
   'roadtrip.avoid.missed': '{classes} 회피 불가',
   'roadtrip.avoid.missedHint': '이 날은 우회로가 없어 그대로 지나갑니다. 다른 날은 계속 피할 수 있는 것을 피합니다.',
@@ -157,7 +164,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': '경로상에 “{name}”와(과) 일치하는 곳이 없습니다.',
   'roadtrip.poi.noneMatchFilters': '이 필터에 맞는 곳이 경로에 없습니다.',
   'roadtrip.poi.foundFiltered': '경로상 {total}곳 중 {count}곳',
-  'roadtrip.poi.truncated': '{count}개 구간에서 한 번에 반환할 수 있는 수를 넘었습니다. 회랑을 좁히면 나머지를 볼 수 있습니다.',
+  'roadtrip.poi.truncated':
+    '{count}개 구간에서 한 번에 반환할 수 있는 수를 넘었습니다. 회랑을 좁히면 나머지를 볼 수 있습니다.',
   'roadtrip.poi.search': '검색',
   'roadtrip.poi.searching': '검색 중 {done}/{total}',
   'roadtrip.poi.capped': '경로가 길어 앞부분만 검색했습니다.',

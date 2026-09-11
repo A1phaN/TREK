@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "Dra dagens slut längs rutten eller till en plats när du är online; högerklicka för att återställa det automatiska slutet.",
-  'roadtrip.window.resetBoundaries': "Återställ automatiska dagsslut",
+  'roadtrip.stops.section': 'Servicestopp',
+  'roadtrip.stops.inDays': 'Visa även i Dagar',
+  'roadtrip.stops.daysHint':
+    'Gäller alla servicestopp på resan. När detta är avstängt visas de endast i Roadtrip. Slå på för att visa dem i Dagar igen.',
+  'roadtrip.window.dragHint':
+    'Dra dagens slut längs rutten eller till en plats när du är online; högerklicka för att återställa det automatiska slutet.',
+  'roadtrip.window.resetBoundaries': 'Återställ automatiska dagsslut',
   'roadtrip.window.endHere': 'Avsluta dagen här',
   'roadtrip.window.endHereHint':
     'Du kan avsluta dagen vid ett visst stopp i platsens detaljer när Roadtrip-läget och dagliga restider är aktiva.',
@@ -92,11 +97,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Avgiftsvägar',
   'roadtrip.avoid.motorway': 'Motorvägar',
   'roadtrip.avoid.ferry': 'Färjor',
-  'roadtrip.avoid.hint': 'De viktas ned, de förbjuds inte. När en körning inte kan ta sig runt använder den dem ändå, och dagen säger till.',
-  'roadtrip.avoid.unavailable': 'Inte tillgängligt: den här installationen använder sin egen motor, som inte kan utesluta en vägklass.',
+  'roadtrip.avoid.hint':
+    'De viktas ned, de förbjuds inte. När en körning inte kan ta sig runt använder den dem ändå, och dagen säger till.',
+  'roadtrip.avoid.unavailable':
+    'Inte tillgängligt: den här installationen använder sin egen motor, som inte kan utesluta en vägklass.',
   'roadtrip.avoid.badge': '{count} undviks',
   'roadtrip.avoid.missed': '{classes} går inte att undvika',
-  'roadtrip.avoid.missedHint': 'Den här dagen har ingen väg runt, så körningen använder det. Övriga dagar undviker fortfarande det de kan.',
+  'roadtrip.avoid.missedHint':
+    'Den här dagen har ingen väg runt, så körningen använder det. Övriga dagar undviker fortfarande det de kan.',
   'roadtrip.refuel.dry': 'Här tar tanken slut',
   'roadtrip.refuel.after': 'efter {distance}',
   'roadtrip.limit.vehicleLabel': 'Vad du kör',
@@ -138,7 +146,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '{distance} lång',
   'roadtrip.track.gap': '{distance} från den här dagen',
   'roadtrip.track.onDay': 'längs den här dagen',
-  'roadtrip.track.explain': 'Körningen dras in på spåret med ett fåtal mellanpunkter. Befintliga mellanpunkter på de sträckorna ersätts.',
+  'roadtrip.track.explain':
+    'Körningen dras in på spåret med ett fåtal mellanpunkter. Befintliga mellanpunkter på de sträckorna ersätts.',
   'roadtrip.track.action': 'Följ det här spåret',
   'roadtrip.track.working': 'Anpassar körningen till spåret, runda {round}',
   'roadtrip.track.done': '{count} mellanpunkter satta. Körningen håller sig inom {distance} från spåret.',
@@ -157,7 +166,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Inget längs vägen matchar ”{name}”.',
   'roadtrip.poi.noneMatchFilters': 'Inget längs vägen matchar de här filtren.',
   'roadtrip.poi.foundFiltered': '{count} av {total} längs vägen',
-  'roadtrip.poi.truncated': 'På {count} sträckor fanns fler än vad som får plats i ett svar – gör korridoren smalare för att se resten.',
+  'roadtrip.poi.truncated':
+    'På {count} sträckor fanns fler än vad som får plats i ett svar – gör korridoren smalare för att se resten.',
   'roadtrip.poi.search': 'Sök',
   'roadtrip.poi.searching': 'Söker {done} av {total}',
   'roadtrip.poi.capped': 'Rutten är lång – bara första sträckan genomsöktes.',

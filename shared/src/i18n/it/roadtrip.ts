@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "Online, trascina la fine della giornata lungo il percorso o su un luogo; fai clic destro per ripristinare la fine automatica.",
-  'roadtrip.window.resetBoundaries': "Ripristina le fini giornata automatiche",
+  'roadtrip.stops.section': 'Soste di servizio',
+  'roadtrip.stops.inDays': 'Mostra anche in Giorni',
+  'roadtrip.stops.daysHint':
+    'Si applica a tutte le soste di servizio del viaggio. Se disattivato, restano solo in Roadtrip. Attivalo per mostrarle di nuovo in Giorni.',
+  'roadtrip.window.dragHint':
+    'Online, trascina la fine della giornata lungo il percorso o su un luogo; fai clic destro per ripristinare la fine automatica.',
+  'roadtrip.window.resetBoundaries': 'Ripristina le fini giornata automatiche',
   'roadtrip.window.endHere': 'Termina la giornata qui',
   'roadtrip.window.endHereHint':
     'Puoi terminare la giornata in una tappa specifica dai suoi dettagli quando la modalità Roadtrip e gli orari giornalieri sono attivi.',
@@ -93,11 +98,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Strade a pedaggio',
   'roadtrip.avoid.motorway': 'Autostrade',
   'roadtrip.avoid.ferry': 'Traghetti',
-  'roadtrip.avoid.hint': 'Vengono penalizzate, non vietate. Quando un percorso non ha alternative, le usa comunque e la giornata lo segnala.',
-  'roadtrip.avoid.unavailable': 'Non disponibile: questa istanza usa il proprio motore, che non sa escludere una classe di strada.',
+  'roadtrip.avoid.hint':
+    'Vengono penalizzate, non vietate. Quando un percorso non ha alternative, le usa comunque e la giornata lo segnala.',
+  'roadtrip.avoid.unavailable':
+    'Non disponibile: questa istanza usa il proprio motore, che non sa escludere una classe di strada.',
   'roadtrip.avoid.badge': '{count} evitati',
   'roadtrip.avoid.missed': '{classes} inevitabili',
-  'roadtrip.avoid.missedHint': 'Questa giornata non ha percorsi alternativi, quindi il viaggio li usa. Le altre giornate continuano a evitare quel che possono.',
+  'roadtrip.avoid.missedHint':
+    'Questa giornata non ha percorsi alternativi, quindi il viaggio li usa. Le altre giornate continuano a evitare quel che possono.',
   'roadtrip.refuel.dry': 'Qui il serbatoio si esaurisce',
   'roadtrip.refuel.after': 'dopo {distance}',
   'roadtrip.limit.vehicleLabel': 'Cosa guidi',
@@ -139,11 +147,13 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '{distance} di lunghezza',
   'roadtrip.track.gap': 'a {distance} da questo giorno',
   'roadtrip.track.onDay': 'lungo questo giorno',
-  'roadtrip.track.explain': 'Il percorso viene portato sulla traccia con alcuni punti di passaggio. Quelli già presenti su quelle tratte vengono sostituiti.',
+  'roadtrip.track.explain':
+    'Il percorso viene portato sulla traccia con alcuni punti di passaggio. Quelli già presenti su quelle tratte vengono sostituiti.',
   'roadtrip.track.action': 'Segui questa traccia',
   'roadtrip.track.working': 'Adatto il percorso alla traccia, giro {round}',
   'roadtrip.track.done': '{count} punti di passaggio posati. Il percorso resta entro {distance} dalla traccia.',
-  'roadtrip.track.capped': '{count} punti di passaggio posati. Nel punto peggiore il percorso resta a {distance} dalla traccia.',
+  'roadtrip.track.capped':
+    '{count} punti di passaggio posati. Nel punto peggiore il percorso resta a {distance} dalla traccia.',
   'roadtrip.track.already': 'Il percorso seguiva già questa traccia.',
   'roadtrip.track.errorRoute': 'Il servizio di calcolo percorso non ha risposto.',
   'roadtrip.track.errorSave': 'Non è stato possibile salvare i punti di passaggio.',
@@ -158,7 +168,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Lungo il percorso non c’è nulla che corrisponda a “{name}”.',
   'roadtrip.poi.noneMatchFilters': 'Niente lungo il percorso corrisponde a questi filtri.',
   'roadtrip.poi.foundFiltered': '{count} di {total} lungo il percorso',
-  'roadtrip.poi.truncated': 'Su {count} tratti ce n’erano più di quanti ne stiano in una risposta: restringi il corridoio per vedere il resto.',
+  'roadtrip.poi.truncated':
+    'Su {count} tratti ce n’erano più di quanti ne stiano in una risposta: restringi il corridoio per vedere il resto.',
   'roadtrip.poi.search': 'Cerca',
   'roadtrip.poi.searching': 'Ricerca {done} di {total}',
   'roadtrip.poi.capped': 'Il percorso è lungo: è stato cercato solo il primo tratto.',

@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "En línia, arrossega el final del dia per la ruta o fins a un lloc; fes clic amb el botó dret per restaurar el final automàtic.",
-  'roadtrip.window.resetBoundaries': "Restaura els finals de dia automàtics",
+  'roadtrip.stops.section': 'Parades de servei',
+  'roadtrip.stops.inDays': 'Mostra també a Dies',
+  'roadtrip.stops.daysHint':
+    'S’aplica a totes les parades de servei del viatge. Si es desactiva, només apareixen a Roadtrip. Activa-ho per tornar-les a mostrar a Dies.',
+  'roadtrip.window.dragHint':
+    'En línia, arrossega el final del dia per la ruta o fins a un lloc; fes clic amb el botó dret per restaurar el final automàtic.',
+  'roadtrip.window.resetBoundaries': 'Restaura els finals de dia automàtics',
   'roadtrip.window.endHere': 'Acaba el dia aquí',
   'roadtrip.window.endHereHint':
     'Pots acabar el dia en una parada concreta des dels seus detalls quan el mode Roadtrip i els horaris diaris estiguin actius.',
@@ -93,11 +98,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Peatges',
   'roadtrip.avoid.motorway': 'Autopistes',
   'roadtrip.avoid.ferry': 'Ferris',
-  'roadtrip.avoid.hint': 'Es penalitzen, no es prohibeixen. Quan un trajecte no té manera d’evitar-ho, ho fa servir igualment i el dia ho indica.',
-  'roadtrip.avoid.unavailable': 'No disponible: aquesta instància fa servir el seu propi motor, que no pot ometre una classe de via.',
+  'roadtrip.avoid.hint':
+    'Es penalitzen, no es prohibeixen. Quan un trajecte no té manera d’evitar-ho, ho fa servir igualment i el dia ho indica.',
+  'roadtrip.avoid.unavailable':
+    'No disponible: aquesta instància fa servir el seu propi motor, que no pot ometre una classe de via.',
   'roadtrip.avoid.badge': '{count} evitats',
   'roadtrip.avoid.missed': '{classes} inevitable',
-  'roadtrip.avoid.missedHint': 'Aquest dia no té cap ruta que ho eviti, així que el trajecte ho fa servir. La resta de dies continuen evitant el que poden.',
+  'roadtrip.avoid.missedHint':
+    'Aquest dia no té cap ruta que ho eviti, així que el trajecte ho fa servir. La resta de dies continuen evitant el que poden.',
   'roadtrip.refuel.dry': 'Aquí s’esgota el dipòsit',
   'roadtrip.refuel.after': 'després de {distance}',
   'roadtrip.limit.vehicleLabel': 'Què condueixes',
@@ -139,11 +147,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '{distance} de llarg',
   'roadtrip.track.gap': 'a {distance} d’aquest dia',
   'roadtrip.track.onDay': 'al llarg d’aquest dia',
-  'roadtrip.track.explain': 'El trajecte s’ajusta a la traça amb uns quants punts de pas. Els punts existents en aquests trams se substitueixen.',
+  'roadtrip.track.explain':
+    'El trajecte s’ajusta a la traça amb uns quants punts de pas. Els punts existents en aquests trams se substitueixen.',
   'roadtrip.track.action': 'Segueix aquesta traça',
   'roadtrip.track.working': 'Ajustant el trajecte a la traça, ronda {round}',
-  'roadtrip.track.done': 'S’han col·locat {count} punts de pas. El trajecte es manté a menys de {distance} de la traça.',
-  'roadtrip.track.capped': 'S’han col·locat {count} punts de pas. En el punt més ample, el trajecte queda a {distance} de la traça.',
+  'roadtrip.track.done':
+    'S’han col·locat {count} punts de pas. El trajecte es manté a menys de {distance} de la traça.',
+  'roadtrip.track.capped':
+    'S’han col·locat {count} punts de pas. En el punt més ample, el trajecte queda a {distance} de la traça.',
   'roadtrip.track.already': 'El trajecte ja seguia aquesta traça.',
   'roadtrip.track.errorRoute': 'El servei de rutes no ha respost.',
   'roadtrip.track.errorSave': 'No s’han pogut desar els punts de pas.',
@@ -158,7 +169,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Res del trajecte no coincideix amb «{name}».',
   'roadtrip.poi.noneMatchFilters': 'Res del camí no coincideix amb aquests filtres.',
   'roadtrip.poi.foundFiltered': '{count} de {total} al trajecte',
-  'roadtrip.poi.truncated': 'En {count} trams hi havia més del que cap en una resposta: estreny el corredor per veure la resta.',
+  'roadtrip.poi.truncated':
+    'En {count} trams hi havia més del que cap en una resposta: estreny el corredor per veure la resta.',
   'roadtrip.poi.search': 'Cerca',
   'roadtrip.poi.searching': 'Cercant {done} de {total}',
   'roadtrip.poi.capped': 'La ruta és llarga: només s’ha cercat el primer tram.',

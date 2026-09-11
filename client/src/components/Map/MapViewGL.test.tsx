@@ -1391,6 +1391,7 @@ describe('MapViewGL', () => {
 
   it('clusters roadtrip stations and zooms before offering overlapping stations individually', async () => {
     loadOnAttach()
+    vi.mocked(glMap.getZoom).mockReturnValue(8)
     const poi: Poi = {
       osm_id: 'n1', name: 'Station A', lat: 48.854, lng: 2.332, category: 'charging_station',
       poi_type: 'charging_station', address: null, website: null, phone: null,
@@ -1411,6 +1412,7 @@ describe('MapViewGL', () => {
     const list = calls[calls.length - 1][0]
     act(() => { list.querySelectorAll('button')[1].click() })
     expect(onPoiClick).toHaveBeenCalledWith(other)
+    vi.mocked(glMap.getZoom).mockReturnValue(10)
   })
 
   it('FE-COMP-MAPVIEWGL-043: plugin markers render as tone dots with a text-only popup', async () => {

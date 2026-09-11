@@ -357,3 +357,5 @@ describe('tripSyncManager.syncAll — background tile pass', () => {
     expect(prefetchMock).not.toHaveBeenCalled()
   })
 })
+
+vi.mock('../repo/roadtripPreferencesRepo', () => ({ roadtripPreferencesRepo: { read: vi.fn(async () => ({})) } }))

@@ -19,6 +19,7 @@ export const roadtripPreferencesSchema = z
     roadtrip_kwh_per_100: amount.max(1000).optional(),
     roadtrip_battery_degradation: amount.max(100).optional(),
     roadtrip_connect_days: z.boolean().optional(),
+    roadtrip_service_stops_in_days: z.boolean().optional(),
     roadtrip_day_colors: z.boolean().optional(),
     roadtrip_avoid: z
       .string()
@@ -37,3 +38,8 @@ export const roadtripPreferencesUpdateSchema = roadtripPreferencesSchema.refine(
 );
 export type RoadtripPreferences = z.infer<typeof roadtripPreferencesSchema>;
 export const ROADTRIP_PREFERENCE_KEYS = Object.keys(roadtripPreferencesSchema.shape) as (keyof RoadtripPreferences)[];
+
+export const roadtripPreferencesResponseSchema = z.object({
+  tripId: z.number().int().positive(),
+  preferences: roadtripPreferencesSchema,
+});

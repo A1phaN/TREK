@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "Sleep online het dageinde langs de route of naar een plaats; klik met rechts om het automatische einde te herstellen.",
-  'roadtrip.window.resetBoundaries': "Automatische dageinden herstellen",
+  'roadtrip.stops.section': 'Servicestops',
+  'roadtrip.stops.inDays': 'Ook in Dagen tonen',
+  'roadtrip.stops.daysHint':
+    'Geldt voor alle servicestops van deze reis. Uitgeschakeld blijven ze alleen in Roadtrip staan. Schakel dit in om ze weer in Dagen te tonen.',
+  'roadtrip.window.dragHint':
+    'Sleep online het dageinde langs de route of naar een plaats; klik met rechts om het automatische einde te herstellen.',
+  'roadtrip.window.resetBoundaries': 'Automatische dageinden herstellen',
   'roadtrip.window.endHere': 'Dag hier beëindigen',
   'roadtrip.window.endHereHint':
     'Je kunt een stop als dageinde instellen in de plaatsdetails wanneer de Roadtrip-modus en dagelijkse reistijden actief zijn.',
@@ -71,7 +76,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.limit.rangeEmpty': 'Geen actieradius',
   'roadtrip.limit.rangeEmptyHint': 'Vul een actieradius in, of vul de velden in en TREK rekent hem uit.',
   'roadtrip.limit.specHint': 'Ingevuld bepalen deze velden de actieradius hierboven.',
-  'roadtrip.limit.vehicleHint': 'Geef aan wat je rijdt, dan kun je de voertuiggegevens invullen in plaats van een actieradius.',
+  'roadtrip.limit.vehicleHint':
+    'Geef aan wat je rijdt, dan kun je de voertuiggegevens invullen in plaats van een actieradius.',
   'roadtrip.limit.minutes': 'min',
   'roadtrip.limit.off': 'uit',
   'roadtrip.limit.blockNote': 'Eén blok = {distance}',
@@ -93,11 +99,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Tolwegen',
   'roadtrip.avoid.motorway': 'Snelwegen',
   'roadtrip.avoid.ferry': 'Veerboten',
-  'roadtrip.avoid.hint': 'Ze krijgen minder gewicht, ze worden niet verboden. Waar een rit er niet omheen kan, gebruikt hij ze toch en de dag meldt dat.',
-  'roadtrip.avoid.unavailable': 'Niet beschikbaar: deze installatie gebruikt haar eigen motor, die geen wegklasse kan weglaten.',
+  'roadtrip.avoid.hint':
+    'Ze krijgen minder gewicht, ze worden niet verboden. Waar een rit er niet omheen kan, gebruikt hij ze toch en de dag meldt dat.',
+  'roadtrip.avoid.unavailable':
+    'Niet beschikbaar: deze installatie gebruikt haar eigen motor, die geen wegklasse kan weglaten.',
   'roadtrip.avoid.badge': '{count} vermeden',
   'roadtrip.avoid.missed': '{classes} onvermijdelijk',
-  'roadtrip.avoid.missedHint': 'Deze dag heeft er geen route omheen, dus de rit gebruikt het. Alle andere dagen vermijden nog steeds wat ze kunnen.',
+  'roadtrip.avoid.missedHint':
+    'Deze dag heeft er geen route omheen, dus de rit gebruikt het. Alle andere dagen vermijden nog steeds wat ze kunnen.',
   'roadtrip.refuel.dry': 'Hier is de tank leeg',
   'roadtrip.refuel.after': 'na {distance}',
   'roadtrip.limit.vehicleLabel': 'Wat je rijdt',
@@ -139,7 +148,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '{distance} lang',
   'roadtrip.track.gap': '{distance} van deze dag',
   'roadtrip.track.onDay': 'langs deze dag',
-  'roadtrip.track.explain': 'De rit wordt met een handvol tussenpunten op de track getrokken. Bestaande tussenpunten op die etappes worden vervangen.',
+  'roadtrip.track.explain':
+    'De rit wordt met een handvol tussenpunten op de track getrokken. Bestaande tussenpunten op die etappes worden vervangen.',
   'roadtrip.track.action': 'Deze track volgen',
   'roadtrip.track.working': 'Rit wordt op de track gepast, ronde {round}',
   'roadtrip.track.done': '{count} tussenpunten geplaatst. De rit blijft binnen {distance} van de track.',
@@ -158,7 +168,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Niets onderweg komt overeen met “{name}”.',
   'roadtrip.poi.noneMatchFilters': 'Niets onderweg voldoet aan deze filters.',
   'roadtrip.poi.foundFiltered': '{count} van {total} onderweg',
-  'roadtrip.poi.truncated': 'Op {count} stukken waren er meer dan in één antwoord passen — maak de corridor smaller om de rest te zien.',
+  'roadtrip.poi.truncated':
+    'Op {count} stukken waren er meer dan in één antwoord passen — maak de corridor smaller om de rest te zien.',
   'roadtrip.poi.search': 'Zoeken',
   'roadtrip.poi.searching': 'Zoeken {done} van {total}',
   'roadtrip.poi.capped': 'De route is lang — alleen het eerste deel is doorzocht.',

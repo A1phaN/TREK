@@ -193,12 +193,12 @@ The Roadtrip addon must be enabled. These tools work without an open browser. Th
 |---|---|---|
 | `get_roadtrip_context` | Saved days, visits, coordinates, stays, pinned times, vehicle preferences, route profiles, vias, tracks and manual boundaries | trips:read |
 | `calculate_roadtrip` | Calculated days, arrivals, departures, automatic pauses, driving warnings and range warnings; optional geometry | trips:read |
-| `get_roadtrip_settings` | Personal driving preferences | settings:read |
-| `update_roadtrip_settings` | Patch personal driving preferences, preserving other settings | settings:write |
+| `get_roadtrip_settings` | Shared driving preferences for the specified trip | trips:read |
+| `update_roadtrip_settings` | Patch shared trip driving preferences, preserving other settings | trips:write |
 | `search_roadtrip_corridor` | Fuel, charging, rest areas, campsites, food, sights or hotels along a day | trips:read |
 | `update_route_via` | Move an existing routing handle and optionally change its outgoing leg | trips:write |
 
-Driving preferences include daily times, day-ending mode, leg/day driving limits, fuel or electric vehicle specifications, fallback range, fill percentage, avoidance and route display. They belong to the requesting account and apply across its trips. Manual endings belong to the shared trip. Only authorized trip editors can change visits, vias or endings. Fixed visit times retain priority over automatic times. Turning daily travel times off preserves saved endings but stops applying them.
+Driving preferences include daily times, day-ending mode, leg/day driving limits, fuel or electric vehicle specifications, fallback range, fill percentage, avoidance and route display. They belong to the specified trip and apply equally to all its travellers. Both settings tools require tripId. Changing driving preferences requires day-edit permission, as do changes to visits, vias and endings. Fixed visit times retain priority over automatic times. Turning daily travel times off preserves saved endings but stops applying them.
 
 Calculation distances are metres, route durations seconds, and stays minutes. Settings use kilometres, litres, kWh, consumption per 100 km and percentages regardless of display units. Zero clears a numeric limit; an empty daily time disables the automatic window. Vehicle specifications take precedence over fallback range when complete. The optional calculation settings are a preview and are never saved. Calculations support up to 150 visits and 100 waypoints per routing run (30 for plugin profiles). Routing calls are paced and cached. Missing coordinates, provider failures and schedule conflicts are reported explicitly; incomplete totals must not be presented as a complete itinerary. Avoidance is a routing preference, and `avoidMissed` identifies requested classes that could not be avoided, including when Valhalla falls back to OSRM.
 

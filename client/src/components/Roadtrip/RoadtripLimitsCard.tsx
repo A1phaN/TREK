@@ -1,3 +1,4 @@
+import { useRoadtripSettings } from '../../hooks/useRoadtripSettings'
 import React, { useState } from 'react'
 import {
   Clock, Fuel, CalendarClock, SlidersHorizontal, ChevronRight, Coins, Signpost, Ship, Check,
@@ -250,7 +251,8 @@ const SPEC_ROWS: Record<VehicleKind, { key: SpecKey; setting: string; Icon: type
  */
 const SPEC_SETTINGS = ['roadtrip_tank_litres', 'roadtrip_litres_per_100', 'roadtrip_battery_kwh', 'roadtrip_kwh_per_100', 'roadtrip_battery_degradation'] as const
 
-export default function RoadtripLimitsCard({ onSave, onResetDayBoundaries }: {
+export default function RoadtripLimitsCard({ onSave, onResetDayBoundaries, loading = false }: {
+  loading?: boolean
   onResetDayBoundaries?: () => Promise<void>
   /**
    * Persists one setting. Absent leaves the dialog read-only.
@@ -261,9 +263,10 @@ export default function RoadtripLimitsCard({ onSave, onResetDayBoundaries }: {
   onSave?: (key: string, value: number | string | boolean) => void
 }): React.ReactElement {
   const { t } = useTranslation()
-  const settings = useSettingsStore(s => s.settings)
+  const settings = useRoadtripSettings(s => s)
+  const unit = useSettingsStore(s => s.settings.distance_unit)
   const [open, setOpen] = useState(false)
-  const distanceUnit: DistanceUnit = settings.distance_unit === 'imperial' ? 'imperial' : 'metric'
+  const distanceUnit: DistanceUnit = unit === 'imperial' ? 'imperial' : 'metric'
   const imperial = distanceUnit === 'imperial'
 
   const legMinutes = settings.roadtrip_leg_minutes
@@ -380,6 +383,8 @@ export default function RoadtripLimitsCard({ onSave, onResetDayBoundaries }: {
       <button
         type="button"
         onClick={() => setOpen(true)}
+        disabled={loading}
+        aria-busy={loading}
         className="flex w-full items-center gap-3 rounded-xl border border-edge-faint bg-surface-card px-3.5 py-3 text-start transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         {/* No icon tile on the trigger: the badges below already carry a clock, a
@@ -387,7 +392,7 @@ export default function RoadtripLimitsCard({ onSave, onResetDayBoundaries }: {
             they need to sit on one line. */}
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="truncate text-body font-semibold text-content">
-            {t('roadtrip.limit.title')}
+            {loading ? t('common.loading') : t('roadtrip.limit.title')}
           </span>
           {badges.length ? (
             <span className="flex flex-wrap items-center gap-1">
@@ -634,6 +639,13 @@ export default function RoadtripLimitsCard({ onSave, onResetDayBoundaries }: {
                     on={!!settings.roadtrip_day_colors}
                     disabled={false}
                     onToggle={() => onSave?.('roadtrip_day_colors', !settings.roadtrip_day_colors)}
+                  />
+                </Panel>
+                <Panel icon={Signpost} title={t('roadtrip.stops.section')} note={t('roadtrip.stops.daysHint')}>
+                  <AvoidRow icon={Link2} label={t('roadtrip.stops.inDays')}
+                    on={settings.roadtrip_service_stops_in_days !== false}
+                    disabled={!onSave}
+                    onToggle={() => onSave?.('roadtrip_service_stops_in_days', settings.roadtrip_service_stops_in_days === false)}
                   />
                 </Panel>
               </div>

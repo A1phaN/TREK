@@ -18,7 +18,7 @@ export default function ClusteredPois({ pois, enabled, onPoiClick, children }: {
     map.on('zoomend', update)
     return () => { map.off('zoomend', update) }
   }, [map])
-  const groups = useMemo(() => enabled ? clusterPois(pois, poi => map.latLngToContainerPoint([poi.lat, poi.lng])) : [], [pois, enabled, map, zoom])
+  const groups = useMemo(() => enabled ? clusterPois(pois, poi => map.latLngToContainerPoint([poi.lat, poi.lng]), zoom) : [], [pois, enabled, map, zoom])
   const markers = new Map(pois.map((poi, index) => [poi.osm_id, children[index]]))
   if (!enabled) return <>{children}</>
   return <>{groups.map(group => {

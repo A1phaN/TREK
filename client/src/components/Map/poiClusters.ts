@@ -1,13 +1,15 @@
 import type { Poi } from './poiCategories'
 
 export const POI_CLUSTER_RADIUS = 48
+export const POI_CLUSTER_MAX_ZOOM = 8
 export const POI_CLUSTER_DETAIL_ZOOM = 18
 export interface PoiCluster { pois: Poi[]; lat: number; lng: number }
 
-export function clusterPois(pois: Poi[], project: (poi: Poi) => { x: number; y: number }): PoiCluster[] {
+export function clusterPois(pois: Poi[], project: (poi: Poi) => { x: number; y: number }, zoom = 0): PoiCluster[] {
   const groups: (PoiCluster & { x: number; y: number })[] = []
   const cells = new Map<string, number[]>()
   const unique = new Map(pois.map(poi => [poi.osm_id, poi]))
+  if (zoom > POI_CLUSTER_MAX_ZOOM) return [...unique.values()].map(poi => ({ pois: [poi], lat: poi.lat, lng: poi.lng }))
   for (const poi of [...unique.values()].sort((a, b) => a.osm_id.localeCompare(b.osm_id))) {
     const point = project(poi)
     const cx = Math.floor(point.x / POI_CLUSTER_RADIUS), cy = Math.floor(point.y / POI_CLUSTER_RADIUS)

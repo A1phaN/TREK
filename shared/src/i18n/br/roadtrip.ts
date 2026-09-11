@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "Online, arraste o fim do dia pela rota ou até um lugar; clique com o botão direito para restaurar o fim automático.",
-  'roadtrip.window.resetBoundaries': "Restaurar fins de dia automáticos",
+  'roadtrip.stops.section': 'Paradas de serviço',
+  'roadtrip.stops.inDays': 'Mostrar também em Dias',
+  'roadtrip.stops.daysHint':
+    'Aplica-se a todas as paradas de serviço desta viagem. Desativado, elas ficam apenas no Roadtrip. Ative para mostrá-las novamente em Dias.',
+  'roadtrip.window.dragHint':
+    'Online, arraste o fim do dia pela rota ou até um lugar; clique com o botão direito para restaurar o fim automático.',
+  'roadtrip.window.resetBoundaries': 'Restaurar fins de dia automáticos',
   'roadtrip.window.endHere': 'Encerrar o dia aqui',
   'roadtrip.window.endHereHint':
     'Você pode encerrar o dia em uma parada específica nos detalhes do local quando o modo Roadtrip e os horários diários estiverem ativos.',
@@ -92,11 +97,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Pedágios',
   'roadtrip.avoid.motorway': 'Rodovias',
   'roadtrip.avoid.ferry': 'Balsas',
-  'roadtrip.avoid.hint': 'Isso é uma penalização, não uma proibição. Quando o trajeto não tem como desviar, ele usa mesmo assim e o dia avisa.',
-  'roadtrip.avoid.unavailable': 'Indisponível: esta instância usa o próprio motor, que não consegue deixar de fora uma classe de via.',
+  'roadtrip.avoid.hint':
+    'Isso é uma penalização, não uma proibição. Quando o trajeto não tem como desviar, ele usa mesmo assim e o dia avisa.',
+  'roadtrip.avoid.unavailable':
+    'Indisponível: esta instância usa o próprio motor, que não consegue deixar de fora uma classe de via.',
   'roadtrip.avoid.badge': '{count} evitados',
   'roadtrip.avoid.missed': '{classes} inevitável',
-  'roadtrip.avoid.missedHint': 'Este dia não tem rota que desvie, então o trajeto usa. Os outros dias continuam evitando o que dá.',
+  'roadtrip.avoid.missedHint':
+    'Este dia não tem rota que desvie, então o trajeto usa. Os outros dias continuam evitando o que dá.',
   'roadtrip.refuel.dry': 'Aqui o tanque acaba',
   'roadtrip.refuel.after': 'após {distance}',
   'roadtrip.limit.vehicleLabel': 'O que você dirige',
@@ -138,11 +146,13 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '{distance} de comprimento',
   'roadtrip.track.gap': 'a {distance} deste dia',
   'roadtrip.track.onDay': 'ao longo deste dia',
-  'roadtrip.track.explain': 'O percurso é puxado para a trilha com alguns pontos de passagem. Os pontos existentes nessas etapas são substituídos.',
+  'roadtrip.track.explain':
+    'O percurso é puxado para a trilha com alguns pontos de passagem. Os pontos existentes nessas etapas são substituídos.',
   'roadtrip.track.action': 'Seguir esta trilha',
   'roadtrip.track.working': 'Ajustando o percurso à trilha, rodada {round}',
   'roadtrip.track.done': '{count} pontos de passagem colocados. O percurso fica a menos de {distance} da trilha.',
-  'roadtrip.track.capped': '{count} pontos de passagem colocados. No ponto mais largo, o percurso fica a {distance} da trilha.',
+  'roadtrip.track.capped':
+    '{count} pontos de passagem colocados. No ponto mais largo, o percurso fica a {distance} da trilha.',
   'roadtrip.track.already': 'O percurso já seguia esta trilha.',
   'roadtrip.track.errorRoute': 'O serviço de rotas não respondeu.',
   'roadtrip.track.errorSave': 'Não foi possível salvar os pontos de passagem.',
@@ -157,7 +167,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Nada no trajeto corresponde a “{name}”.',
   'roadtrip.poi.noneMatchFilters': 'Nada no caminho corresponde a esses filtros.',
   'roadtrip.poi.foundFiltered': '{count} de {total} no trajeto',
-  'roadtrip.poi.truncated': 'Em {count} trechos havia mais do que cabe em uma resposta — estreite o corredor para ver o restante.',
+  'roadtrip.poi.truncated':
+    'Em {count} trechos havia mais do que cabe em uma resposta — estreite o corredor para ver o restante.',
   'roadtrip.poi.search': 'Buscar',
   'roadtrip.poi.searching': 'Buscando {done} de {total}',
   'roadtrip.poi.capped': 'A rota é longa — apenas o primeiro trecho foi pesquisado.',

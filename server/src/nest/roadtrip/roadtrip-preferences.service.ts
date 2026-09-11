@@ -1,5 +1,5 @@
+import { DatabaseService } from '../database/database.service';
 import { RealtimeService } from '../realtime/realtime.service';
-import { SettingsService } from '../settings/settings.service';
 import { HttpException, Injectable } from '@nestjs/common';
 import {
   ROADTRIP_PREFERENCE_KEYS,
@@ -11,12 +11,22 @@ import {
 @Injectable()
 export class RoadtripPreferencesService {
   constructor(
-    private readonly settings: SettingsService,
+    private readonly db: DatabaseService,
     private readonly realtime: RealtimeService,
   ) {}
 
-  read(userId: number): RoadtripPreferences {
-    const settings = this.settings.getUserSettings(userId);
+  read(tripId: number): RoadtripPreferences {
+    const settings: Record<string, unknown> = {};
+    for (const row of this.db.all<{ key: string; value: string }>(
+      'SELECT key, value FROM roadtrip_preferences WHERE trip_id = ?',
+      tripId,
+    )) {
+      try {
+        settings[row.key] = JSON.parse(row.value);
+      } catch {
+        settings[row.key] = row.value;
+      }
+    }
     const preferences: Record<string, unknown> = {};
     for (const key of ROADTRIP_PREFERENCE_KEYS) {
       const parsed = roadtripPreferencesSchema.shape[key].safeParse(settings[key]);
@@ -25,15 +35,24 @@ export class RoadtripPreferencesService {
     return roadtripPreferencesSchema.parse(preferences);
   }
 
-  update(userId: number, patch: RoadtripPreferences): RoadtripPreferences {
+  update(tripId: number, patch: RoadtripPreferences): RoadtripPreferences {
     const validated = roadtripPreferencesUpdateSchema.parse(patch);
-    const next = { ...this.read(userId), ...validated };
-    if (next.roadtrip_day_start && next.roadtrip_day_end && next.roadtrip_day_end <= next.roadtrip_day_start) {
-      throw new HttpException({ error: 'Day end must be later than day start.' }, 400);
-    }
-    this.settings.bulkUpsertSettings(userId, validated);
-    const saved = this.read(userId);
-    this.realtime.broadcastToUser(userId, { type: 'roadtripPreferences:changed', preferences: saved });
+    const saved = this.db.transaction(() => {
+      const next = { ...this.read(tripId), ...validated };
+      if (next.roadtrip_day_start && next.roadtrip_day_end && next.roadtrip_day_end <= next.roadtrip_day_start) {
+        throw new HttpException({ error: 'Day end must be later than day start.' }, 400);
+      }
+      for (const [key, value] of Object.entries(validated)) {
+        this.db.run(
+          'INSERT INTO roadtrip_preferences (trip_id, key, value) VALUES (?, ?, ?) ON CONFLICT(trip_id, key) DO UPDATE SET value = excluded.value',
+          tripId,
+          key,
+          JSON.stringify(value),
+        );
+      }
+      return this.read(tripId);
+    });
+    this.realtime.broadcast(String(tripId), 'roadtripPreferences:changed', { preferences: saved });
     return saved;
   }
 }

@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "Online můžete konec dne přetáhnout po trase nebo na místo; pravým tlačítkem obnovíte automatický konec.",
-  'roadtrip.window.resetBoundaries': "Obnovit automatické konce dnů",
+  'roadtrip.stops.section': 'Servisní zastávky',
+  'roadtrip.stops.inDays': 'Zobrazit také ve Dnech',
+  'roadtrip.stops.daysHint':
+    'Platí pro všechny servisní zastávky této cesty. Po vypnutí zůstanou pouze v plánu Roadtrip. Zapnutím je znovu zobrazíte ve Dnech.',
+  'roadtrip.window.dragHint':
+    'Online můžete konec dne přetáhnout po trase nebo na místo; pravým tlačítkem obnovíte automatický konec.',
+  'roadtrip.window.resetBoundaries': 'Obnovit automatické konce dnů',
   'roadtrip.window.endHere': 'Ukončit den zde',
   'roadtrip.window.endHereHint':
     'V podrobnostech místa můžete určit zastávku jako konec dne, když je aktivní režim Roadtrip a denní časy cestování.',
@@ -93,10 +98,12 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.motorway': 'Dálnice',
   'roadtrip.avoid.ferry': 'Trajekty',
   'roadtrip.avoid.hint': 'Jde o penalizaci, ne o zákaz. Když se jízda nemá jak vyhnout, použije to a den to řekne.',
-  'roadtrip.avoid.unavailable': 'Není k dispozici: tato instance jezdí přes vlastní engine, který neumí vynechat třídu silnic.',
+  'roadtrip.avoid.unavailable':
+    'Není k dispozici: tato instance jezdí přes vlastní engine, který neumí vynechat třídu silnic.',
   'roadtrip.avoid.badge': '{count} vynecháno',
   'roadtrip.avoid.missed': '{classes} nelze objet',
-  'roadtrip.avoid.missedHint': 'Tento den nemá objízdnou trasu, takže tudy jede. Ostatní dny se dál vyhýbají, čemu můžou.',
+  'roadtrip.avoid.missedHint':
+    'Tento den nemá objízdnou trasu, takže tudy jede. Ostatní dny se dál vyhýbají, čemu můžou.',
   'roadtrip.refuel.dry': 'Tady dojde palivo',
   'roadtrip.refuel.after': 'po {distance}',
   'roadtrip.limit.vehicleLabel': 'Čím jezdíš',
@@ -138,7 +145,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': 'délka {distance}',
   'roadtrip.track.gap': '{distance} od tohoto dne',
   'roadtrip.track.onDay': 'podél tohoto dne',
-  'roadtrip.track.explain': 'Jízda se pomocí několika průjezdních bodů přitáhne ke stopě. Stávající body na těchto úsecích budou nahrazeny.',
+  'roadtrip.track.explain':
+    'Jízda se pomocí několika průjezdních bodů přitáhne ke stopě. Stávající body na těchto úsecích budou nahrazeny.',
   'roadtrip.track.action': 'Sledovat tuto stopu',
   'roadtrip.track.working': 'Přizpůsobuji jízdu stopě, kolo {round}',
   'roadtrip.track.done': 'Umístěno {count} průjezdních bodů. Jízda se drží do {distance} od stopy.',
@@ -157,7 +165,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Na trase nic neodpovídá „{name}“.',
   'roadtrip.poi.noneMatchFilters': 'Nic na trase neodpovídá těmto filtrům.',
   'roadtrip.poi.foundFiltered': '{count} z {total} na trase',
-  'roadtrip.poi.truncated': 'Na {count} úsecích jich bylo více, než se vejde do jedné odpovědi — zužte koridor, abyste viděli zbytek.',
+  'roadtrip.poi.truncated':
+    'Na {count} úsecích jich bylo více, než se vejde do jedné odpovědi — zužte koridor, abyste viděli zbytek.',
   'roadtrip.poi.search': 'Hledat',
   'roadtrip.poi.searching': 'Hledání {done} z {total}',
   'roadtrip.poi.capped': 'Trasa je dlouhá — prohledán byl jen první úsek.',

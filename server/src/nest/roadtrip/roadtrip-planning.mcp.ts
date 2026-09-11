@@ -27,7 +27,7 @@ export class RoadtripPlanningMcp {
   @Tool({
     name: 'get_roadtrip_context',
     description:
-      'Read the saved roadtrip days, visits, pinned times, stays, stop types, fill levels, travel modes, via points, followed tracks and manual day endings. Includes your personal driving preferences. No routing request and no browser needed. Coordinates missing from a visit prevent it from being routed. Use calculate_roadtrip to get the derived day layout. Edit visits with the existing place and assignment tools; change their saved order with reorder_day_assignments. Settings affect your account; visits and manual boundaries affect the shared trip.',
+      'Read the saved roadtrip days, visits, pinned times, stays, stop types, fill levels, travel modes, via points, followed tracks and manual day endings. Includes the shared driving preferences for this trip. No routing request and no browser needed. Coordinates missing from a visit prevent it from being routed. Use calculate_roadtrip to get the derived day layout. Edit visits with the existing place and assignment tools; change their saved order with reorder_day_assignments. Settings, visits and manual boundaries all belong to the shared trip.',
     inputSchema: { tripId: z.number().int().positive() },
     annotations: TOOL_ANNOTATIONS_READONLY,
     access: { group: 'trips', mode: 'read' },

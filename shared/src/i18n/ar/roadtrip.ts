@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "عند الاتصال بالإنترنت، اسحب نهاية اليوم على المسار أو إلى مكان؛ انقر بزر الفأرة الأيمن لاستعادة النهاية التلقائية.",
-  'roadtrip.window.resetBoundaries': "استعادة نهايات الأيام التلقائية",
+  'roadtrip.stops.section': 'توقفات الخدمة',
+  'roadtrip.stops.inDays': 'إظهارها في الأيام أيضًا',
+  'roadtrip.stops.daysHint':
+    'يسري على جميع توقفات الخدمة في هذه الرحلة. عند الإيقاف تظهر فقط في مخطط Roadtrip. أعد التفعيل لإظهارها في الأيام.',
+  'roadtrip.window.dragHint':
+    'عند الاتصال بالإنترنت، اسحب نهاية اليوم على المسار أو إلى مكان؛ انقر بزر الفأرة الأيمن لاستعادة النهاية التلقائية.',
+  'roadtrip.window.resetBoundaries': 'استعادة نهايات الأيام التلقائية',
   'roadtrip.window.endHere': 'إنهاء اليوم هنا',
   'roadtrip.window.endHereHint':
     'يمكنك إنهاء اليوم عند محطة محددة من تفاصيل المكان عندما يكون وضع Roadtrip وأوقات السفر اليومية مفعّلين.',
@@ -96,7 +101,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.unavailable': 'غير متاح: هذه النسخة تستخدم محركها الخاص، وهو لا يستطيع استبعاد فئة طرق.',
   'roadtrip.avoid.badge': 'تجنُّب {count}',
   'roadtrip.avoid.missed': 'لا مفر من {classes}',
-  'roadtrip.avoid.missedHint': 'لا يوجد في هذا اليوم طريق بديل، لذلك تمر الرحلة منه. أما بقية الأيام فتظل تتجنب ما تستطيع.',
+  'roadtrip.avoid.missedHint':
+    'لا يوجد في هذا اليوم طريق بديل، لذلك تمر الرحلة منه. أما بقية الأيام فتظل تتجنب ما تستطيع.',
   'roadtrip.refuel.dry': 'ينفد الخزان هنا',
   'roadtrip.refuel.after': 'بعد {distance}',
   'roadtrip.limit.vehicleLabel': 'بماذا تقود',
@@ -138,7 +144,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': 'بطول {distance}',
   'roadtrip.track.gap': 'على بعد {distance} من هذا اليوم',
   'roadtrip.track.onDay': 'على امتداد هذا اليوم',
-  'roadtrip.track.explain': 'يُسحب المسار إلى التتبع بواسطة بضع نقاط عبور. تُستبدل نقاط العبور الموجودة على تلك المراحل.',
+  'roadtrip.track.explain':
+    'يُسحب المسار إلى التتبع بواسطة بضع نقاط عبور. تُستبدل نقاط العبور الموجودة على تلك المراحل.',
   'roadtrip.track.action': 'اتبع هذا المسار',
   'roadtrip.track.working': 'يجري ملاءمة المسار مع التتبع، الجولة {round}',
   'roadtrip.track.done': 'تم وضع {count} نقطة عبور. يبقى المسار ضمن {distance} من التتبع.',

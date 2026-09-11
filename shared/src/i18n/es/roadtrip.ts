@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "Con conexión, arrastra el fin del día por la ruta o hasta un lugar; haz clic derecho para restaurar el final automático.",
-  'roadtrip.window.resetBoundaries': "Restaurar finales de día automáticos",
+  'roadtrip.stops.section': 'Paradas de servicio',
+  'roadtrip.stops.inDays': 'Mostrar también en Días',
+  'roadtrip.stops.daysHint':
+    'Se aplica a todas las paradas de servicio del viaje. Al desactivarlo, solo aparecen en Roadtrip. Actívalo para mostrarlas de nuevo en Días.',
+  'roadtrip.window.dragHint':
+    'Con conexión, arrastra el fin del día por la ruta o hasta un lugar; haz clic derecho para restaurar el final automático.',
+  'roadtrip.window.resetBoundaries': 'Restaurar finales de día automáticos',
   'roadtrip.window.endHere': 'Terminar el día aquí',
   'roadtrip.window.endHereHint':
     'Puedes terminar el día en una parada concreta desde sus detalles cuando el modo Roadtrip y los horarios diarios estén activos.',
@@ -92,11 +97,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Peajes',
   'roadtrip.avoid.motorway': 'Autopistas',
   'roadtrip.avoid.ferry': 'Ferris',
-  'roadtrip.avoid.hint': 'Se penalizan, no se prohíben. Cuando un trayecto no tiene forma de evitarlo, lo usa igual y el día lo indica.',
-  'roadtrip.avoid.unavailable': 'No disponible: esta instancia usa su propio motor, que no puede omitir una clase de vía.',
+  'roadtrip.avoid.hint':
+    'Se penalizan, no se prohíben. Cuando un trayecto no tiene forma de evitarlo, lo usa igual y el día lo indica.',
+  'roadtrip.avoid.unavailable':
+    'No disponible: esta instancia usa su propio motor, que no puede omitir una clase de vía.',
   'roadtrip.avoid.badge': '{count} evitados',
   'roadtrip.avoid.missed': '{classes} inevitable(s)',
-  'roadtrip.avoid.missedHint': 'Este día no tiene ninguna ruta que lo evite, así que el trayecto lo usa. Los demás días siguen evitando lo que pueden.',
+  'roadtrip.avoid.missedHint':
+    'Este día no tiene ninguna ruta que lo evite, así que el trayecto lo usa. Los demás días siguen evitando lo que pueden.',
   'roadtrip.refuel.dry': 'Aquí se vacía el depósito',
   'roadtrip.refuel.after': 'tras {distance}',
   'roadtrip.limit.vehicleLabel': 'Qué conduces',
@@ -138,11 +146,13 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '{distance} de largo',
   'roadtrip.track.gap': 'a {distance} de este día',
   'roadtrip.track.onDay': 'a lo largo de este día',
-  'roadtrip.track.explain': 'El trayecto se ajusta a la traza con unos pocos puntos de paso. Los puntos existentes en esos tramos se reemplazan.',
+  'roadtrip.track.explain':
+    'El trayecto se ajusta a la traza con unos pocos puntos de paso. Los puntos existentes en esos tramos se reemplazan.',
   'roadtrip.track.action': 'Seguir esta traza',
   'roadtrip.track.working': 'Ajustando el trayecto a la traza, ronda {round}',
   'roadtrip.track.done': '{count} puntos de paso colocados. El trayecto se mantiene a menos de {distance} de la traza.',
-  'roadtrip.track.capped': '{count} puntos de paso colocados. En su punto más ancho, el trayecto queda a {distance} de la traza.',
+  'roadtrip.track.capped':
+    '{count} puntos de paso colocados. En su punto más ancho, el trayecto queda a {distance} de la traza.',
   'roadtrip.track.already': 'El trayecto ya seguía esta traza.',
   'roadtrip.track.errorRoute': 'El servicio de rutas no respondió.',
   'roadtrip.track.errorSave': 'No se pudieron guardar los puntos de paso.',
@@ -157,7 +167,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Nada en la ruta coincide con «{name}».',
   'roadtrip.poi.noneMatchFilters': 'Nada en el camino coincide con estos filtros.',
   'roadtrip.poi.foundFiltered': '{count} de {total} en la ruta',
-  'roadtrip.poi.truncated': 'En {count} tramos había más de lo que cabe en una respuesta: reduce el corredor para ver el resto.',
+  'roadtrip.poi.truncated':
+    'En {count} tramos había más de lo que cabe en una respuesta: reduce el corredor para ver el resto.',
   'roadtrip.poi.search': 'Buscar',
   'roadtrip.poi.searching': 'Buscando {done} de {total}',
   'roadtrip.poi.capped': 'La ruta es larga: solo se buscó en el primer tramo.',

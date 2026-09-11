@@ -1,8 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
-  'roadtrip.window.dragHint': "オンライン時は一日の終了地点をルート上や場所へドラッグできます。右クリックで自動の終了地点に戻せます。",
-  'roadtrip.window.resetBoundaries': "一日の終了地点を自動に戻す",
+  'roadtrip.stops.section': 'サービス施設での停車',
+  'roadtrip.stops.inDays': '日別にも表示',
+  'roadtrip.stops.daysHint':
+    'この旅行のすべてのサービス施設での停車に適用されます。オフにするとRoadtripの計画にのみ表示されます。オンにすると日別にも再表示されます。',
+  'roadtrip.window.dragHint':
+    'オンライン時は一日の終了地点をルート上や場所へドラッグできます。右クリックで自動の終了地点に戻せます。',
+  'roadtrip.window.resetBoundaries': '一日の終了地点を自動に戻す',
   'roadtrip.window.endHere': 'ここで一日を終了',
   'roadtrip.window.endHereHint':
     'Roadtripモードと毎日の移動時間が有効な場合、場所の詳細から特定の立ち寄り先を一日の終点に設定できます。',
@@ -93,10 +98,12 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.motorway': '高速道路',
   'roadtrip.avoid.ferry': 'フェリー',
   'roadtrip.avoid.hint': '禁止ではなく、優先度を下げるだけです。迂回できない場合はそのまま通り、その日に表示されます。',
-  'roadtrip.avoid.unavailable': '利用できません。このインスタンスは自前のエンジンを使っており、道路種別を除外できません。',
+  'roadtrip.avoid.unavailable':
+    '利用できません。このインスタンスは自前のエンジンを使っており、道路種別を除外できません。',
   'roadtrip.avoid.badge': '{count} 件を回避',
   'roadtrip.avoid.missed': '{classes} は回避できず',
-  'roadtrip.avoid.missedHint': 'この日は迂回路がないため、そのまま通ります。ほかの日は引き続き避けられるものを避けます。',
+  'roadtrip.avoid.missedHint':
+    'この日は迂回路がないため、そのまま通ります。ほかの日は引き続き避けられるものを避けます。',
   'roadtrip.refuel.dry': 'ここで燃料切れ',
   'roadtrip.refuel.after': '{distance} 後',
   'roadtrip.limit.vehicleLabel': '何で走るか',
@@ -138,7 +145,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '全長 {distance}',
   'roadtrip.track.gap': 'この日から {distance}',
   'roadtrip.track.onDay': 'この日に沿って',
-  'roadtrip.track.explain': 'いくつかの経由地で走行をトラックに引き寄せます。その区間にある既存の経由地は置き換えられます。',
+  'roadtrip.track.explain':
+    'いくつかの経由地で走行をトラックに引き寄せます。その区間にある既存の経由地は置き換えられます。',
   'roadtrip.track.action': 'このトラックをたどる',
   'roadtrip.track.working': '走行をトラックに合わせています（{round} 回目）',
   'roadtrip.track.done': '経由地を {count} か所置きました。走行はトラックから {distance} 以内に収まります。',
