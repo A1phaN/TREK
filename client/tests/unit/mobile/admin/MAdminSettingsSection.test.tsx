@@ -266,6 +266,17 @@ describe('MAdminSettingsSection', () => {
     expect(admin.handleSaveApiKeys).toHaveBeenCalled();
   });
 
+  it('FE-MOB-ASET-016b: a managed install hides the keys but keeps the provider choice', () => {
+    // The operator owns the credentials; which of them answers place search is
+    // still the admin's call, the same split the desktop tab makes.
+    renderSettings({ managed: true });
+
+    expect(screen.queryByLabelText('Google Maps API Key')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Amap/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Unsplash API Key')).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue('Automatic')).toBeInTheDocument();
+  });
+
   it('FE-MOB-ASET-017: the Google Places toggles persist optimistically', async () => {
     const user = userEvent.setup();
     const seen: string[] = [];

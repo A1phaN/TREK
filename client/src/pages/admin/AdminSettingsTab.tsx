@@ -363,10 +363,10 @@ export default function AdminSettingsTab({ admin, t }: AdminSettingsTabProps): R
           </div>
         </div>
 
-          {/* Google and Unsplash come with the instance, and so does what a lookup costs;
-              the per-place toggles only ever traded away quota that is not the customer’s
-              to spend. Weather needs no key at all and has nothing to configure. */}
-          {!managed && (<>
+          {/* The card itself stays on a managed install: the TREK index needs no key,
+              and which keyed provider answers place search is the admin's call there
+              too (server managed.ts). What folds away below is the operator's:
+              the keys, what a lookup costs, and the per-place Google switches. */}
           {/* API Keys.
               The key fields stay visible; only the four Google switches fold away.
               They are set once and then never touched, and putting them flat next to
@@ -687,6 +687,7 @@ export default function AdminSettingsTab({ admin, t }: AdminSettingsTabProps): R
             />
           </div>
 
+          {!managed && (
           <button type="button"
             onClick={handleSaveApiKeys}
             disabled={savingKeys}
@@ -695,9 +696,9 @@ export default function AdminSettingsTab({ admin, t }: AdminSettingsTabProps): R
             {savingKeys ? <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
             {t('common.save')}
           </button>
+          )}
             </div>
           </div>
-          </>)}
         </div>
       </div>
 

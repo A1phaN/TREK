@@ -1170,8 +1170,10 @@ describe('AdminPage', () => {
 
       // By accessible name, not by position: the card gained an Amap field
       // between Maps and Unsplash, and an index would have kept passing while
-      // asserting about the wrong input.
-      fireEvent.change(within(apiKeysCard!).getByLabelText('Unsplash API Key'), {
+      // asserting about the wrong input. The name sits on the show/hide toggle;
+      // the input is its sibling.
+      const unsplashToggle = within(apiKeysCard!).getByLabelText('Unsplash API Key');
+      fireEvent.change(unsplashToggle.parentElement!.querySelector('input')!, {
         target: { value: 'test-unsplash-key' },
       });
 
@@ -1198,9 +1200,10 @@ describe('AdminPage', () => {
       fireEvent.click(screen.getByRole('button', { name: /settings/i }));
 
       const apiKeysHeading = await screen.findByRole('heading', { name: /^api keys$/i });
-      const apiKeysCard = apiKeysHeading.closest<HTMLElement>('.bg-white');
+      const apiKeysCard = apiKeysHeading.closest<HTMLElement>('.rounded-xl');
 
-      fireEvent.change(within(apiKeysCard!).getByLabelText(/Amap/), {
+      const amapToggle = within(apiKeysCard!).getByLabelText(/Amap/);
+      fireEvent.change(amapToggle.parentElement!.querySelector('input')!, {
         target: { value: 'test-amap-key' },
       });
       fireEvent.click(within(apiKeysCard!).getByRole('button', { name: /^save$/i }));

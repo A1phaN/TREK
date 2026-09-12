@@ -37,6 +37,7 @@ export function buildAdminHook(overrides: Record<string, unknown> = {}): AdminHo
     hour12: false,
     mcpEnabled: false,
     devMode: false,
+    managed: false,
     currentUser: buildAdminUser(),
     updateApiKeys: vi.fn(async () => undefined),
     setAppRequireMfa: vi.fn(),

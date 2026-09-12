@@ -40,6 +40,7 @@ export default function MAdminSettingsSection({ admin, t }: MAdminSettingsSectio
     allowedFileTypes, setAllowedFileTypes, savingFileTypes, setSavingFileTypes,
     mapsKey, setMapsKey, unsplashKey, setUnsplashKey, amapKey, setAmapKey, savingKeys, validating, validation,
     placesProvider, savingPlacesProvider, handleSavePlacesProvider,
+    managed,
     setShowRotateJwtModal,
     handleToggleAuthSetting, handleToggleRequireMfa,
     handleSaveApiKeys, handleValidateKey,
@@ -216,6 +217,9 @@ export default function MAdminSettingsSection({ admin, t }: MAdminSettingsSectio
       <MAdminCard>
         <MAdminCardHead title={t('admin.apiKeys')} hint={t('admin.apiKeysHint')} />
         <div className="space-y-3">
+          {/* The keys belong to the operator on a managed install, same as on the
+              desktop tab; the provider choice below stays the admin's. */}
+          {!managed && (<>
           <MAdminField
             label={
               <span className="flex items-center gap-2">
@@ -269,6 +273,16 @@ export default function MAdminSettingsSection({ admin, t }: MAdminSettingsSectio
             />
           </MAdminField>
 
+          <MAdminField label={t('admin.unsplashKey')} hint={t('admin.unsplashKeyHint')}>
+            <MAdminSecretInput
+              aria-label={t('admin.unsplashKey')}
+              value={unsplashKey}
+              onChange={(e) => setUnsplashKey(e.target.value)}
+              placeholder={t('settings.keyPlaceholder')}
+            />
+          </MAdminField>
+          </>)}
+
           <MAdminField label={t('admin.placesProvider.title')} hint={t('admin.placesProvider.subtitle')}>
             <select
               value={placesProvider}
@@ -282,22 +296,16 @@ export default function MAdminSettingsSection({ admin, t }: MAdminSettingsSectio
               <option value="openstreetmap">{t('admin.placesProvider.openstreetmap')}</option>
             </select>
             {((placesProvider === 'google' && !mapsKey) || (placesProvider === 'amap' && !amapKey)) && (
-              <p className="mt-1 font-geist text-[0.625rem] font-bold text-[color:var(--m-st-warn,#b45309)]">
+              <p className="mt-1 font-geist text-[0.625rem] font-bold text-[color:var(--m-st-pending)]">
                 {t('admin.placesProvider.missingKey')}
               </p>
             )}
           </MAdminField>
 
-          <MAdminField label={t('admin.unsplashKey')} hint={t('admin.unsplashKeyHint')}>
-            <MAdminSecretInput
-              aria-label={t('admin.unsplashKey')}
-              value={unsplashKey}
-              onChange={(e) => setUnsplashKey(e.target.value)}
-              placeholder={t('settings.keyPlaceholder')}
-            />
-          </MAdminField>
-
           <div>
+            {/* The four Google switches trade away quota that is the operator's on
+                a managed install; the search log below is the instance's own. */}
+            {!managed && (<>
             <MAdminRow
               title={t('admin.placesPhotos.title')}
               hint={t('admin.placesPhotos.subtitle')}
@@ -378,6 +386,7 @@ export default function MAdminSettingsSection({ admin, t }: MAdminSettingsSectio
                 />
               }
             />
+            </>)}
             <MAdminRow
               title={t('admin.placeShadow.title')}
               hint={t('admin.placeShadow.subtitle')}
@@ -433,9 +442,11 @@ export default function MAdminSettingsSection({ admin, t }: MAdminSettingsSectio
             </div>
           </div>
 
-          <MAdminButton busy={savingKeys} onClick={handleSaveApiKeys}>
-            {t('common.save')}
-          </MAdminButton>
+          {!managed && (
+            <MAdminButton busy={savingKeys} onClick={handleSaveApiKeys}>
+              {t('common.save')}
+            </MAdminButton>
+          )}
         </div>
       </MAdminCard>
 
