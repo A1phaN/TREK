@@ -790,6 +790,26 @@ describe('post-fold quirk fixes', () => {
     expect(untouched!.settled_at).toBe('2026-01-09');
   });
 
+  it('BUDGET-SVC-DB-043: clearing settled_at stores NULL, whether it arrives as null or an empty string', () => {
+    const { user: alice } = createUser(testDb, { username: 'alice' });
+    const { user: bob } = createUser(testDb, { username: 'bob' });
+    const trip = createTrip(testDb, alice.id);
+    const parties = { from_user_id: alice.id, to_user_id: bob.id, amount: 20 };
+
+    // The date picker's clear button sends '' and the contract allows null; both
+    // mean "no day of its own", never a stored empty string.
+    const blank = budget.insertSettlement(trip.id, { ...parties, settled_at: '' }, alice.id);
+    expect(blank!.settled_at).toBeNull();
+
+    const dated = budget.insertSettlement(trip.id, { ...parties, settled_at: '2026-01-05' }, alice.id);
+    expect(budget.applySettlementUpdate(dated!.id, trip.id, { ...parties, settled_at: null })!.settled_at).toBeNull();
+
+    budget.applySettlementUpdate(dated!.id, trip.id, { ...parties, settled_at: '2026-01-05' });
+    expect(budget.applySettlementUpdate(dated!.id, trip.id, { ...parties, settled_at: '' })!.settled_at).toBeNull();
+    const row = testDb.prepare('SELECT settled_at FROM budget_settlements WHERE id = ?').get(dated!.id) as { settled_at: string | null };
+    expect(row.settled_at).toBeNull();
+  });
+
   // ── Notes vs. itemized receipts (#1658) ────────────────────────────────────
 
   it('BUDGET-SVC-DB-021: a note and a receipt are stored in their own columns', () => {
