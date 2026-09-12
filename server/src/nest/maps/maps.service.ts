@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { isOutsideChina } from '@trek/shared';
 import type {
   MapsSearchResult,
   MapsAutocompleteResult,
@@ -2819,7 +2820,9 @@ export class MapsService {
     lang?: string,
     opts?: { lane?: GeoLane; timeoutMs?: number; locality?: boolean },
   ): Promise<{ name: string | null; address: string | null }> {
-    // Amap answers first when it holds the keyed slot. Resolved at userId 0,
+    // Amap answers first when it holds the keyed slot, and only for a point it
+    // can possibly know: outside its box the call would cost a round trip to
+    // come back empty before Nominatim is asked anyway. Resolved at userId 0,
     // because most callers here have no person behind them (a booking import,
     // an Atlas tile, a right-click on a shared map): the chain stops at the
     // operator env var and the instance-wide row, and nobody's personal key is
@@ -2829,7 +2832,7 @@ export class MapsService {
     if (amap) {
       const latNum = Number.parseFloat(lat);
       const lngNum = Number.parseFloat(lng);
-      if (Number.isFinite(latNum) && Number.isFinite(lngNum)) {
+      if (Number.isFinite(latNum) && Number.isFinite(lngNum) && !isOutsideChina(latNum, lngNum)) {
         try {
           const answer = await amap.reverse(latNum, lngNum, lang);
           if (answer) return answer;

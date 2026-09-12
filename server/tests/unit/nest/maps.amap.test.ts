@@ -462,12 +462,15 @@ describe('parseAmapUrl', () => {
 
 // ── Provider selection ───────────────────────────────────────────────────────
 
+/** The user row resolveApiKey reads, with both key columns on it. */
+type KeyRow = { maps_api_key: string | null; amap_api_key: string | null };
+
 /** Make the Google key chain answer, the Amap chain answer, or neither. */
 function keys(opts: { google?: string; amap?: string }) {
-  mockDbGet.mockImplementation((..._args: unknown[]) => {
+  mockDbGet.mockImplementation((..._args: unknown[]): KeyRow => {
     // resolveApiKey reads the caller's own row per name; the SQL differs but
     // the stub only sees the bound userId, so answer both columns at once.
-    return { maps_api_key: opts.google ?? null, amap_api_key: opts.amap ?? null } as any;
+    return { maps_api_key: opts.google ?? null, amap_api_key: opts.amap ?? null };
   });
 }
 
@@ -610,20 +613,33 @@ describe('MapsService with Amap in the keyed slot', () => {
     mockProviderGet.mockReturnValue({ value: 'amap' });
     mockInstanceGet.mockReturnValue({ value: 'akey' });
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.stubGlobal(
-      'fetch',
-      vi
-        .fn()
-        .mockResolvedValueOnce(amapError('10003'))
-        .mockResolvedValueOnce({ ok: true, json: async () => ({ name: '某处', display_name: '某地址' }) }),
-    );
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(amapError('10003'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ name: '某处', display_name: '某地址' }) });
+    vi.stubGlobal('fetch', fetchSpy);
 
     const answer = await svc.reverseGeocode('39.9', '116.4');
     expect(answer).toEqual({ name: '某处', address: '某地址' });
-    const calls = (globalThis.fetch as any).mock.calls.map((c: unknown[]) => String(c[0]));
+    const calls = fetchSpy.mock.calls.map(call => String(call[0]));
     expect(calls[0]).toContain('/v3/geocode/regeo');
     expect(calls[1]).toContain('nominatim');
     errorSpy.mockRestore();
+  });
+
+  it('AMAP-082b: a point outside the Amap box goes straight to Nominatim', async () => {
+    // Lisbon. Amap holds the slot, but it knows nothing out here, so asking it
+    // buys a round trip and an empty answer before the fallback runs anyway.
+    mockProviderGet.mockReturnValue({ value: 'amap' });
+    mockInstanceGet.mockReturnValue({ value: 'akey' });
+    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ name: 'Belém', display_name: 'Lisboa' }) });
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const answer = await svc.reverseGeocode('38.6916', '-9.2160');
+
+    expect(answer).toEqual({ name: 'Belém', address: 'Lisboa' });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(String(fetchSpy.mock.calls[0][0])).toContain('nominatim');
   });
 
   it('AMAP-083: a pasted Amap marker link resolves without touching the Google path', async () => {
