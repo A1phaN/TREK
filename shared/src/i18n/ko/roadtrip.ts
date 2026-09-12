@@ -1,6 +1,10 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.import.title': 'Google Maps 경로 가져오기',
+  'roadtrip.import.note': '경유지를 선택한 날짜에 추가합니다. TREK이 경로를 다시 계산합니다.',
+  'roadtrip.import.unresolved': '위치를 찾을 수 없어 이 경유지를 건너뜁니다.',
+  'roadtrip.import.day': '일',
   'roadtrip.hazards.show': '위험 지역 표시',
   'roadtrip.hazards.current': '현재 경보',
   'roadtrip.hazards.note': '경보는 도로 폐쇄를 의미하지 않습니다. 경로는 변경되지 않습니다.',

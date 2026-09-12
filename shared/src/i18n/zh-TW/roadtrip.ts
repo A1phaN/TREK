@@ -1,6 +1,10 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.import.title': '匯入 Google Maps 路線',
+  'roadtrip.import.note': '停靠點將新增至所選日期。TREK 將重新計算路線。',
+  'roadtrip.import.unresolved': '找不到位置；將略過此停靠點。',
+  'roadtrip.import.day': '天',
   'roadtrip.hazards.show': '顯示危險區域',
   'roadtrip.hazards.current': '目前警報',
   'roadtrip.hazards.note': '警報不代表道路封閉。路線保持不變。',

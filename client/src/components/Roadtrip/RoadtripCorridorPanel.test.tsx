@@ -279,6 +279,14 @@ describe('RoadtripCorridorPanel', () => {
     expect(screen.getByText('Aral')).toBeInTheDocument()
   })
 
+  it('shows the plugin source and failed providers beside remaining hits', () => {
+    const c = corridor({}, { failedSources: ['plugin:unavailable'], results: [poi({ osm_id: 'plugin:stations:one', name: 'Plugin Station', pluginId: 'stations' })] })
+    wrap(<RoadtripCorridorPanel corridor={c} routes={routes([day(1, 1)])} />)
+    expect(screen.getByText('Plugin Station')).toBeInTheDocument()
+    expect(screen.getByText('stations')).toBeInTheDocument()
+    expect(screen.getByText('Error: plugin:unavailable')).toBeInTheDocument()
+  })
+
   it('FE-ROADTRIP-PANEL-015: a total outage reads as a failure, not as an empty road', () => {
     const c = corridor({}, { error: true, failedAreas: 4 })
     wrap(<RoadtripCorridorPanel corridor={c} routes={routes([day(1, 1)])} />)

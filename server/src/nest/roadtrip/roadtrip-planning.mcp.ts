@@ -2,7 +2,7 @@ import { ADDON_IDS } from '../../addons';
 import { McpController, Tool, TOOL_ANNOTATIONS_READONLY, ok, errorResult, type McpContext } from '../../nest-mcp';
 import { addonGate } from '../addons/addon-gate';
 import { AddonsService } from '../addons/addons.service';
-import { MapsService } from '../maps/maps.service';
+import { RoadtripSearchService } from './roadtrip-search.service';
 import { RoadtripPlanService } from './roadtrip-plan.service';
 import {
   roadtripPlanRequestSchema,
@@ -20,7 +20,7 @@ const when = addonGate(ADDON_IDS.ROADTRIP);
 export class RoadtripPlanningMcp {
   constructor(
     private readonly plans: RoadtripPlanService,
-    private readonly maps: MapsService,
+    private readonly maps: RoadtripSearchService,
     readonly addons: AddonsService,
   ) {}
 
@@ -104,16 +104,18 @@ export class RoadtripPlanningMcp {
     const tiles = corridorTiles(line, input.widthKm);
     const hits = new Map<
       string,
-      { poi: Awaited<ReturnType<MapsService['pois']>>['pois'][number]; alongKm: number; distanceKm: number }
+      { poi: Awaited<ReturnType<RoadtripSearchService['search']>>['pois'][number]; alongKm: number; distanceKm: number }
     >();
     const page = tiles.slice(input.offset, input.offset + 6);
     const failedAreas: number[] = [];
     let truncatedAreas = 0;
     const sources = new Set<string>();
+    const failedSources = new Set<string>();
     for (const bbox of page) {
       try {
-        const found = await this.maps.pois(input.category, bbox);
-        sources.add(found.source);
+        const found = await this.maps.search({ categories: [input.category], bbox }, ctx.userId);
+        found.sources.forEach(source => sources.add(source));
+        found.failedSources.forEach(source => failedSources.add(source));
         if (found.truncated || found.clamped) truncatedAreas++;
         for (const poi of found.pois) {
           const projection = projectOntoRoute(poi, line);
@@ -146,7 +148,8 @@ export class RoadtripPlanningMcp {
     return ok({
       dayNumber: day.dayNumber,
       sources: [...sources],
-      complete: !failedAreas.length && !truncatedAreas && input.offset + page.length >= tiles.length,
+      failedSources: [...failedSources],
+      complete: !failedSources.size && !failedAreas.length && !truncatedAreas && input.offset + page.length >= tiles.length,
       failedAreas,
       truncatedAreas,
       totalAreas: tiles.length,

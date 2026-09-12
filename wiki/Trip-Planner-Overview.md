@@ -105,3 +105,11 @@ Driving settings includes **Show hazard areas**, off by default and shared by th
 - [Admin-Addons](Admin-Addons)
 
 Driving settings also controls **Show in Days too** under **Service stops**. It is on by default and applies to every service stop in the trip, including existing stops. Turn it off to keep service stops exclusively in the Roadtrip view and omit them from the normal Days view and its route. Turning it on restores their visibility without creating duplicates. The setting is shared with fellow travellers and can also be changed through `update_roadtrip_settings` using `roadtrip_service_stops_in_days`.
+
+**Looking for** in Roadtrip also searches installed place-search plugins. Plugin results show their source and can be added like other stops. Search remains online-only and runs on request. Results outside the chosen corridor are removed, and failed sources are shown beside the remaining results.
+
+> **AI / MCP:** `search_roadtrip_corridor` uses the same combined sources and reports `failedSources`.
+
+In Roadtrip, open the three-dot menu beside the day selector to import a Google Maps directions link. Preview the ordered stops, choose a day, then confirm. Resolved stops are appended to that day; unresolved locations are marked and skipped. TREK calculates its own route between the stops. Import needs an online connection and permission to edit places and days.
+
+> **AI / MCP:** Use preview_google_maps_route to inspect a link, then import_google_maps_route to append the reviewed stops to a trip day.

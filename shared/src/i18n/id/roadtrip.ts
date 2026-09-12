@@ -1,6 +1,10 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.import.title': 'Impor rute Google Maps',
+  'roadtrip.import.note': 'Perhentian ditambahkan ke hari yang dipilih. TREK menghitung ulang rute.',
+  'roadtrip.import.unresolved': 'Lokasi tidak ditemukan; perhentian ini akan dilewati.',
+  'roadtrip.import.day': 'Hari',
   'roadtrip.hazards.show': 'Tampilkan area bahaya',
   'roadtrip.hazards.current': 'Peringatan terkini',
   'roadtrip.hazards.note': 'Peringatan bukan penutupan jalan. Rute tidak berubah.',

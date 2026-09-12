@@ -1,6 +1,10 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.import.title': 'Google Maps-route importeren',
+  'roadtrip.import.note': 'Stops worden aan de gekozen dag toegevoegd. TREK berekent de route opnieuw.',
+  'roadtrip.import.unresolved': 'Locatie niet gevonden; deze stop wordt overgeslagen.',
+  'roadtrip.import.day': 'Dag',
   'roadtrip.hazards.show': 'Gevarengebieden tonen',
   'roadtrip.hazards.current': 'Actuele waarschuwingen',
   'roadtrip.hazards.note': 'Waarschuwingen zijn geen wegafsluitingen. De route blijft ongewijzigd.',

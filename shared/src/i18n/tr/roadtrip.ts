@@ -1,6 +1,10 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.import.title': 'Google Maps rotasını içe aktar',
+  'roadtrip.import.note': 'Duraklar seçilen güne eklenir. TREK rotayı yeniden hesaplar.',
+  'roadtrip.import.unresolved': 'Konum bulunamadı; bu durak atlanacak.',
+  'roadtrip.import.day': 'Gün',
   'roadtrip.hazards.show': 'Tehlike bölgelerini göster',
   'roadtrip.hazards.current': 'Güncel uyarılar',
   'roadtrip.hazards.note': 'Uyarılar yol kapatmaları değildir. Rota değişmez.',

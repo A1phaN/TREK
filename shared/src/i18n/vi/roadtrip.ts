@@ -1,6 +1,10 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.import.title': 'Nhập tuyến đường Google Maps',
+  'roadtrip.import.note': 'Các điểm dừng được thêm vào ngày đã chọn. TREK tính lại tuyến đường.',
+  'roadtrip.import.unresolved': 'Không tìm thấy vị trí; điểm dừng này sẽ bị bỏ qua.',
+  'roadtrip.import.day': 'Ngày',
   'roadtrip.hazards.show': 'Hiển thị vùng nguy hiểm',
   'roadtrip.hazards.current': 'Cảnh báo hiện tại',
   'roadtrip.hazards.note': 'Cảnh báo không có nghĩa là đường bị đóng. Tuyến đường không thay đổi.',

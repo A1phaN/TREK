@@ -1,3 +1,5 @@
+import { RoadtripSearchService } from '../../src/nest/roadtrip/roadtrip-search.service';
+import { GoogleRouteService } from '../../src/nest/roadtrip/google-route.service';
 /**
  * Road trip module e2e — the real guard chain against a temp SQLite db.
  *
@@ -131,6 +133,39 @@ describe('Roadtrip e2e (real guard chain + temp SQLite)', () => {
   });
 
   const cookie = () => sessionCookie(1);
+  it('validates Google route preview and import before executing either service', async () => {
+    const routes = app.get(GoogleRouteService);
+    const preview = vi.spyOn(routes, 'preview').mockResolvedValue({ stops: [] });
+    const save = vi.spyOn(routes, 'import').mockReturnValue({ imported: 2 });
+    const input = { dayId: 3, stops: [{ name: 'A', lat: 48, lng: 11 }, { name: 'B', lat: 41, lng: 12 }] };
+    try {
+      await request(server).post('/api/roadtrip/google-maps-preview').send({ url: 'https://google.com/maps/dir/A/B' }).expect(401);
+      await request(server).post('/api/roadtrip/google-maps-preview').set('Cookie', cookie()).send({ url: 'bad' }).expect(400);
+      await request(server).post('/api/roadtrip/google-maps-preview').set('Cookie', cookie()).send({ url: 'https://google.com/maps/dir/A/B' }).expect(200);
+      await request(server).post('/api/trips/6/roadtrip/google-maps-import').set('Cookie', cookie()).send(input).expect(404);
+      await request(server).post('/api/trips/5/roadtrip/google-maps-import').set('Cookie', cookie()).send({ ...input, stops: [{ name: 'A', lat: 999, lng: 0 }] }).expect(400);
+      await request(server).post('/api/trips/5/roadtrip/google-maps-import').set('Cookie', cookie()).send(input).expect(200);
+      expect(save).toHaveBeenCalledWith(5, 1, input, undefined);
+      setAddon(false);
+      await request(server).post('/api/trips/5/roadtrip/google-maps-import').set('Cookie', cookie()).send(input).expect(404);
+      await request(server).post('/api/roadtrip/google-maps-preview').set('Cookie', cookie()).send({ url: 'https://google.com/maps/dir/A/B' }).expect(404);
+      expect(save).toHaveBeenCalledTimes(1);
+      expect(preview).toHaveBeenCalledTimes(1);
+    } finally { preview.mockRestore(); save.mockRestore(); }
+  });
+  it('validates and gates area search before calling plugins', async () => {
+    const search = vi.spyOn(app.get(RoadtripSearchService), 'search').mockResolvedValue({ pois: [], sources: [], failedSources: [], truncated: false, clamped: false });
+    const input = { categories: ['fuel'], bbox: { south: 48, north: 49, west: 10, east: 11 } };
+    try {
+      await request(server).post('/api/roadtrip/search-area').send(input).expect(401);
+      await request(server).post('/api/roadtrip/search-area').set('Cookie', cookie()).send({ ...input, categories: ['invalid'] }).expect(400);
+      await request(server).post('/api/roadtrip/search-area').set('Cookie', cookie()).send(input).expect(200);
+      expect(search).toHaveBeenCalledWith(input, 1);
+      setAddon(false);
+      await request(server).post('/api/roadtrip/search-area').set('Cookie', cookie()).send(input).expect(404);
+      expect(search).toHaveBeenCalledTimes(1);
+    } finally { search.mockRestore(); }
+  });
   it('gates live hazards by addon, authentication and trip access', async () => {
     const read = vi.spyOn(app.get(RoadtripHazardsService), 'read').mockResolvedValue({ fetchedAt: new Date().toISOString(), hazards: [], sources: [] });
     try {

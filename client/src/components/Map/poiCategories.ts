@@ -70,5 +70,7 @@ export interface Poi {
     capacity: number | null
     fee: boolean | null
   } | null
-  source: 'openstreetmap'
+  source: string
+  pluginId?: string
+  rating?: number | null
 }

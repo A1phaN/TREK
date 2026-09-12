@@ -1,3 +1,4 @@
+import GoogleRouteImport from './GoogleRouteImport'
 import React, { useMemo, useState } from 'react'
 import {
   Search, Plus, RotateCw, AlertTriangle, X, BedDouble, MapPin, ChevronDown,
@@ -17,6 +18,8 @@ import type { CorridorPoi } from './useCorridorPois'
 import type { RoadtripRoutes } from './useRoadtripRoutes'
 
 interface RoadtripCorridorPanelProps {
+  tripId?: number
+  canImport?: boolean
   corridor: RoadtripCorridor
   routes: RoadtripRoutes
   /** Opens the place form prefilled from a POI, on a day and at a position in it. */
@@ -103,6 +106,7 @@ function ResultRow({ poi, onAdd }: { poi: CorridorPoi; onAdd?: () => void }): Re
         <div className="truncate font-semibold tracking-[-0.012em] text-content" style={{ fontSize: FS.name }}>
           {poi.name}
         </div>
+        {poi.pluginId && <p className="truncate text-caption text-content-muted">{poi.pluginId}</p>}
         {/* Two facts, two chips. Where it is off the road and how far into the drive it
             comes are separate answers, and as two phrases sharing a line they read as one
             run-on sentence about the same thing. A chip each gives them an edge, and the
@@ -249,7 +253,7 @@ function ResultGroup({ category, pois, dayId, insertIndexFor, onAddPoi }: {
  * header rather than among the filters — it is the question's subject, not one of its
  * conditions.
  */
-export default function RoadtripCorridorPanel({ corridor, routes, onAddPoi }: RoadtripCorridorPanelProps): React.ReactElement {
+export default function RoadtripCorridorPanel({ corridor, routes, onAddPoi, tripId, canImport }: RoadtripCorridorPanelProps): React.ReactElement {
   const { t } = useTranslation()
   const distanceUnit = useSettingsStore(s => s.settings.distance_unit)
   const { search } = corridor
@@ -299,6 +303,7 @@ export default function RoadtripCorridorPanel({ corridor, routes, onAddPoi }: Ro
     : 0
 
   const warnings: [string, string][] = []
+  if (search.failedSources?.length) warnings.push(['sources', `${t('common.error')}: ${search.failedSources.join(', ')}`])
   if (search.capped) warnings.push(['capped', t('roadtrip.poi.capped')])
   if (search.error) warnings.push(['failed', t('roadtrip.poi.failed')])
   // Some boxes answered and some did not. Saying so is the difference between "there is
@@ -327,6 +332,7 @@ export default function RoadtripCorridorPanel({ corridor, routes, onAddPoi }: Ro
             />
           </div>
         ) : null}
+        {tripId && canImport && <GoogleRouteImport tripId={tripId} dayId={corridor.day?.dayId} />}
       </div>
 
       {/* What to look for. */}

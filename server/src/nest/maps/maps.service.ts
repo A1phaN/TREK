@@ -2645,21 +2645,23 @@ export class MapsService {
     lat: string,
     lng: string,
     lang?: string,
-    opts?: { lane?: GeoLane; timeoutMs?: number },
+    opts?: { lane?: GeoLane; timeoutMs?: number; locality?: boolean },
   ): Promise<{ name: string | null; address: string | null }> {
     const params = new URLSearchParams({
       lat,
       lon: lng,
       format: 'json',
       addressdetails: '1',
-      zoom: '18',
+      zoom: opts?.locality ? '10' : '18',
       'accept-language': toApiLang(lang),
     });
     const response = await nominatimFetch('reverse', params, opts);
     if (!response.ok) return { name: null, address: null };
     const data = (await response.json()) as { name?: string; display_name?: string; address?: Record<string, string> };
     const addr = data.address || {};
-    const name = data.name || addr.tourism || addr.amenity || addr.shop || addr.building || addr.road || null;
+    const name = opts?.locality
+      ? addr.city || addr.town || addr.village || addr.municipality || data.name || null
+      : data.name || addr.tourism || addr.amenity || addr.shop || addr.building || addr.road || null;
     return { name, address: data.display_name || null };
   }
 

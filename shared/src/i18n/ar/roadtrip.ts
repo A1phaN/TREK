@@ -1,6 +1,10 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.import.title': 'استيراد مسار Google Maps',
+  'roadtrip.import.note': 'تُضاف المحطات إلى اليوم المحدد. يعيد TREK حساب المسار.',
+  'roadtrip.import.unresolved': 'تعذر تحديد الموقع؛ سيتم تخطي هذه المحطة.',
+  'roadtrip.import.day': 'اليوم',
   'roadtrip.hazards.show': 'عرض مناطق الخطر',
   'roadtrip.hazards.current': 'التحذيرات الحالية',
   'roadtrip.hazards.note': 'التحذيرات لا تعني إغلاق الطرق. يبقى المسار دون تغيير.',

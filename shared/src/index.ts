@@ -79,3 +79,5 @@ export * from './plugins/plugins.schema';
 export * from './roadtrip/preferences.schema';
 export * from './roadtrip/hazards.schema';
 export * from './roadtrip/planning.schema';
+export * from './roadtrip/search.schema';
+export * from './roadtrip/google-import.schema';

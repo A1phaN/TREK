@@ -680,6 +680,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
                           returns silently without the permission, which reads as a broken
                           button rather than a missing one. */}
                       <RoadtripCorridorPanel
+                        tripId={Number(tripId)} canImport={can('place_edit', trip) && can('day_edit', trip)}
                         corridor={roadtripCorridor}
                         routes={roadtripRoutes}
                         onAddPoi={can('place_edit', trip) ? handlePoiClick : undefined}

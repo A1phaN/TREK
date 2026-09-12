@@ -262,9 +262,9 @@ describe('Roadtrip MCP registration and search', () => {
       })),
     };
     const maps = {
-      pois: vi.fn(async () => ({
+      search: vi.fn(async () => ({
         pois: [{ osm_id: 'n1', name: 'Fuel', brand: 'Example', lat: 48, lng: 10.05, category: 'fuel' }],
-        source: 'trek-places',
+        sources: ['trek-places'], failedSources: [],
         truncated: true,
         clamped: false,
       })),
@@ -279,7 +279,7 @@ describe('Roadtrip MCP registration and search', () => {
     expect(body.sources).toEqual(['trek-places']);
     expect(body.truncatedAreas).toBeGreaterThan(0);
     expect(body.complete).toBe(false);
-    maps.pois.mockRejectedValue(new Error('private endpoint'));
+    maps.search.mockRejectedValue(new Error('private endpoint'));
     const failed = await mcp.corridor({ tripId: 1, dayNumber: 1, category: 'fuel', widthKm: 5, offset: 0 }, ctx);
     expect(JSON.stringify(failed)).toContain('failedAreas');
     expect(JSON.stringify(failed)).not.toContain('private endpoint');

@@ -443,6 +443,9 @@ export interface SearchRequest {
   lang?: string;
   /** Where the person is looking, when there is somewhere to bias toward. */
   near?: { lat: number; lng: number };
+  /** Category search within a Roadtrip search rectangle. Older hosts omit these fields. */
+  category?: string;
+  bounds?: { south: number; west: number; north: number; east: number };
 }
 export interface SearchProvider {
   search(request: SearchRequest, ctx: PluginContext): Promise<SearchResultPlace[]>;

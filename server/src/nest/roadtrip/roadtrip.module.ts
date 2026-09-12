@@ -1,3 +1,8 @@
+import { GoogleRouteService } from './google-route.service';
+import { GoogleRouteController } from './google-route.controller';
+import { GoogleRouteMcp } from './google-route.mcp';
+import { PlacesModule } from '../places/places.module';
+import { AssignmentsModule } from '../assignments/assignments.module';
 import { AddonsModule } from '../addons/addons.module';
 import { AuthModule } from '../auth/auth.module';
 import { MapsModule } from '../maps/maps.module';
@@ -18,6 +23,8 @@ import { RoadtripRouterService } from './roadtrip-router.service';
 import { RoadtripController } from './roadtrip.controller';
 import { RoadtripMcp } from './roadtrip.mcp';
 import { RoadtripService } from './roadtrip.service';
+import { RoadtripSearchService } from './roadtrip-search.service';
+import { RoadtripSearchController } from './roadtrip-search.controller';
 import { Module } from '@nestjs/common';
 import { RoadtripHazardsController } from './roadtrip-hazards.controller';
 import { RoadtripHazardsService } from './roadtrip-hazards.service';
@@ -35,10 +42,11 @@ import { RoadtripHazardsMcp } from './roadtrip-hazards.mcp';
     RealtimeModule,
     SettingsModule,
     PluginsRuntimeModule,
-    MapsModule,
+    MapsModule, PlacesModule, AssignmentsModule,
   ],
-  controllers: [RoadtripPreferencesController, RoadtripController, DayBoundariesController, RoadtripHazardsController],
-  providers: [
+  controllers: [GoogleRouteController, RoadtripSearchController, RoadtripPreferencesController, RoadtripController, DayBoundariesController, RoadtripHazardsController],
+  providers: [GoogleRouteService, GoogleRouteMcp,
+    RoadtripSearchService,
     RoadtripHazardsService,
     RoadtripHazardsMcp,
     RoadtripService,

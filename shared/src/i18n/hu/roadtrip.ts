@@ -1,6 +1,10 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.import.title': 'Google Maps-útvonal importálása',
+  'roadtrip.import.note': 'A megállók a kiválasztott naphoz kerülnek. A TREK újratervezi az útvonalat.',
+  'roadtrip.import.unresolved': 'A hely nem található; ez a megálló kimarad.',
+  'roadtrip.import.day': 'Nap',
   'roadtrip.hazards.show': 'Veszélyes területek megjelenítése',
   'roadtrip.hazards.current': 'Aktuális figyelmeztetések',
   'roadtrip.hazards.note': 'A figyelmeztetések nem útlezárások. Az útvonal változatlan marad.',
