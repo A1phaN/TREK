@@ -75,6 +75,7 @@ export interface Place {
   google_place_id?: string | null;
   google_ftid?: string | null;
   osm_id?: string | null;
+  amap_poi_id?: string | null;
   route_geometry?: string | null;
   route_color?: string | null;
   website?: string | null;
@@ -350,6 +351,7 @@ export interface AssignmentRow extends DayAssignment {
   google_place_id: string | null;
   google_ftid: string | null;
   osm_id: string | null;
+  amap_poi_id: string | null;
   website: string | null;
   phone: string | null;
   stop_type: string | null;
