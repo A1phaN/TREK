@@ -34,7 +34,6 @@ import { readEnv } from '../../../app-config';
 import { safeFetchFollow } from '../../../utils/ssrfGuard';
 import { UA, parseOpeningHours } from '../maps.helpers';
 import type {
-  DetailsOptions,
   PlacesProvider,
   ProviderCredential,
   ProviderPlace,
@@ -163,10 +162,6 @@ export class AmapPlacesProvider implements PlacesProvider {
 
   constructor(private readonly credential: ProviderCredential) {}
 
-  ownsPlaceId(placeId: string): boolean {
-    return isAmapPlaceId(placeId);
-  }
-
   // ── Outbound plumbing ──────────────────────────────────────────────────────
 
   /**
@@ -188,10 +183,10 @@ export class AmapPlacesProvider implements PlacesProvider {
    * Amap's optional 数字签名 (digital signature).
    *
    * A key can be created with a private secret, and such a key rejects every
-   * unsigned request. The scheme is an MD5 of the request parameters sorted by
-   * name, with the secret appended — MD5 because Amap specifies MD5, not because
-   * anything here is choosing a hash. The key itself is deliberately NOT part of
-   * the signed set on the query-string form of the API.
+   * unsigned request. The scheme is an MD5 over every query parameter sorted by
+   * name, the key and the output format included, with the secret appended.
+   * MD5 because Amap specifies MD5, not because anything here is choosing a
+   * hash.
    *
    * Unset, which is the common case, nothing is added.
    */
@@ -257,7 +252,7 @@ export class AmapPlacesProvider implements PlacesProvider {
    * tell two identically named branches apart in the place picker. Province,
    * city and district come as separate fields for exactly this purpose.
    */
-  private toPlace(poi: AmapPoi): ProviderPlace | null {
+  private toPlace(poi: AmapPoi): ProviderPlace {
     const coords = fromAmapLocation(poi.location);
     const business = poi.business ?? {};
     const bizExt = poi.biz_ext ?? {};
@@ -325,19 +320,12 @@ export class AmapPlacesProvider implements PlacesProvider {
         )
       : await this.call<AmapEnvelope & { pois?: AmapPoi[] }>('/v3/place/text', common, 'place/text');
 
-    return (data.pois ?? [])
-      .map((poi) => this.toPlace(poi))
-      .filter((p): p is ProviderPlace => p !== null);
+    return (data.pois ?? []).map((poi) => this.toPlace(poi));
   }
 
-  async autocomplete(
-    input: string,
-    lang?: string,
-    bias?: ViewportBias,
-    // Amap does not bill per keystroke and has no session concept, so the token
-    // the Google path uses to group a search has nothing to attach to here.
-    _sessionToken?: string,
-  ): Promise<ProviderSuggestion[]> {
+  // Amap does not bill per keystroke and has no session concept, so the token
+  // the Google path uses to group a search has nothing to attach to here.
+  async autocomplete(input: string, lang?: string, bias?: ViewportBias): Promise<ProviderSuggestion[]> {
     const params: Record<string, string> = {
       keywords: input,
       // Without this, inputtips also returns bus stops and road names, which
@@ -371,7 +359,7 @@ export class AmapPlacesProvider implements PlacesProvider {
       }));
   }
 
-  async placeDetails(placeId: string, opts: DetailsOptions = {}): Promise<ProviderPlace | null> {
+  async placeDetails(placeId: string, lang?: string): Promise<ProviderPlace | null> {
     const poiId = amapPoiId(placeId);
     if (!poiId) return null;
 
@@ -384,15 +372,13 @@ export class AmapPlacesProvider implements PlacesProvider {
       {
         id: poiId,
         show_fields: 'business,indoor',
-        language: toAmapLang(opts.lang),
+        language: toAmapLang(lang),
       },
       `place/detail(${poiId})`,
     );
 
     const poi = data.pois?.[0];
-    if (!poi) return null;
-    const place = this.toPlace(poi);
-    return place ? { ...place, cached_at: Date.now() } : null;
+    return poi ? { ...this.toPlace(poi), cached_at: Date.now() } : null;
   }
 
   /**
@@ -419,7 +405,8 @@ export class AmapPlacesProvider implements PlacesProvider {
       {
         location: toAmapLocation(lat, lng),
         extensions: 'all',
-        // 18 is street-address detail, matching the zoom the Nominatim path asks for.
+        // Metres around the point that count as "here", roughly the block the
+        // Nominatim path's zoom 18 resolves to.
         radius: '200',
         language: toAmapLang(lang),
       },

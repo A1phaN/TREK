@@ -51,6 +51,15 @@ vi.mock('../../../src/nest/common/crypto/apiKeyCrypto', () => ({
 
 vi.mock('../../../src/config', () => ({ JWT_SECRET: 'test-secret', ENCRYPTION_KEY: '0'.repeat(64) }));
 
+// The index answers search and autocomplete before any keyed provider, and
+// trekPlacesEnabled fails open, so a service-level case that reached it with
+// the Amap fetch stub in place would leave the runner for places.liketrek.com.
+// Stubbed to "nothing found", which is the state that hands the query on.
+vi.mock('../../../src/nest/maps/trek-places.client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../src/nest/maps/trek-places.client')>()),
+  trekPlacesSearch: vi.fn(async (): Promise<unknown[]> => []),
+}));
+
 import { db } from '../../../src/db/database';
 import { DatabaseService } from '../../../src/nest/database/database.service';
 import { MapsService } from '../../../src/nest/maps/maps.service';
@@ -61,7 +70,6 @@ import {
   isAmapPlaceId,
   parseAmapUrl,
 } from '../../../src/nest/maps/providers/amap.provider';
-import { GooglePlacesProvider } from '../../../src/nest/maps/providers/google.provider';
 import { isGooglePlaceId } from '../../../src/nest/maps/maps.helpers';
 import type { PlacePhotoCacheService } from '../../../src/nest/place-photos/place-photo-cache.service';
 
@@ -454,28 +462,31 @@ describe('parseAmapUrl', () => {
 
 // ── Provider selection ───────────────────────────────────────────────────────
 
-describe('MapsService.resolvePlacesProvider', () => {
-  /** Make the Google key chain answer, the Amap chain answer, or neither. */
-  function keys(opts: { google?: string; amap?: string }) {
-    mockDbGet.mockImplementation((...args: unknown[]) => {
-      // resolveApiKey reads the caller's own row per name; the SQL differs but
-      // the stub only sees the bound userId, so answer both columns at once.
-      return { maps_api_key: opts.google ?? null, amap_api_key: opts.amap ?? null } as any;
-    });
-  }
+/** Make the Google key chain answer, the Amap chain answer, or neither. */
+function keys(opts: { google?: string; amap?: string }) {
+  mockDbGet.mockImplementation((..._args: unknown[]) => {
+    // resolveApiKey reads the caller's own row per name; the SQL differs but
+    // the stub only sees the bound userId, so answer both columns at once.
+    return { maps_api_key: opts.google ?? null, amap_api_key: opts.amap ?? null } as any;
+  });
+}
 
+describe('MapsService.keyedProvider', () => {
   it('AMAP-070: auto keeps Google when a Google key is configured', () => {
     keys({ google: 'gkey', amap: 'akey' });
-    expect(svc.resolvePlacesProvider(1)).toBeInstanceOf(GooglePlacesProvider);
+    expect(svc.keyedProvider(1)).toMatchObject({ id: 'google', key: 'gkey', source: 'user-row' });
+    expect(svc.resolvePlacesProvider(1)).toBeNull();
   });
 
   it('AMAP-071: auto falls to Amap only when there is no Google key', () => {
     keys({ amap: 'akey' });
+    expect(svc.keyedProvider(1)?.id).toBe('amap');
     expect(svc.resolvePlacesProvider(1)).toBeInstanceOf(AmapPlacesProvider);
   });
 
   it('AMAP-072: auto with no key at all means the OpenStreetMap stack', () => {
     keys({});
+    expect(svc.keyedProvider(1)).toBeNull();
     expect(svc.resolvePlacesProvider(1)).toBeNull();
   });
 
@@ -489,20 +500,20 @@ describe('MapsService.resolvePlacesProvider', () => {
     mockProviderGet.mockReturnValue({ value: 'google' });
     keys({ amap: 'akey' });
     // Misconfigured means "answer with OSM", not "bill somebody else's provider".
-    expect(svc.resolvePlacesProvider(1)).toBeNull();
+    expect(svc.keyedProvider(1)).toBeNull();
   });
 
   it('AMAP-075: openstreetmap ignores both keys', () => {
     mockProviderGet.mockReturnValue({ value: 'openstreetmap' });
     keys({ google: 'gkey', amap: 'akey' });
-    expect(svc.resolvePlacesProvider(1)).toBeNull();
+    expect(svc.keyedProvider(1)).toBeNull();
   });
 
   it('AMAP-076: a hand-edited nonsense value degrades to auto instead of failing', () => {
     mockProviderGet.mockReturnValue({ value: 'not-a-provider' });
     keys({ google: 'gkey' });
     expect(svc.placesProviderChoice()).toBe('auto');
-    expect(svc.resolvePlacesProvider(1)).toBeInstanceOf(GooglePlacesProvider);
+    expect(svc.keyedProvider(1)?.id).toBe('google');
   });
 
   it('AMAP-077: an Amap place stays with Amap even while Google is selected', async () => {
@@ -556,10 +567,23 @@ describe('MapsService.resolvePlacesProvider', () => {
   });
 });
 
-describe('MapsService.searchPlaces with Amap selected', () => {
-  it('AMAP-080: reports amap as the source so the client can credit it', async () => {
+describe('MapsService with Amap in the keyed slot', () => {
+  // The index and OpenStreetMap are asked first either way; these cases are
+  // about what answers once they have nothing, so the index is switched off
+  // the way maps.service.test.ts does it for the Google cases.
+  let indexSpy: { mockRestore: () => void } | null = null;
+  afterEach(() => {
+    indexSpy?.mockRestore();
+    indexSpy = null;
+  });
+  function amapSelected() {
+    indexSpy = vi.spyOn(svc, 'trekPlacesEnabled').mockReturnValue(false);
     mockProviderGet.mockReturnValue({ value: 'amap' });
-    mockDbGet.mockReturnValue({ maps_api_key: null, amap_api_key: 'akey' } as any);
+    keys({ amap: 'akey' });
+  }
+
+  it('AMAP-080: search reports amap as the source so the client can credit it', async () => {
+    amapSelected();
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(ok({ pois: [{ id: 'B1', name: '外滩', location: TIANANMEN_LOCATION }] })),
@@ -568,5 +592,60 @@ describe('MapsService.searchPlaces with Amap selected', () => {
     const result = await svc.searchPlaces(1, '外滩');
     expect(result.source).toBe('amap');
     expect(result.places).toHaveLength(1);
+    expect(result.places[0].amap_poi_id).toBe('amap:B1');
+  });
+
+  it('AMAP-081: autocomplete goes to inputtips instead of Nominatim', async () => {
+    amapSelected();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok({ tips: [{ id: 'T1', name: '外滩', district: '上海市黄浦区' }] })));
+
+    const result = await svc.autocompletePlaces(1, '外滩');
+    expect(result.source).toBe('amap');
+    expect(result.suggestions[0].placeId).toBe('amap:T1');
+    expect(calledUrl()).toContain('/v3/assistant/inputtips');
+  });
+
+  it('AMAP-082: reverse geocoding asks Amap at the instance key, and falls back to Nominatim when it fails', async () => {
+    // No user behind a reverse lookup: the chain stops at the instance-wide row.
+    mockProviderGet.mockReturnValue({ value: 'amap' });
+    mockInstanceGet.mockReturnValue({ value: 'akey' });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(amapError('10003'))
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ name: '某处', display_name: '某地址' }) }),
+    );
+
+    const answer = await svc.reverseGeocode('39.9', '116.4');
+    expect(answer).toEqual({ name: '某处', address: '某地址' });
+    const calls = (globalThis.fetch as any).mock.calls.map((c: unknown[]) => String(c[0]));
+    expect(calls[0]).toContain('/v3/geocode/regeo');
+    expect(calls[1]).toContain('nominatim');
+    errorSpy.mockRestore();
+  });
+
+  it('AMAP-083: a pasted Amap marker link resolves without touching the Google path', async () => {
+    // Auto with no key at all: the address comes from Nominatim, the coordinate
+    // and the name from the link itself, already converted to WGS-84.
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ display_name: '北京市东城区' }) }));
+
+    const result = await svc.resolveGoogleMapsUrl(
+      `https://uri.amap.com/marker?position=${TIANANMEN_LOCATION}&name=%E5%A4%A9%E5%AE%89%E9%97%A8`,
+    );
+    expect(result.lat).toBeCloseTo(39.90869, 4);
+    expect(result.lng).toBeCloseTo(116.39124, 4);
+    expect(result.name).toBe('天安门');
+    expect(result.address).toBe('北京市东城区');
+    expect(result.google_ftid).toBeNull();
+    expect(calledUrl()).toContain('nominatim');
+  });
+
+  it('AMAP-084: an Amap POI page with no coordinate is the same 400 a bare Google page gets', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    await expect(svc.resolveGoogleMapsUrl('https://www.amap.com/place/B000A83M61')).rejects.toMatchObject({ status: 400 });
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
