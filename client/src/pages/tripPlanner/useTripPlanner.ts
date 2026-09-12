@@ -874,7 +874,9 @@ export function useTripPlanner() {
    * declutter follows.
    */
   const roadtripMapPlaces = useMemo(() => {
-    if (!collapsedRoadtripDays.size) return mapPlaces
+    const plannedIds = new Set(Object.values(assignments).flat().map(a => a.place_id))
+    const plannedPlaces = mapPlaces.filter(p => plannedIds.has(p.id))
+    if (!collapsedRoadtripDays.size) return plannedPlaces
     const hidden = new Set<number>()
     for (const day of roadtripRoutes.days) {
       if (!collapsedRoadtripDays.has(day.dayId)) continue
@@ -884,8 +886,8 @@ export function useTripPlanner() {
       if (collapsedRoadtripDays.has(day.dayId)) continue
       for (const stop of day.stops) if (!stop.automaticNight) hidden.delete(stop.placeId)
     }
-    return mapPlaces.filter(p => !hidden.has(p.id))
-  }, [mapPlaces, roadtripRoutes.days, collapsedRoadtripDays])
+    return plannedPlaces.filter(p => !hidden.has(p.id))
+  }, [mapPlaces, assignments, roadtripRoutes.days, collapsedRoadtripDays])
 
   const roadtripLineColors = useMemo(
     () => {
