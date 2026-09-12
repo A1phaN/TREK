@@ -298,7 +298,7 @@ describe('AdminSettingsTab', () => {
   it('FE-ADMSET-022c: warns when the selected provider has no key behind it', () => {
     // A provider chosen without a key answers with OpenStreetMap rather than
     // failing, which is quiet enough to be mistaken for the provider working.
-    renderTab({ placesProvider: 'amap', amapKey: '' });
+    renderTab({ placesProvider: 'amap', hasAmapKey: false });
     expect(
       within(card('API Keys')).getByText(/falls back to OpenStreetMap/i),
     ).toBeInTheDocument();
@@ -321,6 +321,16 @@ describe('AdminSettingsTab', () => {
     expect(keys.queryByLabelText('Google Maps API Key')).not.toBeInTheDocument();
     expect(keys.queryByLabelText(/Amap/)).not.toBeInTheDocument();
     expect(keys.getByRole('button', { name: 'Automatic' })).toBeInTheDocument();
+  });
+
+  it('FE-ADMSET-022f: an operator key keeps the managed install quiet', () => {
+    // The key fields are not on the page here, and an operator key set through
+    // the environment would not show up in them anyway. app-config knows.
+    renderTab({ managed: true, placesProvider: 'google', mapsKey: '', hasMapsKey: true });
+
+    expect(
+      within(card('API Keys')).queryByText(/falls back to OpenStreetMap/i),
+    ).not.toBeInTheDocument();
   });
 
   it('FE-ADMSET-023: the maps Test button is disabled without a key', () => {

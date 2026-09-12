@@ -35,7 +35,7 @@ export default function AdminSettingsTab({ admin, t }: AdminSettingsTabProps): R
     passkeyLogin, setPasskeyLogin, passkeyConfigured,
     webauthnRpId, setWebauthnRpId, webauthnOrigins, setWebauthnOrigins, savingWebauthn, handleSaveWebauthn,
     allowedFileTypes, setAllowedFileTypes, savingFileTypes, setSavingFileTypes,
-    mapsKey, setMapsKey, unsplashKey, setUnsplashKey, amapKey, setAmapKey, showKeys, savingKeys, validating, validation,
+    mapsKey, setMapsKey, unsplashKey, setUnsplashKey, amapKey, setAmapKey, hasMapsKey, hasAmapKey, showKeys, savingKeys, validating, validation,
     placesProvider, savingPlacesProvider, handleSavePlacesProvider,
     managed,
     setShowRotateJwtModal,
@@ -363,17 +363,16 @@ export default function AdminSettingsTab({ admin, t }: AdminSettingsTabProps): R
           </div>
         </div>
 
-          {/* The card itself stays on a managed install: the TREK index needs no key,
-              and which keyed provider answers place search is the admin's call there
-              too (server managed.ts). What folds away below is the operator's:
-              the keys, what a lookup costs, and the per-place Google switches. */}
           {/* API Keys.
-              The key fields stay visible; only the four Google switches fold away.
-              They are set once and then never touched, and putting them flat next to
-              the keys made a rarely-used option look as important as the key it
-              depends on. Weather is a quiet row for the same reason in reverse: it
-              had the loudest treatment on the card and is the one thing here with
-              nothing to configure. */}
+              The card itself stays on a managed install: the TREK index needs no key,
+              and which keyed provider answers place search is the admin's call there
+              too (server managed.ts). What folds away is the operator's: the keys,
+              what a lookup costs, and the per-place Google switches. Those switches
+              sit under the keys rather than flat beside them because they are set
+              once and then never touched, and side by side a rarely-used option
+              looked as important as the key it depends on. Weather is a quiet row
+              for the same reason in reverse: it had the loudest treatment on the
+              card and is the one thing here with nothing to configure. */}
           <div className="bg-surface-card rounded-xl border border-edge overflow-hidden">
             <div className="px-6 py-4 border-b border-edge-secondary">
               <h2 className="font-semibold text-content">{t('admin.apiKeys')}</h2>
@@ -656,8 +655,12 @@ export default function AdminSettingsTab({ admin, t }: AdminSettingsTabProps): R
               />
               {/* A provider chosen without a key behind it answers with
                   OpenStreetMap rather than failing, which is quiet enough to be
-                  mistaken for the provider working. Say so. */}
-              {((placesProvider === 'google' && !mapsKey) || (placesProvider === 'amap' && !amapKey)) && (
+                  mistaken for the provider working. Say so. Asked of app-config
+                  and not of the fields above: those are empty on a managed
+                  install and on an operator key that came from the environment,
+                  and saying "falls back to OpenStreetMap" to an admin whose
+                  search works is worse than saying nothing. */}
+              {((placesProvider === 'google' && !hasMapsKey) || (placesProvider === 'amap' && !hasAmapKey)) && (
                 <p className="flex items-start gap-2 text-xs text-warning bg-warning-soft border border-warning/30 rounded-lg px-3 py-2 mt-2">
                   <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
                   {t('admin.placesProvider.missingKey')}

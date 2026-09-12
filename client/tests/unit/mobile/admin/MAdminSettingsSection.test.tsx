@@ -277,6 +277,18 @@ describe('MAdminSettingsSection', () => {
     expect(screen.getByDisplayValue('Automatic')).toBeInTheDocument();
   });
 
+  it('FE-MOB-ASET-016c: the missing-key notice follows app-config, not the fields', () => {
+    // A provider chosen without a key answers with OpenStreetMap rather than
+    // failing. Which of the two is true is app-config's answer: the key fields
+    // are empty on a managed install and on a key set by the environment.
+    const { unmount } = render(<Harness admin={buildAdminHook({ placesProvider: 'amap', hasAmapKey: false })} />);
+    expect(screen.getByText(/falls back to OpenStreetMap/i)).toBeInTheDocument();
+    unmount();
+
+    renderSettings({ managed: true, placesProvider: 'google', mapsKey: '', hasMapsKey: true });
+    expect(screen.queryByText(/falls back to OpenStreetMap/i)).not.toBeInTheDocument();
+  });
+
   it('FE-MOB-ASET-017: the Google Places toggles persist optimistically', async () => {
     const user = userEvent.setup();
     const seen: string[] = [];

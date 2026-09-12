@@ -146,6 +146,8 @@ export function buildAdminHook(overrides: Record<string, unknown> = {}): AdminHo
     setUnsplashKey: vi.fn(),
     amapKey: '',
     setAmapKey: vi.fn(),
+    hasMapsKey: false,
+    hasAmapKey: false,
     placesProvider: 'auto',
     savingPlacesProvider: false,
     showKeys: {},

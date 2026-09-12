@@ -48,6 +48,11 @@ export function useAdmin() {
   const mcpEnabled = useAddonStore(s => s.isEnabled('mcp'))
   const devMode = useAuthStore(s => s.devMode)
   const managed = useAuthStore(s => s.managed)
+  // Whether a key is actually behind a provider is app-config's answer, not the
+  // form's: on a managed install the fields below stay empty by design, and an
+  // operator key set through the environment never reaches them either.
+  const hasMapsKey = useAuthStore(s => s.hasMapsKey)
+  const hasAmapKey = useAuthStore(s => s.hasAmapKey)
 
   // ?tab= makes a section linkable: a support reply, an onboarding mail or a
   // bookmark can point at the one panel it is about instead of at the top of a
@@ -491,7 +496,7 @@ export function useAdmin() {
     allowedFileTypes, setAllowedFileTypes, savingFileTypes, setSavingFileTypes,
     smtpValues, setSmtpValues, smtpLoaded,
     mapsKey, setMapsKey, weatherKey, setWeatherKey, unsplashKey, setUnsplashKey,
-    amapKey, setAmapKey,
+    amapKey, setAmapKey, hasMapsKey, hasAmapKey,
     placesProvider, savingPlacesProvider, handleSavePlacesProvider,
     showKeys, setShowKeys, savingKeys, validating, validation,
     updateInfo, setUpdateInfo, showUpdateModal, setShowUpdateModal,

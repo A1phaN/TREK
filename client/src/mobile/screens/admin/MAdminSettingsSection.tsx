@@ -38,7 +38,7 @@ export default function MAdminSettingsSection({ admin, t }: MAdminSettingsSectio
     passkeyLogin, setPasskeyLogin, passkeyConfigured,
     webauthnRpId, setWebauthnRpId, webauthnOrigins, setWebauthnOrigins, savingWebauthn, handleSaveWebauthn,
     allowedFileTypes, setAllowedFileTypes, savingFileTypes, setSavingFileTypes,
-    mapsKey, setMapsKey, unsplashKey, setUnsplashKey, amapKey, setAmapKey, savingKeys, validating, validation,
+    mapsKey, setMapsKey, unsplashKey, setUnsplashKey, amapKey, setAmapKey, hasMapsKey, hasAmapKey, savingKeys, validating, validation,
     placesProvider, savingPlacesProvider, handleSavePlacesProvider,
     managed,
     setShowRotateJwtModal,
@@ -295,7 +295,9 @@ export default function MAdminSettingsSection({ admin, t }: MAdminSettingsSectio
               <option value="amap">{t('admin.placesProvider.amap')}</option>
               <option value="openstreetmap">{t('admin.placesProvider.openstreetmap')}</option>
             </select>
-            {((placesProvider === 'google' && !mapsKey) || (placesProvider === 'amap' && !amapKey)) && (
+            {/* From app-config, like the desktop card: the key fields are empty
+                on a managed install and on an operator key set by environment. */}
+            {((placesProvider === 'google' && !hasMapsKey) || (placesProvider === 'amap' && !hasAmapKey)) && (
               <p className="mt-1 font-geist text-[0.625rem] font-bold text-[color:var(--m-st-pending)]">
                 {t('admin.placesProvider.missingKey')}
               </p>
