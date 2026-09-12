@@ -685,9 +685,12 @@ export const MapView = memo(function MapView({
   // that is decides which layer draws it. A saved raster template still wins,
   // the default is a vector style.
   const basemap = useMemo(() => resolveBasemap(tileUrl, OFM_POSITRON), [tileUrl])
+  const poiClickRef = useRef(onPoiClick)
+  poiClickRef.current = onPoiClick
   const poiMarkers = useMemo(() => (pois as Poi[]).map((poi: Poi) => (
     <Marker
       key={`poi-${poi.osm_id}`}
+      alt={poi.name}
       position={[poi.lat, poi.lng]}
       icon={createPoiIcon(poi.category, poi.brand_wikidata)}
       zIndexOffset={500}
@@ -697,7 +700,11 @@ export const MapView = memo(function MapView({
         // itself, and this is the first moment there is one to attach to.
         add: (e: { target: { getElement: () => HTMLElement | undefined } }) => {
           const el = e.target.getElement()
-          if (el && onPoiDropOnRoute) makePoiDraggable(el, poi.osm_id)
+          if (!el) return
+          // Native clicks avoid Leaflet suppressing a click after an earlier map drag.
+          el.setAttribute('aria-label', poi.name)
+          el.onclick = event => { event.stopPropagation(); poiClickRef.current?.(poi) }
+          if (onPoiDropOnRoute) makePoiDraggable(el, poi.osm_id)
         },
       }}
     >

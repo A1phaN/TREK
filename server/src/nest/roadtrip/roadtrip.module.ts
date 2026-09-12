@@ -1,3 +1,6 @@
+import { ChargingMcp } from './charging.mcp';
+import { ChargingService } from './charging.service';
+import { ChargingController } from './charging.controller';
 import { GoogleRouteService } from './google-route.service';
 import { GoogleRouteController } from './google-route.controller';
 import { GoogleRouteMcp } from './google-route.mcp';
@@ -44,8 +47,8 @@ import { RoadtripHazardsMcp } from './roadtrip-hazards.mcp';
     PluginsRuntimeModule,
     MapsModule, PlacesModule, AssignmentsModule,
   ],
-  controllers: [GoogleRouteController, RoadtripSearchController, RoadtripPreferencesController, RoadtripController, DayBoundariesController, RoadtripHazardsController],
-  providers: [GoogleRouteService, GoogleRouteMcp,
+  controllers: [ChargingController, GoogleRouteController, RoadtripSearchController, RoadtripPreferencesController, RoadtripController, DayBoundariesController, RoadtripHazardsController],
+  providers: [ChargingMcp, ChargingService, GoogleRouteService, GoogleRouteMcp,
     RoadtripSearchService,
     RoadtripHazardsService,
     RoadtripHazardsMcp,

@@ -247,3 +247,5 @@ Roadtrip also exposes `get_roadtrip_hazards` (`tripId`, trips read scope). It re
 Roadtrip corridor searches include installed search-provider plugins. Providers receive the category and search bounds, and the host filters hits to the route. The response lists successful and failed sources; a failed provider does not discard the remaining results.
 
 Google Maps directions links can be reviewed with preview_google_maps_route and saved with import_google_maps_route. Import creates places and visits together in the supplied order, with trip access and place/day permission checks. Unresolved stops must be omitted from the confirmed input. The Google road geometry is not copied.
+
+get_roadtrip_charging_info accepts tripId and placeId. It requires trip access and the Roadtrip addon. It reports matching failures, unavailable feeds, freshness, known free capacity and unknown status counts separately. Published tariff components include currency, tax handling and conditions; they do not estimate a user's roaming price. Data source: [MobiData BW OCPDB](https://api.mobidata-bw.de/), with per-source attribution from its public source registry.

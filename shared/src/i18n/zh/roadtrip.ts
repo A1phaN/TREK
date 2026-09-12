@@ -1,6 +1,12 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.charging.available': '可用',
+  'roadtrip.charging.unknown': '暂无可靠数据',
+  'roadtrip.charging.stale': '状态已过时',
+  'roadtrip.charging.prices': '公布的费率',
+  'roadtrip.charging.note': '公布的费率可能附带税费、条件和额外费用。您的充电卡价格可能不同。',
+  'roadtrip.charging.coverage': '开放数据，覆盖范围因地区和运营商而异。',
   'roadtrip.import.title': '导入 Google Maps 路线',
   'roadtrip.import.note': '停靠点将添加到所选日期。TREK 将重新计算路线。',
   'roadtrip.import.unresolved': '未找到位置；将跳过此停靠点。',

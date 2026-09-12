@@ -1,3 +1,4 @@
+import ChargingInfo from './ChargingInfo'
 import { useRoadtripSettings } from '../../hooks/useRoadtripSettings'
 import React, { useState } from 'react'
 import {
@@ -833,10 +834,10 @@ function ServiceStop({ stop, entry, late, driveFindings, selected, onSelect, onE
           {/* Truncated, not wrapped: a service stop is a waypoint, and its full name lives
               on the map pin — where a place's name is the row's whole reason to exist. */}
           <span
-            className="min-w-0 truncate font-semibold leading-6 tracking-[-0.012em] text-content-secondary"
+            className="flex min-w-0 items-center gap-2 font-semibold leading-6 tracking-[-0.012em] text-content-secondary"
             style={{ fontSize: FS.name }}
           >
-            {stop.name}
+            <span className="min-w-0 truncate">{stop.name}</span>{stop.stopType === 'charging' && <ChargingInfo placeId={stop.placeId} compact />}
           </span>
           <span className="flex flex-wrap items-center gap-1">
             <StayBadge minutes={stop.dwellMinutes} onEdit={onEditStay} />
@@ -1090,10 +1091,10 @@ function Stop({ stop, number, entry, late, driveFindings, selected, continues, s
           {/* Wraps rather than truncates: the name is what the row is for, and thirty of
               them cut off mid-word is a list nobody reads. */}
           <span
-            className="min-w-0 break-words font-semibold leading-6 tracking-[-0.012em] text-content"
+            className="flex min-w-0 items-center gap-2 font-semibold leading-6 tracking-[-0.012em] text-content"
             style={{ fontSize: FS.name }}
           >
-            {stop.name}
+            <span className={stop.stopType === 'charging' ? 'min-w-0 truncate' : 'min-w-0 break-words'}>{stop.name}</span>{stop.stopType === 'charging' && <ChargingInfo placeId={stop.placeId} compact />}
           </span>
           {/* Two halves under one border: the word says what the number means, so the
               number needs no unit of explanation beside it. */}

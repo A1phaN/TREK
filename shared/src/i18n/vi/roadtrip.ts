@@ -1,6 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.charging.available': 'còn trống',
+  'roadtrip.charging.unknown': 'Không có dữ liệu đáng tin cậy',
+  'roadtrip.charging.stale': 'Trạng thái đã cũ',
+  'roadtrip.charging.prices': 'Biểu giá công bố',
+  'roadtrip.charging.note':
+    'Biểu giá công bố; có thể áp dụng thuế, điều kiện và phụ phí. Giá thẻ sạc của bạn có thể khác.',
+  'roadtrip.charging.coverage': 'Dữ liệu mở; phạm vi phụ thuộc khu vực và nhà vận hành.',
   'roadtrip.import.title': 'Nhập tuyến đường Google Maps',
   'roadtrip.import.note': 'Các điểm dừng được thêm vào ngày đã chọn. TREK tính lại tuyến đường.',
   'roadtrip.import.unresolved': 'Không tìm thấy vị trí; điểm dừng này sẽ bị bỏ qua.',

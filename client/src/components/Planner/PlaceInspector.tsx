@@ -1,3 +1,4 @@
+import ChargingInfo from '../Roadtrip/ChargingInfo'
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { avatarSrc } from '../../utils/avatarSrc'
 import { safeHttpUrl } from '../../utils/safeUrl'
@@ -135,6 +136,7 @@ interface TripMember {
 }
 
 interface PlaceInspectorProps {
+  roadtripActive?: boolean
   roadtripEndDay?: EndDayControlProps
   roadtripStay?: RoadtripStayControl
   place: Place | null
@@ -183,7 +185,7 @@ export default function PlaceInspector({
   onClose, onEdit, onDelete, onAssignToDay, onRemoveAssignment,
   files = [], onFileUpload, tripMembers = [], onSetParticipants, onUpdatePlace, onUploadImage, onRate,
   leftWidth = 0, rightWidth = 0,
-  collectionStatus, onCopyToTrip, onSetStatus, onRemoveFromList, roadtripEndDay, roadtripStay,
+  collectionStatus, onCopyToTrip, onSetStatus, onRemoveFromList, roadtripEndDay, roadtripStay, roadtripActive,
 }: PlaceInspectorProps) {
   // Plugins that declared a place-detail slot mount at the bottom of this panel,
   // scoped to the open place (trip mode only). Inline-filter like the other sites.
@@ -421,6 +423,7 @@ export default function PlaceInspector({
           )}
 
           {/* Description / Summary */}
+          {roadtripActive && place.stop_type === 'charging' && <ChargingInfo placeId={place.id} />}
           {(roadtripEndDay || roadtripStay) && <VisitControls endDay={roadtripEndDay} stay={roadtripStay} />}
           {(place.description || googleDetails?.summary) && (
             <div className="collab-note-md bg-surface-hover text-content-muted" style={{ borderRadius: 10, overflow: 'hidden', flexShrink: 0, fontSize: 'calc(12px * var(--fs-scale-body, 1))', lineHeight: '1.5', padding: '8px 12px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>

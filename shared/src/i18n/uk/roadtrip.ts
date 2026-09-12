@@ -1,6 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.charging.available': 'вільні',
+  'roadtrip.charging.unknown': 'Немає надійних даних',
+  'roadtrip.charging.stale': 'Статус застарів',
+  'roadtrip.charging.prices': 'Опубліковані тарифи',
+  'roadtrip.charging.note':
+    'Опублікований тариф; можливі податки, умови та доплати. Ціна за вашою карткою може відрізнятися.',
+  'roadtrip.charging.coverage': 'Відкриті дані; охоплення залежить від регіону й оператора.',
   'roadtrip.import.title': 'Імпорт маршруту Google Maps',
   'roadtrip.import.note': 'Зупинки додаються до вибраного дня. TREK перерахує маршрут.',
   'roadtrip.import.unresolved': 'Місце не знайдено; цю зупинку буде пропущено.',

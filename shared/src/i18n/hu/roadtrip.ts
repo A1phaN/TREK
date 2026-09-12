@@ -1,6 +1,12 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.charging.available': 'szabad',
+  'roadtrip.charging.unknown': 'Nincs megbízható adat',
+  'roadtrip.charging.stale': 'Elavult állapot',
+  'roadtrip.charging.prices': 'Közzétett díjak',
+  'roadtrip.charging.note': 'Közzétett díj; adók, feltételek és felárak lehetnek. A töltőkártya ára eltérhet.',
+  'roadtrip.charging.coverage': 'Nyílt adatok; a lefedettség régiónként és szolgáltatónként változik.',
   'roadtrip.import.title': 'Google Maps-útvonal importálása',
   'roadtrip.import.note': 'A megállók a kiválasztott naphoz kerülnek. A TREK újratervezi az útvonalat.',
   'roadtrip.import.unresolved': 'A hely nem található; ez a megálló kimarad.',

@@ -13,6 +13,8 @@ const dwdProperties = z.object({
 });
 const gdacsProperties = z.object({
   eventtype: z.string().regex(/^[A-Z]{2}$/), eventid: z.number().int().positive(), episodeid: z.number().int().nonnegative(),
+  episodealertscore: z.number().finite().nonnegative().optional().catch(undefined),
+  alertscore: z.number().finite().nonnegative().optional().catch(undefined),
   name: z.string(), description: z.string(), datemodified: z.string(), iscurrent: z.union([z.string(), z.boolean()]),
 });
 const utc = (date: string) => new Date(/(?:Z|[+-]\d\d:\d\d)$/.test(date) ? date : `${date}Z`).toISOString();
@@ -76,6 +78,7 @@ export class RoadtripHazardsService {
           title: props.name, description: props.description, updatedAt: utc(props.datemodified), validUntil: null,
           url: `https://www.gdacs.org/report.aspx?eventtype=${props.eventtype}&eventid=${props.eventid}&episodeid=${props.episodeid}`,
           geometry: feature.geometry,
+          alertScore: props.episodealertscore ?? props.alertscore,
         }));
       } catch { partial = true; }
     }

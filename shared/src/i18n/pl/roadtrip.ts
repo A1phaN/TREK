@@ -1,6 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.charging.available': 'wolne',
+  'roadtrip.charging.unknown': 'Brak wiarygodnych danych',
+  'roadtrip.charging.stale': 'Nieaktualny status',
+  'roadtrip.charging.prices': 'Opublikowane taryfy',
+  'roadtrip.charging.note':
+    'Opublikowana taryfa; możliwe podatki, warunki i dodatkowe opłaty. Cena Twojej karty może się różnić.',
+  'roadtrip.charging.coverage': 'Otwarte dane; zasięg zależy od regionu i operatora.',
   'roadtrip.import.title': 'Importuj trasę z Google Maps',
   'roadtrip.import.note': 'Przystanki zostaną dodane do wybranego dnia. TREK przeliczy trasę.',
   'roadtrip.import.unresolved': 'Nie znaleziono miejsca; ten przystanek zostanie pominięty.',

@@ -1,6 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.charging.available': 'disponibles',
+  'roadtrip.charging.unknown': 'No hi ha dades fiables',
+  'roadtrip.charging.stale': 'Estat desactualitzat',
+  'roadtrip.charging.prices': 'Tarifes publicades',
+  'roadtrip.charging.note':
+    'Tarifa publicada; pot haver-hi impostos, condicions i càrrecs addicionals. El preu de la targeta pot variar.',
+  'roadtrip.charging.coverage': 'Dades obertes; cobertura segons regió i operador.',
   'roadtrip.import.title': 'Importa una ruta de Google Maps',
   'roadtrip.import.note': 'Les parades s’afegeixen al dia triat. TREK recalcula la ruta.',
   'roadtrip.import.unresolved': 'Ubicació no trobada; aquesta parada s’ometrà.',

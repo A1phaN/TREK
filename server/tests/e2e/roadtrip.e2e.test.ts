@@ -1,5 +1,6 @@
 import { RoadtripSearchService } from '../../src/nest/roadtrip/roadtrip-search.service';
 import { GoogleRouteService } from '../../src/nest/roadtrip/google-route.service';
+import { ChargingService } from '../../src/nest/roadtrip/charging.service';
 /**
  * Road trip module e2e — the real guard chain against a temp SQLite db.
  *
@@ -133,6 +134,18 @@ describe('Roadtrip e2e (real guard chain + temp SQLite)', () => {
   });
 
   const cookie = () => sessionCookie(1);
+  it('gates charging data by addon and trip membership', async () => {
+    const read = vi.spyOn(app.get(ChargingService), 'read').mockResolvedValue({} as never);
+    try {
+      await request(server).get('/api/trips/5/roadtrip/charging/10').expect(401);
+      await request(server).get('/api/trips/6/roadtrip/charging/10').set('Cookie', cookie()).expect(404);
+      await request(server).get('/api/trips/5/roadtrip/charging/10').set('Cookie', cookie()).expect(200);
+      expect(read).toHaveBeenCalledWith(5, 10);
+      setAddon(false);
+      await request(server).get('/api/trips/5/roadtrip/charging/10').set('Cookie', cookie()).expect(404);
+      expect(read).toHaveBeenCalledTimes(1);
+    } finally { read.mockRestore(); }
+  });
   it('validates Google route preview and import before executing either service', async () => {
     const routes = app.get(GoogleRouteService);
     const preview = vi.spyOn(routes, 'preview').mockResolvedValue({ stops: [] });

@@ -1,6 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.charging.available': 'volné',
+  'roadtrip.charging.unknown': 'Spolehlivá data nejsou dostupná',
+  'roadtrip.charging.stale': 'Zastaralý stav',
+  'roadtrip.charging.prices': 'Zveřejněné tarify',
+  'roadtrip.charging.note':
+    'Zveřejněný tarif; mohou platit daně, podmínky a další poplatky. Cena vaší karty se může lišit.',
+  'roadtrip.charging.coverage': 'Otevřená data; pokrytí závisí na regionu a provozovateli.',
   'roadtrip.import.title': 'Importovat trasu z Google Maps',
   'roadtrip.import.note': 'Zastávky se přidají ke zvolenému dni. TREK trasu přepočítá.',
   'roadtrip.import.unresolved': 'Místo nenalezeno; tato zastávka bude přeskočena.',

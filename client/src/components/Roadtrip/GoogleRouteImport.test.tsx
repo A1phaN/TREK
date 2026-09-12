@@ -14,7 +14,7 @@ async function openPreview() {
   fireEvent.click(screen.getByRole('button', { name: 'Import Google Maps route' }))
   fireEvent.click(screen.getByText('Import Google Maps route', { selector: 'span' }))
   fireEvent.change(screen.getByRole('textbox', { name: 'Google Maps URL' }), { target: { value: 'https://google.com/maps/dir/A/B' } })
-  fireEvent.click(screen.getByRole('button', { name: 'Preview', exact: true }))
+  fireEvent.click(screen.getByRole('button', { name: 'Preview' }))
   await screen.findByText('Munich')
 }
 
@@ -28,7 +28,7 @@ describe('Google route preview', () => {
     expect(screen.getAllByRole('listitem').map(item => item.textContent)).toEqual([expect.stringContaining('Munich'), expect.stringContaining('Unknown'), expect.stringContaining('Rome')])
     expect(screen.getByText('Location unresolved; this stop will be skipped.')).toBeInTheDocument()
     expect(googleRouteRepo.append).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('button', { name: 'Import', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import' }))
     await waitFor(() => expect(loadTrip).toHaveBeenCalledWith(1))
     expect(googleRouteRepo.append).toHaveBeenCalledWith(1, { dayId: 3, stops: [{ name: 'Munich', lat: 48, lng: 11 }, { name: 'Rome', lat: 41, lng: 12 }] }, expect.any(String))
   })
@@ -36,7 +36,7 @@ describe('Google route preview', () => {
   it('blocks import when fewer than two locations resolve', async () => {
     vi.mocked(googleRouteRepo.preview).mockResolvedValue({ stops: [{ name: 'Munich', lat: 48, lng: 11 }, { name: 'Unknown', lat: null, lng: null }] })
     await openPreview()
-    expect(screen.getByRole('button', { name: 'Import', exact: true })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Import' })).toBeDisabled()
     expect(googleRouteRepo.append).not.toHaveBeenCalled()
   })
 })

@@ -773,7 +773,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
             {selectedPlace && !isMobile && (
               <PlaceInspector
                 roadtripEndDay={roadtripEndDay}
-                roadtripStay={roadtripStay}
+                roadtripStay={roadtripStay} roadtripActive={roadtripActive}
                 onEditTransport={openLinkedTransport}
                 onEditReservation={openLinkedReservation}
                 place={selectedPlace}
@@ -817,7 +817,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
                 <div style={{ width: '100%', maxHeight: '85vh' }} role="presentation" onClick={e => e.stopPropagation()}>
                   <PlaceInspector
                     roadtripEndDay={roadtripEndDay}
-                    roadtripStay={roadtripStay}
+                    roadtripStay={roadtripStay} roadtripActive={roadtripActive}
                     onEditTransport={openLinkedTransport}
                     onEditReservation={openLinkedReservation}
                     place={selectedPlace}

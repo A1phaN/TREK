@@ -1,6 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.charging.available': 'διαθέσιμα',
+  'roadtrip.charging.unknown': 'Δεν υπάρχουν αξιόπιστα δεδομένα',
+  'roadtrip.charging.stale': 'Παρωχημένη κατάσταση',
+  'roadtrip.charging.prices': 'Δημοσιευμένες χρεώσεις',
+  'roadtrip.charging.note':
+    'Δημοσιευμένη χρέωση· ενδέχεται να ισχύουν φόροι, όροι και πρόσθετα τέλη. Η τιμή της κάρτας σας μπορεί να διαφέρει.',
+  'roadtrip.charging.coverage': 'Ανοικτά δεδομένα· η κάλυψη εξαρτάται από την περιοχή και τον πάροχο.',
   'roadtrip.import.title': 'Εισαγωγή διαδρομής Google Maps',
   'roadtrip.import.note': 'Οι στάσεις προστίθενται στην επιλεγμένη ημέρα. Το TREK υπολογίζει ξανά τη διαδρομή.',
   'roadtrip.import.unresolved': 'Η τοποθεσία δεν βρέθηκε· αυτή η στάση θα παραλειφθεί.',

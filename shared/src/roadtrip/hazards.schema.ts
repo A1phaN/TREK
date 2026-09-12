@@ -16,6 +16,7 @@ export const roadtripHazardSchema = z.object({
   validUntil: z.string().datetime().nullable(),
   url: z.string().url(),
   geometry: hazardGeometrySchema,
+  alertScore: z.number().finite().nonnegative().optional(),
 });
 export const roadtripHazardsSchema = z.object({
   fetchedAt: z.string().datetime(),

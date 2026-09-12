@@ -113,3 +113,9 @@ Driving settings also controls **Show in Days too** under **Service stops**. It 
 In Roadtrip, open the three-dot menu beside the day selector to import a Google Maps directions link. Preview the ordered stops, choose a day, then confirm. Resolved stops are appended to that day; unresolved locations are marked and skipped. TREK calculates its own route between the stops. Import needs an online connection and permission to edit places and days.
 
 > **AI / MCP:** Use preview_google_maps_route to inspect a link, then import_google_maps_route to append the reviewed stops to a trip day.
+
+Roadtrip charging stops show compact availability and published energy-price badges. The place detail panel adds source attribution, timestamps and tariff conditions. Data comes from the public MobiData BW OCPDB aggregation, including participating German operators and Swiss data, without an API key or account. Coverage varies; an unknown or stale status does not mean a charger is free. Prices are published source tariffs, not personal charging-card quotes. Data refreshes while Roadtrip is visible and is not advertised as live offline.
+
+> **AI / MCP:** get_roadtrip_charging_info reads the same availability, tariff components, freshness and source information for a saved charging stop.
+
+GDACS warning popups show the current episode score when supplied, falling back to the overall event score. The compact scale indicates GDACS humanitarian impact, not whether roads are passable.

@@ -1,6 +1,12 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.charging.available': 'lediga',
+  'roadtrip.charging.unknown': 'Inga tillförlitliga uppgifter',
+  'roadtrip.charging.stale': 'Inaktuell status',
+  'roadtrip.charging.prices': 'Publicerade priser',
+  'roadtrip.charging.note': 'Publicerat pris; skatter, villkor och tillägg kan gälla. Ditt laddkorts pris kan avvika.',
+  'roadtrip.charging.coverage': 'Öppna data; täckning varierar efter region och operatör.',
   'roadtrip.import.title': 'Importera Google Maps-rutt',
   'roadtrip.import.note': 'Stoppen läggs till på vald dag. TREK beräknar rutten på nytt.',
   'roadtrip.import.unresolved': 'Platsen hittades inte; stoppet hoppas över.',

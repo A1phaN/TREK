@@ -11,6 +11,7 @@ import { CATEGORY_ICON_MAP } from '../shared/categoryIcons'
 import * as photoService from '../../services/photoService'
 
 const mapMock = vi.hoisted(() => ({
+  getContainer: vi.fn(() => document.createElement('div')),
   panTo: vi.fn(),
   setView: vi.fn(),
   fitBounds: vi.fn(),
@@ -64,6 +65,7 @@ vi.mock('react-leaflet', () => ({
   TileLayer: () => <div data-testid="tile-layer" />,
   Marker: ({ children, eventHandlers, position, icon, zIndexOffset }: any) => (
     <div
+      ref={node => { if (node && zIndexOffset === 500) eventHandlers?.add?.({ target: { getElement: () => node } }) }}
       data-testid="marker"
       data-lat={position[0]}
       data-lng={position[1]}
@@ -630,6 +632,23 @@ describe('MapView explore POIs', () => {
     render(<MapView pois={[poi]} onPoiClick={onPoiClick} />)
     fireEvent.click(markersWithZ('500')[0])
     expect(onPoiClick).toHaveBeenCalledWith(poi)
+  })
+
+  it('keeps native POI clicks working after a pan and uses the latest callback', () => {
+    const first = vi.fn()
+    const latest = vi.fn()
+    const poi = buildPoi({ osm_id: 'node/7' })
+    const { rerender } = render(<MapView pois={[poi]} onPoiClick={first} onPoiDropOnRoute={() => {}} />)
+    const marker = markersWithZ('500')[0]
+    expect(marker).toHaveAttribute('draggable', 'true')
+    fireEvent.mouseDown(marker)
+    fireEvent.mouseUp(marker)
+    fireEvent.click(marker)
+    expect(first).toHaveBeenCalledTimes(1)
+    rerender(<MapView pois={[poi]} onPoiClick={latest} onPoiDropOnRoute={() => {}} />)
+    fireEvent.click(markersWithZ('500')[0])
+    expect(latest).toHaveBeenCalledExactlyOnceWith(poi)
+    expect(first).toHaveBeenCalledTimes(1)
   })
 
   it('FE-COMP-MAPVIEW-035: an unknown POI category falls back to grey and draws no glyph', () => {

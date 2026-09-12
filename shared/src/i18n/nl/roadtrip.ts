@@ -1,6 +1,13 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.charging.available': 'beschikbaar',
+  'roadtrip.charging.unknown': 'Geen betrouwbare gegevens',
+  'roadtrip.charging.stale': 'Status verouderd',
+  'roadtrip.charging.prices': 'Gepubliceerde tarieven',
+  'roadtrip.charging.note':
+    'Gepubliceerd tarief; belastingen, voorwaarden en toeslagen kunnen gelden. Je laadpasprijs kan afwijken.',
+  'roadtrip.charging.coverage': 'Open data; dekking verschilt per regio en aanbieder.',
   'roadtrip.import.title': 'Google Maps-route importeren',
   'roadtrip.import.note': 'Stops worden aan de gekozen dag toegevoegd. TREK berekent de route opnieuw.',
   'roadtrip.import.unresolved': 'Locatie niet gevonden; deze stop wordt overgeslagen.',

@@ -21,7 +21,7 @@ export function MapViewAuto(props: any) {
   const { t } = useTranslation()
   const hazards = useRoadtripHazards(props.tripId, !!props.clusterLoosely)
   const mapProps = { ...props, hazards: hazards.feed?.hazards }
-  const status = hazards.enabled ? <div role="status" className="absolute bottom-10 left-1/2 z-[500] flex max-w-[calc(100%-2rem)] -translate-x-1/2 flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-xl border border-edge-faint bg-surface-card px-3 py-2 text-caption text-content shadow-md">
+  const status = hazards.enabled ? <div role="status" style={props.hasInspector || props.hasDayDetail ? { top: 64 } : { bottom: 40 }} className="absolute left-1/2 z-[500] flex max-w-[calc(100%-2rem)] -translate-x-1/2 flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-xl border border-edge-faint bg-surface-card px-3 py-2 text-caption text-content shadow-md">
     {hazards.status !== 'ready' ? t(`roadtrip.hazards.${hazards.status}`) : <>
       <span className="flex items-center gap-2 whitespace-nowrap font-medium">
         <AlertTriangle size={14} className="text-content-muted" aria-hidden />

@@ -1,6 +1,12 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.charging.available': 'متاح',
+  'roadtrip.charging.unknown': 'لا تتوفر بيانات موثوقة',
+  'roadtrip.charging.stale': 'الحالة قديمة',
+  'roadtrip.charging.prices': 'التعريفات المنشورة',
+  'roadtrip.charging.note': 'تعريفة منشورة؛ قد تُطبق ضرائب وشروط ورسوم إضافية. قد يختلف سعر بطاقة الشحن.',
+  'roadtrip.charging.coverage': 'بيانات مفتوحة؛ تختلف التغطية حسب المنطقة والمشغل.',
   'roadtrip.import.title': 'استيراد مسار Google Maps',
   'roadtrip.import.note': 'تُضاف المحطات إلى اليوم المحدد. يعيد TREK حساب المسار.',
   'roadtrip.import.unresolved': 'تعذر تحديد الموقع؛ سيتم تخطي هذه المحطة.',
