@@ -82,7 +82,7 @@ const budget: TranslationStrings = {
   'costs.balances': 'Salda',
   'costs.finalBudget': 'Budżet końcowy',
   'costs.finalExpenses': 'Zapłacone wydatki',
-  'costs.finalReimbursed': 'Otrzymane zwroty',
+  'costs.finalReimbursed': 'Zwroty netto',
   'costs.finalPending': 'Oczekujące zwroty',
   'costs.byCategory': 'Według kategorii',
   'costs.noCategories': 'Brak wydatków.',

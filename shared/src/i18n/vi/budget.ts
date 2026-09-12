@@ -82,7 +82,7 @@ const budget: TranslationStrings = {
   'costs.balances': 'Số dư',
   'costs.finalBudget': 'Ngân sách cuối cùng',
   'costs.finalExpenses': 'Chi phí đã trả',
-  'costs.finalReimbursed': 'Khoản hoàn trả đã nhận',
+  'costs.finalReimbursed': 'Hoàn trả ròng',
   'costs.finalPending': 'Khoản hoàn trả đang chờ',
   'costs.byCategory': 'Theo danh mục',
   'costs.noCategories': 'Chưa có chi phí nào.',

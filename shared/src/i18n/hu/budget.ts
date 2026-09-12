@@ -82,7 +82,7 @@ const budget: TranslationStrings = {
   'costs.balances': 'Egyenlegek',
   'costs.finalBudget': 'Végső költségvetés',
   'costs.finalExpenses': 'Kifizetett kiadások',
-  'costs.finalReimbursed': 'Kapott visszatérítések',
+  'costs.finalReimbursed': 'Nettó visszatérítések',
   'costs.finalPending': 'Függőben lévő visszatérítések',
   'costs.byCategory': 'Kategóriánként',
   'costs.noCategories': 'Még nincs költség.',

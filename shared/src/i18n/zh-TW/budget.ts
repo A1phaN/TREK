@@ -81,7 +81,7 @@ const budget: TranslationStrings = {
   'costs.balances': '餘額',
   'costs.finalBudget': '最終花費',
   'costs.finalExpenses': '已支付的支出',
-  'costs.finalReimbursed': '已收到的還款',
+  'costs.finalReimbursed': '還款淨額',
   'costs.finalPending': '待還款項',
   'costs.byCategory': '按分類',
   'costs.noCategories': '尚無支出。',

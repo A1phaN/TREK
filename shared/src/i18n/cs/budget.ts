@@ -82,7 +82,7 @@ const budget: TranslationStrings = {
   'costs.balances': 'Zůstatky',
   'costs.finalBudget': 'Konečný rozpočet',
   'costs.finalExpenses': 'Zaplacené výdaje',
-  'costs.finalReimbursed': 'Přijaté náhrady',
+  'costs.finalReimbursed': 'Náhrady netto',
   'costs.finalPending': 'Nevyřízené náhrady',
   'costs.byCategory': 'Podle kategorie',
   'costs.noCategories': 'Zatím žádné výdaje.',

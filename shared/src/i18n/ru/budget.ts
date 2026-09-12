@@ -82,7 +82,7 @@ const budget: TranslationStrings = {
   'costs.balances': 'Балансы',
   'costs.finalBudget': 'Итоговый бюджет',
   'costs.finalExpenses': 'Оплаченные расходы',
-  'costs.finalReimbursed': 'Полученные возмещения',
+  'costs.finalReimbursed': 'Возмещения нетто',
   'costs.finalPending': 'Ожидаемые возмещения',
   'costs.byCategory': 'По категориям',
   'costs.noCategories': 'Расходов пока нет.',

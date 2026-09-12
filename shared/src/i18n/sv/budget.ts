@@ -82,7 +82,7 @@ const budget: TranslationStrings = {
   'costs.balances': 'Balanser',
   'costs.finalBudget': 'Slutlig budget',
   'costs.finalExpenses': 'Betalda utgifter',
-  'costs.finalReimbursed': 'Mottagna återbetalningar',
+  'costs.finalReimbursed': 'Återbetalningar netto',
   'costs.finalPending': 'Väntande återbetalningar',
   'costs.byCategory': 'Via kategori',
   'costs.noCategories': 'Inga utgifter än.',

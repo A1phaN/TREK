@@ -82,7 +82,7 @@ const budget: TranslationStrings = {
   'costs.balances': '잔액',
   'costs.finalBudget': '최종 부담액',
   'costs.finalExpenses': '지불한 지출',
-  'costs.finalReimbursed': '받은 정산',
+  'costs.finalReimbursed': '정산 (순액)',
   'costs.finalPending': '미정산 금액',
   'costs.byCategory': '카테고리별',
   'costs.noCategories': '아직 지출이 없습니다.',

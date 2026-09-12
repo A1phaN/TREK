@@ -82,7 +82,7 @@ const budget: TranslationStrings = {
   'costs.balances': 'Bakiyeler',
   'costs.finalBudget': 'Nihai bütçe',
   'costs.finalExpenses': 'Ödenen harcamalar',
-  'costs.finalReimbursed': 'Alınan geri ödemeler',
+  'costs.finalReimbursed': 'Net geri ödemeler',
   'costs.finalPending': 'Bekleyen geri ödemeler',
   'costs.byCategory': 'Kategoriye göre',
   'costs.noCategories': 'Henüz harcama yok.',

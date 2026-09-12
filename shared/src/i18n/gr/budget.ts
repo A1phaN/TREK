@@ -83,7 +83,7 @@ const budget: TranslationStrings = {
   'costs.balances': 'Υπόλοιπα',
   'costs.finalBudget': 'Τελικός προϋπολογισμός',
   'costs.finalExpenses': 'Πληρωμένα έξοδα',
-  'costs.finalReimbursed': 'Επιστροφές που ελήφθησαν',
+  'costs.finalReimbursed': 'Καθαρές επιστροφές',
   'costs.finalPending': 'Εκκρεμείς επιστροφές',
   'costs.byCategory': 'Ανά κατηγορία',
   'costs.noCategories': 'Δεν υπάρχουν έξοδα ακόμη.',

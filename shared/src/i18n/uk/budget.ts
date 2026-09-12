@@ -82,7 +82,7 @@ const budget: TranslationStrings = {
   'costs.balances': 'Баланси',
   'costs.finalBudget': 'Підсумковий бюджет',
   'costs.finalExpenses': 'Оплачені витрати',
-  'costs.finalReimbursed': 'Отримані відшкодування',
+  'costs.finalReimbursed': 'Відшкодування нетто',
   'costs.finalPending': 'Очікувані відшкодування',
   'costs.byCategory': 'За категоріями',
   'costs.noCategories': 'Витрат ще немає.',

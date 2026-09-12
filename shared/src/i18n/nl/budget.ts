@@ -82,7 +82,7 @@ const budget: TranslationStrings = {
   'costs.balances': 'Saldi',
   'costs.finalBudget': 'Eindbudget',
   'costs.finalExpenses': 'Betaalde uitgaven',
-  'costs.finalReimbursed': 'Ontvangen terugbetalingen',
+  'costs.finalReimbursed': 'Terugbetalingen netto',
   'costs.finalPending': 'Openstaande terugbetalingen',
   'costs.byCategory': 'Per categorie',
   'costs.noCategories': 'Nog geen uitgaven.',

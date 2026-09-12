@@ -82,7 +82,7 @@ const budget: TranslationStrings = {
   'costs.balances': 'الأرصدة',
   'costs.finalBudget': 'الميزانية النهائية',
   'costs.finalExpenses': 'المصاريف المدفوعة',
-  'costs.finalReimbursed': 'المبالغ المستردة المستلمة',
+  'costs.finalReimbursed': 'صافي المبالغ المستردة',
   'costs.finalPending': 'المبالغ المستردة المعلقة',
   'costs.byCategory': 'حسب الفئة',
   'costs.noCategories': 'لا توجد مصروفات بعد.',

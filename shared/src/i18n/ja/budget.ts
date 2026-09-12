@@ -82,7 +82,7 @@ const budget: TranslationStrings = {
   'costs.balances': '残高',
   'costs.finalBudget': '最終負担額',
   'costs.finalExpenses': '支払った費用',
-  'costs.finalReimbursed': '受け取った精算',
+  'costs.finalReimbursed': '精算（差引）',
   'costs.finalPending': '未精算の金額',
   'costs.byCategory': 'カテゴリ別',
   'costs.noCategories': '支出はまだありません。',

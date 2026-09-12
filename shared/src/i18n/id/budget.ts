@@ -82,7 +82,7 @@ const budget: TranslationStrings = {
   'costs.balances': 'Saldo',
   'costs.finalBudget': 'Anggaran akhir',
   'costs.finalExpenses': 'Pengeluaran yang dibayar',
-  'costs.finalReimbursed': 'Penggantian diterima',
+  'costs.finalReimbursed': 'Penggantian bersih',
   'costs.finalPending': 'Penggantian tertunda',
   'costs.byCategory': 'Per kategori',
   'costs.noCategories': 'Belum ada pengeluaran.',
