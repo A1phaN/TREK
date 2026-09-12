@@ -46,7 +46,7 @@ If you set a provider and model here, it applies to **all users** and overrides 
 With the **Local** provider selected, the panel manages your Ollama server directly:
 
 - **Installed on the server** lists the models Ollama already has, with a **Refresh** button. Click a model to select it.
-- **Pull a recommended model** downloads a model with a live progress bar. The one recommended model is **Qwen3.5 — 4B** (`qwen3.5:4b`, 3.4 GB, 256K context) — it reads images as well as text, so a single download covers every kind of document, and "thinking" is disabled automatically. Once the pull finishes it is selected automatically.
+- **Pull a recommended model** downloads a model with a live progress bar. The one recommended model is **Qwen3.5 — 4B** (`qwen3.5:4b`, 3.4 GB, 256K context): small and quick on a CPU-only host, "thinking" is disabled automatically, Apache-2.0. Like every local model it receives the document's extracted text, so scanned PDFs still need Anthropic (see below). Once the pull finishes it is selected automatically.
 
 You can also select any other model already installed on the server, or type a model id by hand.
 
