@@ -4,6 +4,13 @@ import { createTables } from '../../../src/db/schema';
 import Database from 'better-sqlite3';
 import { describe, expect, it } from 'vitest';
 
+// The preferences table and its one-time inheritance are pinned at schema
+// version 219. Anything added later is appended after it (append-only), so it
+// stops being the last migration as soon as the next one lands. Rewind to just
+// before it and re-run: the steps after it are idempotent, so only this one
+// touches the rows seeded here.
+const PREFERENCES_VERSION = 219;
+
 describe('trip driving preferences migration', () => {
   it('inherits owner values once, tolerates nulls and preserves trip overrides on replay', () => {
     const db = new Database(':memory:');
@@ -17,8 +24,7 @@ describe('trip driving preferences migration', () => {
       db.exec(
         "INSERT INTO settings (user_id, key, value) VALUES (1, 'roadtrip_range_km', '120'), (2, 'roadtrip_range_km', '300'), (1, 'roadtrip_day_start', '\"08:00\"'), (1, 'roadtrip_day_end', NULL), (1, 'routing_base_url', '\"https://private.test\"')",
       );
-      const version = (db.prepare('SELECT version FROM schema_version').get() as { version: number }).version;
-      db.prepare('UPDATE schema_version SET version = ?').run(version - 1);
+      db.prepare('UPDATE schema_version SET version = ?').run(PREFERENCES_VERSION - 1);
       runMigrations(db);
       expect(db.prepare('SELECT key, value FROM roadtrip_preferences WHERE trip_id = 10 ORDER BY key').all()).toEqual([
         { key: 'roadtrip_day_start', value: '"08:00"' },
@@ -26,7 +32,7 @@ describe('trip driving preferences migration', () => {
       ]);
       expect(db.prepare('SELECT value FROM roadtrip_preferences WHERE trip_id = 11').get()).toEqual({ value: '300' });
       db.exec("UPDATE roadtrip_preferences SET value = '200' WHERE trip_id = 10 AND key = 'roadtrip_range_km'");
-      db.prepare('UPDATE schema_version SET version = ?').run(version - 1);
+      db.prepare('UPDATE schema_version SET version = ?').run(PREFERENCES_VERSION - 1);
       runMigrations(db);
       expect(
         db.prepare("SELECT value FROM roadtrip_preferences WHERE trip_id = 10 AND key = 'roadtrip_range_km'").get(),
