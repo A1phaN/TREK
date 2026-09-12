@@ -14,7 +14,7 @@ import { resetAllStores, seedStore } from '../../../helpers/store'
 import { server } from '../../../helpers/msw/server'
 import { fireEvent, render, screen, waitFor, within } from '../../../helpers/render'
 
-// FE-MOB-COSTT-001 to FE-MOB-COSTT-043
+// FE-MOB-COSTT-001 to FE-MOB-COSTT-044
 
 // The add/edit expense sheet is the shared desktop-sized form; the panel only
 // owns when it opens and what happens on save, so it is stubbed here.
@@ -644,6 +644,16 @@ describe('MCostsTab', () => {
     fireEvent.click(bob)
     expect(bob).toHaveAttribute('aria-expanded', 'false')
     expect(within(card).queryByText('+$58.00')).not.toBeInTheDocument()
+  })
+
+  it('FE-MOB-COSTT-044: a settlement read that fails says so instead of costing everyone nothing', async () => {
+    serveSettlement(SETTLEMENT, true)
+    render(<MCostsTab planner={planner()} shell={buildShell()} />)
+
+    const card = up(await screen.findByText('costs.finalBudget'), 1)
+    await waitFor(() => expect(within(card).getByText('common.unknownError')).toBeInTheDocument())
+    expect(within(card).queryByText('$0.00')).not.toBeInTheDocument()
+    expect(within(card).queryByRole('button')).not.toBeInTheDocument()
   })
 
   it('FE-MOB-COSTT-040: the expense filters apply to payments the same way they do on desktop', async () => {

@@ -58,8 +58,13 @@ export default function MCostsTab({ planner, shell }: MTabScreenProps) {
   const ctx: CostsCtx = useMemo(() => ({ me, tripCurrency, convert }), [me, tripCurrency, convert])
 
   const [settlement, setSettlement] = useState<CostsSettlementResponse | null>(null)
+  // A failed settlement read leaves `settlement` null, and the final budget would
+  // read that as "the trip cost nobody anything", a claim we cannot make.
+  const [settlementError, setSettlementError] = useState(false)
   const loadSettlement = useCallback(() => {
-    budgetApi.settlement(tripId, base).then(setSettlement).catch(() => {})
+    budgetApi.settlement(tripId, base)
+      .then(s => { setSettlement(s); setSettlementError(false) })
+      .catch(() => setSettlementError(true))
   }, [tripId, base])
 
   // Mirrors CostsPanel.tsx: items reload on trip change, settlement reloads on
@@ -312,7 +317,9 @@ export default function MCostsTab({ planner, shell }: MTabScreenProps) {
       {/* Final budget — what the trip costs each traveler; the arithmetic opens on tap */}
       <div className="mt-2 rounded-2xl border border-[color:var(--m-rowbr)] bg-m-card p-[13px]">
         <div className="font-geist text-[0.625rem] font-bold uppercase tracking-[.09em] text-m-faint">{t('costs.finalBudget')}</div>
-        {tripMembers.map(p => {
+        {settlementError ? (
+          <p className="py-[14px] text-center font-geist text-[0.71875rem] text-m-muted">{t('common.unknownError')}</p>
+        ) : tripMembers.map(p => {
           const row = finalBudgetFor(settlement?.finalBudgets || [], p)
           const open = expandedFinalId === p.id
           return (
