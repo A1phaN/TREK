@@ -21,7 +21,16 @@ const chain = (): SpillChain => ({
 });
 const lookup = (): RoutedLeg =>
   ({
-    seg: { duration: 198 * 60 },
+    seg: {
+      duration: 198 * 60,
+      distance: 300000,
+      from: [0, 0],
+      to: [1, 1],
+      mid: [0.5, 0.5],
+      walkingText: '',
+      drivingText: '',
+      distanceText: '300 km',
+    },
     line: [
       [0, 0],
       [1, 1],

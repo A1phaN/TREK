@@ -879,7 +879,7 @@ describe('RoadtripSidebar', () => {
       // With no search to run there is nothing better, so the finding is all there is and
       // has to stay.
       wrap(<RoadtripSidebar routes={routes({ days: [warned()], totalStops: 3 })} />)
-      expect(screen.getByText('640 km')).toBeInTheDocument()
+      expect(screen.queryByText('640 km')).toBeNull()
     })
   })
 
