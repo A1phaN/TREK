@@ -15,7 +15,9 @@ import MCostSheet from '../sheets/MCostSheet'
 import { ReceiptPreviewModal } from '../../../../components/Budget/ReceiptPreviewModal'
 import { readUserNote, settlementDate } from '../../../../components/Budget/CostsPanel.helpers'
 import { catMeta, COST_CAT_META } from '../../../../components/Budget/costsCategories'
+import CustomSelect from '../../../../components/shared/CustomSelect'
 import { CustomDatePicker } from '../../../../components/shared/CustomDateTimePicker'
+import { SYMBOLS, currenciesWith } from '../../../../components/Budget/BudgetPanel.constants'
 import { localToday } from '../../../../components/Planner/today'
 import MConfirmSheet from '../../settings/MConfirmSheet'
 import MSheet from '../../../components/MSheet'
@@ -724,6 +726,11 @@ function PaymentRow({ settlement, ctx, base, locale, t, personName, canEdit, onE
           <div className="min-w-0 flex-1">
             <div className="truncate text-[0.8125rem] font-bold text-m-ink">{t('costs.payment')}</div>
             <div className="truncate font-geist text-[0.65625rem] text-m-faint">{personName(settlement.from_user_id)} → {personName(settlement.to_user_id)}</div>
+            {cur !== base && (
+              <div className="mt-[1px] truncate font-geist text-[0.59375rem] text-m-faint">
+                {formatMoney(settlement.amount, cur, locale)} {'→'} {formatMoney(amount, base, locale)}
+              </div>
+            )}
           </div>
           <span className="flex-none rounded-full bg-[color:var(--m-ic)] px-[11px] py-1 font-geist text-[0.75rem] font-extrabold tabular-nums text-m-ink">
             {formatMoney(amount, base, locale)}
@@ -775,9 +782,11 @@ function MemberAvatar({ name, avatarUrl, isMe, variant, size, t }: {
  * this form (the demo only toasts "Demo: add payment", 03-trip-tabs.md §3.8)
  * and no mobile/exported-desktop sheet covers it, so this is a small local
  * sheet built from the trip form-sheet chrome, kept to the fields the
- * settle-up card itself needs: from, to, amount in the display currency, and
- * the day it happened (editable like an expense's, unlike the legacy
- * created_at-only date — see `settlementDate` in CostsPanel.helpers.ts).
+ * settle-up card itself needs: from, to, amount plus its currency (a new
+ * payment starts in the display currency, a reopened one keeps the currency
+ * it was recorded in, like the desktop modal), and the day it happened
+ * (editable like an expense's, unlike the legacy created_at-only date, see
+ * `settlementDate` in CostsPanel.helpers.ts).
  */
 function AddPaymentSheet({ open, editing, onClose, tripId, base, people, me, toast, t, onSaved }: {
   open: boolean
@@ -794,25 +803,28 @@ function AddPaymentSheet({ open, editing, onClose, tripId, base, people, me, toa
   const [fromId, setFromId] = useState(me)
   const [toId, setToId] = useState(() => people.find(p => p.id !== me)?.id ?? me)
   const [amount, setAmount] = useState('')
+  const [currency, setCurrency] = useState(base)
   const [day, setDay] = useState(localToday())
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (!open) return
+    const cur = (editing?.currency || base).toUpperCase()
     setFromId(editing?.from_user_id ?? me)
     setToId(editing?.to_user_id ?? people.find(p => p.id !== me)?.id ?? me)
-    setAmount(editing ? amountToInputString(editing.amount, (editing.currency || base).toUpperCase()) : '')
+    setAmount(editing ? amountToInputString(editing.amount, cur) : '')
+    setCurrency(cur)
     setDay(editing ? settlementDate(editing) : localToday())
     setSaving(false)
   }, [open, editing, me, base, people])
 
   const amt = Number.parseFloat(amount.replace(',', '.')) || 0
-  const valid = amt > 0 && fromId !== toId
+  const valid = amt > 0 && fromId !== toId && !!day
 
   const save = async () => {
     if (!valid || saving) return
     setSaving(true)
-    const data = { from_user_id: fromId, to_user_id: toId, amount: amt, currency: base, settled_at: day }
+    const data = { from_user_id: fromId, to_user_id: toId, amount: amt, currency, settled_at: day }
     try {
       if (editing) await budgetApi.updateSettlement(tripId, editing.id, data)
       else await budgetApi.createSettlement(tripId, data)
@@ -853,11 +865,26 @@ function AddPaymentSheet({ open, editing, onClose, tripId, base, people, me, toa
         <Eyebrow className="mb-[7px] mt-[14px] uppercase">{t('costs.amount')}</Eyebrow>
         <div className="flex items-center gap-2">
           <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" className={FIELD_CLS} />
-          <span className="flex-none font-geist text-[0.75rem] font-bold text-m-faint">{base}</span>
+          <span className="flex-none font-geist text-[0.75rem] font-bold text-m-faint">{currency}</span>
         </div>
 
-        <Eyebrow className="mb-[7px] mt-[14px] uppercase">{t('costs.day')}</Eyebrow>
-        <CustomDatePicker value={day} onChange={setDay} style={{ width: '100%' }} />
+        <div className="mt-[14px] flex gap-2">
+          <div className="min-w-0 flex-1">
+            <Eyebrow className="mb-[7px] uppercase">{t('costs.currency')}</Eyebrow>
+            <CustomSelect
+              value={currency}
+              onChange={v => setCurrency(String(v))}
+              searchable
+              size="sm"
+              options={currenciesWith(currency).map(c => ({ value: c, label: SYMBOLS[c] ? `${c}  ${SYMBOLS[c]}` : c }))}
+              style={{ width: '100%' }}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <Eyebrow className="mb-[7px] uppercase">{t('costs.day')}</Eyebrow>
+            <CustomDatePicker value={day} onChange={setDay} style={{ width: '100%' }} />
+          </div>
+        </div>
       </div>
       <FormSheetFooter onCancel={onClose} cancelLabel={t('common.cancel')} onSubmit={save} submitLabel={editing ? t('common.save') : t('costs.addPayment')} submitDisabled={!valid || saving} />
     </MSheet>

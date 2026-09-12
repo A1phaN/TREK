@@ -1022,7 +1022,7 @@ function SettlementModal({ tripId, people, me, editing, currency, onClose, onSav
   const [saving, setSaving] = useState(false)
 
   const amt = Number.parseFloat(amount) || 0
-  const valid = amt > 0 && fromId !== toId
+  const valid = amt > 0 && fromId !== toId && !!day
   const opts = people.map(p => ({ value: String(p.id), label: p.id === me ? t('costs.you') : p.username }))
 
   const save = async () => {

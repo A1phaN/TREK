@@ -1308,6 +1308,21 @@ describe('CostsPanel — payment modal', () => {
     await waitFor(() => expect(put).toBeTruthy())
     expect(put!.settled_at).toBe('2025-06-10')
   })
+
+  it('FE-W5COSTS-077: a payment cannot be saved without a day', async () => {
+    // Cleared, the server would store NULL and the ledger would quietly move
+    // the payment back to the day it was recorded on.
+    const user = userEvent.setup()
+    mount([], { settlements: [{ id: 7, from_user_id: 2, to_user_id: 1, amount: 30, settled_at: '2025-06-10', created_at: '2025-06-16 10:00:00' }] })
+
+    await user.click(await screen.findByTitle('Edit'))
+    const save = screen.getByRole('button', { name: 'Save' })
+    expect(save).toBeEnabled()
+
+    await user.click(document.querySelector('button[aria-haspopup="dialog"]') as HTMLElement)
+    await user.click(screen.getByRole('button', { name: 'Clear date' }))
+    expect(save).toBeDisabled()
+  })
 })
 
 describe('CostsPanel — expense modal', () => {

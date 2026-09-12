@@ -626,4 +626,44 @@ describe('MCostsTab', () => {
     expect(del).toHaveBeenCalledWith(7, 502)
     await waitFor(() => expect(settlementBases).toHaveLength(2))
   })
+
+  it('FE-MOB-COSTT-043: editing a payment keeps the currency it was recorded in, not the display currency', async () => {
+    // Recorded in pounds while the phone shows dollars: the row says so, the
+    // sheet reopens in GBP, and a date-only correction must not re-declare the
+    // amount as dollars (the server would freeze a fresh FX rate for it).
+    const payment = { id: 505, from_user_id: 1, to_user_id: 2, amount: 10, currency: 'GBP', settled_at: '2026-04-28', created_at: '2026-04-30T09:00:00Z' }
+    serveSettlement({ ...SETTLEMENT, settlements: [payment] })
+    const update = vi.spyOn(budgetApi, 'updateSettlement').mockResolvedValue({})
+    await renderTab()
+
+    const row = rowOf('costs.payment')
+    expect(within(row).getByText('£10.00 → $20.00')).toBeInTheDocument()
+    expect(within(row).getByText('$20.00')).toBeInTheDocument()
+
+    fireEvent.click(within(row).getByRole('button', { name: 'common.edit' }))
+    const dialog = screen.getByRole('dialog', { name: 'costs.editPayment' })
+    expect(within(dialog).getByDisplayValue('10.00')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: /GBP/ })).toBeInTheDocument()
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'common.save' }))
+    expect(update).toHaveBeenCalledWith(7, 505, { from_user_id: 1, to_user_id: 2, amount: 10, currency: 'GBP', settled_at: '2026-04-28' })
+  })
+
+  it('FE-MOB-COSTT-044: a payment cannot be saved without a day', async () => {
+    // Cleared, the server would store NULL and the ledger would quietly fall
+    // back to the day the payment was recorded on.
+    const create = vi.spyOn(budgetApi, 'createSettlement').mockResolvedValue({})
+    await renderTab()
+    fireEvent.click(screen.getByRole('button', { name: 'costs.addPayment' }))
+    const dialog = screen.getByRole('dialog', { name: 'costs.addPayment' })
+    const submit = within(dialog).getByRole('button', { name: 'costs.addPayment' })
+    fireEvent.change(within(dialog).getByPlaceholderText('0.00'), { target: { value: '12,5' } })
+    expect(submit).toBeEnabled()
+
+    fireEvent.click(dialog.querySelector('button[aria-haspopup="dialog"]') as HTMLElement)
+    fireEvent.click(screen.getByRole('button', { name: 'Clear date' }))
+    expect(submit).toBeDisabled()
+    fireEvent.click(submit)
+    expect(create).not.toHaveBeenCalled()
+  })
 })
