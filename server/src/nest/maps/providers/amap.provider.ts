@@ -22,11 +22,11 @@
  *     otherwise the controller's error mapping would report every failure as an
  *     empty result.
  *
- * Deliberately not implemented: `photoRefs`/`photoBytes`. Amap's POI photos come
- * with no licence statement we could show a user, and the existing Wikimedia
- * fallback already produces a picture *with* its attribution. An unattributable
- * image is worse than no image, so the photo path falls through to Wikimedia for
- * Amap places.
+ * No picture comes out of this provider. Amap's POI photos carry no licence
+ * statement we could show a user, and the Wikimedia fallback the place-details
+ * column already uses produces a picture *with* its attribution. An
+ * unattributable image is worse than no image, so an Amap place gets its picture
+ * the same way a place found on OpenStreetMap does.
  */
 import { createHash } from 'node:crypto';
 import { fromAmapLocation, gcj02ToWgs84, toAmapLocation } from '@trek/shared';
@@ -436,8 +436,10 @@ export class AmapPlacesProvider implements PlacesProvider {
  * The formats people paste, in the order they are tried:
  *   - `uri.amap.com/marker?position=<lng>,<lat>&name=…` — what our own "open in
  *     Amap" links look like, and what the mobile app's share sheet produces
- *   - `amap.com/place/<id>` or `…/detail?id=<id>` — a POI page, whose id we can
- *     look up when a key is configured
+ *   - `amap.com/place/<id>` or `…/detail?id=<id>`: a POI page carries an id and
+ *     no coordinate, so it comes back with the id and NaN. Turning that id into
+ *     a location needs a keyed detail lookup, and the URL resolver has no user
+ *     to resolve a key for, so it answers 400 instead
  *   - `?p=…` / `#…` viewport fragments carrying a bare `lng,lat`
  *
  * Returned coordinates are WGS-84; the link carries GCJ-02.

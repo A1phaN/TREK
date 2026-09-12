@@ -48,8 +48,10 @@ Amap place gets its picture from Wikimedia Commons like any other, with the cred
 A place remembers where it came from. One picked from Amap keeps its Amap id, one picked from Google keeps its Google
 id, and each keeps opening against the provider that knows it, whichever provider the admin selects later.
 
-You can also paste an Amap share link into the search box: `uri.amap.com/marker?…`, `amap.com/place/…` or a
-`surl.amap.com` short link, the same way a Google Maps URL works below.
+You can also paste an Amap link into the search box, the same way a Google Maps URL works below, as long as the link
+carries a coordinate: a `uri.amap.com/marker?position=…` share link does, a map URL with the coordinate in the address
+does, and a `surl.amap.com` short link does when it resolves to one of those. A bare `amap.com/place/…` POI page is an
+id and nothing else, and TREK answers that one with an error rather than guessing where it is.
 
 ### Which provider answers
 
@@ -94,7 +96,7 @@ The column is desktop-only; the mobile place sheet is unchanged.
 
 Paste a `maps.app.goo.gl/…`, `goo.gl/maps/…`, or `maps.google.*/…` URL directly into the search box and press the search button. TREK resolves it server-side and populates the name, address, and coordinates.
 
-Amap links work the same way: `uri.amap.com/marker?…`, `amap.com/place/…` and `surl.amap.com` short links. Their coordinates are converted from GCJ-02 to WGS-84 on the way in, so the place lands where it belongs on every other map.
+Amap links work the same way, as long as the link carries a coordinate: `uri.amap.com/marker?position=…` share links, map URLs with the coordinate in the address, and `surl.amap.com` short links that resolve to one of those. A bare `amap.com/place/…` POI page is an id and nothing else, and TREK answers it with an error. Coordinates are converted from GCJ-02 to WGS-84 on the way in, so the place lands where it belongs on every other map.
 
 ## Entering coordinates manually
 
