@@ -148,8 +148,8 @@ Requires `budget:read` or `budget:write` scope. Budget addon must be enabled.
 | `toggle_budget_member_paid` | Mark or unmark a member as having paid their share. |
 | `get_settlement_summary` | Each member's net balance and the suggested payments to settle shared expenses, in the trip's base currency. Call this before recording a settlement. |
 | `list_settlements` | List the recorded settle-up payments for a trip — who paid whom, how much, and when. |
-| `create_settlement` | Record a settle-up payment: one member paid another the given amount in the trip's base currency. |
-| `update_settlement` | Update a recorded settle-up payment (payer, recipient, and amount). |
+| `create_settlement` | Record a settle-up payment: one member paid another the given amount, with the payment's currency and the day it happened. |
+| `update_settlement` | Update a recorded settle-up payment (payer, recipient, amount, currency and the day it happened). |
 | `delete_settlement` | Delete a recorded settle-up payment. This is the undo for `create_settlement` and restores the affected balances. |
 
 ### Tags

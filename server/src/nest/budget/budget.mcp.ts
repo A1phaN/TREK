@@ -433,7 +433,7 @@ export class BudgetMcp {
       to_user_id: z.number().int().positive().describe('User ID of the member who received the payment'),
       amount: z.number().positive().describe('Amount paid, in `currency`'),
       currency: z.string().max(10).nullable().optional().describe("ISO currency code the payment was made in (e.g. \"USD\"); defaults to the trip currency. Its FX rate is frozen now, so the transfer keeps cancelling its expense when live rates drift."),
-      settled_at: z.string().max(40).nullable().optional().describe('Date the payment actually happened, YYYY-MM-DD; defaults to today when omitted.'),
+      settled_at: z.string().max(40).nullable().optional().describe('Day the payment actually happened, YYYY-MM-DD. Omitted means no day is stored and the ledger files the payment under the day it was recorded.'),
     },
     annotations: TOOL_ANNOTATIONS_NON_IDEMPOTENT,
     when: budgetAddonOn,

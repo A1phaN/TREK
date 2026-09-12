@@ -240,7 +240,8 @@ export const budgetCreateSettlementRequestSchema = z.object({
   amount: z.number(),
   // The display currency the amount was entered in; the server freezes its FX rate.
   currency: z.string().nullable().optional(),
-  // The day the transfer happened; defaults to today (server-side) when omitted.
+  // The day the transfer happened. Null when the caller sets none; the ledger then
+  // uses the day it was recorded, which is where every older payment already sits.
   settled_at: z.string().nullable().optional(),
 });
 export type BudgetCreateSettlementRequest = z.infer<typeof budgetCreateSettlementRequestSchema>;

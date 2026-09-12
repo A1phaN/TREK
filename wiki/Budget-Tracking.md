@@ -92,7 +92,7 @@ Costs works out the minimum number of transfers needed to settle all debts (usin
 
 Balances are always netted in the **trip currency** and converted to your display currency once, at the end — so they stay stable even when the trip mixes currencies.
 
-A recorded payment carries **its own currency** too: settling a rouble debt with a euro transfer is normal, so the payment modal has a currency picker, and its rate is frozen when you record it. A payment made in another currency shows both amounts in the ledger (`$30.00 → 27,00 €`).
+A recorded payment carries **its own currency** too: settling a rouble debt with a euro transfer is normal, so the payment modal has a currency picker, and its rate is frozen when you record it. A payment made in another currency shows both amounts in the ledger (`$30.00 → 27,00 €`). A payment also carries the day it happened, editable like an expense's date, so a transfer you only get round to recording three days later still lands on the right day; payments recorded before this field existed stay on the day they were recorded.
 
 ![Add payment dialog with From and To member pickers, an amount field and a currency selector](assets/CostsSettleUp.png)
 
