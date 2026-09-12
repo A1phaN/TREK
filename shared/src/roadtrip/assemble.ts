@@ -171,7 +171,10 @@ export function assembleRoadtrip({
       return { ...s, dwellMinutes, offRoadMeters: line ? snap!.meters : null };
     });
 
-    const drive = { warnings: [] as ReturnType<typeof deriveDriveWarnings>['warnings'], day: null as ReturnType<typeof deriveDriveWarnings>['day'] };
+    const drive = {
+      warnings: [] as ReturnType<typeof deriveDriveWarnings>['warnings'],
+      day: null as ReturnType<typeof deriveDriveWarnings>['day'],
+    };
     const dryPoints: (DryPoint & { lat: number; lng: number })[] = [];
     const drivingLine: [number, number][] = [];
     let drivenMeters = 0;
@@ -181,9 +184,12 @@ export function assembleRoadtrip({
       if (incoming?.seg) {
         const incomingDrive = deriveDriveWarnings([incoming.seg], [false, false], limits, carryKm);
         carryKm = incomingDrive.carryKm;
-        drive.warnings.push(...incomingDrive.warnings.map(w => ({ ...w, index: i })));
+        drive.warnings.push(...incomingDrive.warnings.map((w) => ({ ...w, index: i })));
         for (const dry of incomingDrive.emptyAt) {
-          const at = pointAtMeters(incoming.line.map(([lat, lng]) => ({ lat, lng })), dry.drivenMeters);
+          const at = pointAtMeters(
+            incoming.line.map(([lat, lng]) => ({ lat, lng })),
+            dry.drivenMeters,
+          );
           if (at) dryPoints.push({ ...dry, legIndex: -i - 1, inboundLine: incoming.line, lat: at.lat, lng: at.lng });
         }
         if (!incoming.seg.mode || incoming.seg.mode === 'driving') drivingSeconds += incoming.seg.duration ?? 0;
@@ -197,10 +203,20 @@ export function assembleRoadtrip({
         [stops[i]!.fillPercent],
       );
       carryKm = outgoing.carryKm;
-      drive.warnings.push(...outgoing.warnings.map(w => ({ ...w, index: i + 1 })));
+      drive.warnings.push(...outgoing.warnings.map((w) => ({ ...w, index: i + 1 })));
       for (const dry of outgoing.emptyAt) {
-        const at = pointAtMeters((leg?.line ?? []).map(([lat, lng]) => ({ lat, lng })), dry.intoLegKm * 1000);
-        if (at) dryPoints.push({ ...dry, legIndex: i, drivenMeters: drivenMeters + dry.intoLegKm * 1000, lat: at.lat, lng: at.lng });
+        const at = pointAtMeters(
+          (leg?.line ?? []).map(([lat, lng]) => ({ lat, lng })),
+          dry.intoLegKm * 1000,
+        );
+        if (at)
+          dryPoints.push({
+            ...dry,
+            legIndex: i,
+            drivenMeters: drivenMeters + dry.intoLegKm * 1000,
+            lat: at.lat,
+            lng: at.lng,
+          });
       }
       if (leg && (!leg.seg.mode || leg.seg.mode === 'driving')) {
         drivingLine.push(...leg.line);

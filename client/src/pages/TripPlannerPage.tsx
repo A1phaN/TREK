@@ -6,6 +6,7 @@ import { useCanDo } from '../store/permissionsStore'
 import { useSettingsStore } from '../store/settingsStore'
 import { MapViewAuto as MapView } from '../components/Map/MapViewAuto'
 import { MapCompassPill, type CompassMap } from '../components/Map/MapCompassPill'
+import { TripRouteOverviewPill, TripRouteOverviewPanel } from '../components/Map/TripRouteOverview'
 import { getCached, fetchPhoto } from '../services/photoService'
 import DayPlanSidebar from '../components/Planner/DayPlanSidebar'
 import RoadtripModeSwitch from '../components/Roadtrip/RoadtripModeSwitch'
@@ -253,6 +254,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
     pushUndo, undo, canUndo, lastActionLabel, handleUndo,
     enabledAddons, collabFeatures, tripAccommodations, setTripAccommodations,
     roadtripMode, toggleRoadtripMode, roadtripActive, roadtripRoutes, roadtripLineColors, roadtripMapLines, roadtripMapPlaces, collapsedRoadtripDays, toggleRoadtripDay, roadtripCorridor,
+    overviewActive, tripOverview, toggleOverview, overviewShown,
     followTrack, roadtripViaCounts,
     allowedFileTypes, tripMembers, setTripMembers, refreshMembers, loadAccommodations,
     TRANSPORT_TYPES, TRIP_TABS, activeTab, setActiveTab, handleTabChange,
@@ -335,6 +337,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
   // page level so it has tripMembers / base currency / current user available.
   const meId = useAuthStore(s => s.user?.id ?? -1)
   const displayCurrency = useSettingsStore(s => s.settings.default_currency)
+  const distanceUnit = useSettingsStore(s => s.settings.distance_unit)
   const costsBase = (displayCurrency || trip?.currency || 'EUR').toUpperCase()
   // Transit search departs against a real date, so the whole Automated mode —
   // the day-header tram button and the modal's mode switch — is off without one.
@@ -405,8 +408,8 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
               tripId={tripId}
               places={roadtripActive ? roadtripMapPlaces : mapPlaces}
               dayPlaces={dayPlaces}
-              route={roadtripActive ? roadtripMapLines : route}
-              routeColors={roadtripActive ? roadtripLineColors : undefined}
+              route={roadtripActive ? roadtripMapLines : overviewActive ? tripOverview.lines : route}
+              routeColors={roadtripActive ? roadtripLineColors : overviewActive ? tripOverview.lineColors : undefined}
               routeVias={roadtripActive ? roadtripMapVias : routeVias}
               dayBoundaryControls={roadtripActive ? dayBoundaryControls : undefined}
               accessLines={roadtripActive ? roadtripRoutes.accessLines : undefined}
@@ -415,7 +418,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
               // know which automated transports may ride it (#2019).
               days={days}
               selectedDayId={selectedDayId}
-              routeSegments={roadtripActive ? roadtripRoutes.segments : routeSegments}
+              routeSegments={roadtripActive ? roadtripRoutes.segments : overviewActive ? tripOverview.segments : routeSegments}
               selectedPlaceId={selectedPlaceId}
               onMarkerClick={handleMarkerClick}
               onMapClick={handleMapClick}
@@ -449,7 +452,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
               onRouteClick={roadtripActive && can('day_edit', trip) ? addRoadtripVia : undefined}
               roadtripVias={roadtripActive ? roadtripVias.byDay : undefined}
               alternativeRoutes={alternativeOverlays}
-              focusPoints={mapFocusPoints}
+              focusPoints={overviewActive ? tripOverview.focusPoints : mapFocusPoints}
               clusterLoosely={roadtripActive}
               activeAlternative={highlightedAlternative}
               onChooseAlternative={chooseRouteAlternative}
@@ -473,6 +476,28 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
                     onHighlight={setHighlightedAlternative}
                   />
                 </LazyPanel>
+              </div>
+            )}
+
+            {/* Bottom-RIGHT. Not the top corridor between the panels, which is already
+                contested by the POI bar and the collapse tabs (#2247); and not the
+                bottom-left corner, where Leaflet's base-layer switcher sits at
+                z-index 1000 and would cover this. The right corner is free on both
+                renderers — the locate button that lives there is phone-only. */}
+            {!roadtripActive && (
+              <div className="hidden md:flex" style={{
+                position: 'absolute', bottom: 18, right: mapInsetRight + 14, zIndex: 26,
+                pointerEvents: 'none', flexDirection: 'column', alignItems: 'flex-end', gap: 8,
+              }}>
+                {overviewActive && (
+                  <TripRouteOverviewPanel
+                    overview={tripOverview}
+                    unit={distanceUnit}
+                    selectedDayId={selectedDayId}
+                    onSelectDay={handleSelectDay}
+                  />
+                )}
+                <TripRouteOverviewPill active={overviewShown} onToggle={toggleOverview} />
               </div>
             )}
 

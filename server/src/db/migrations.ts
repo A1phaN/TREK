@@ -4536,6 +4536,26 @@ function runMigrations(db: Database.Database): void {
       }
     },
     () => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS school_holiday_countries (
+          code TEXT PRIMARY KEY, name TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS school_holiday_regions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          country TEXT NOT NULL REFERENCES school_holiday_countries(code),
+          name TEXT NOT NULL COLLATE NOCASE, revision INTEGER NOT NULL DEFAULT 1,
+          UNIQUE(country, name)
+        );
+        CREATE TABLE IF NOT EXISTS school_holiday_periods (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          region_id INTEGER NOT NULL REFERENCES school_holiday_regions(id) ON DELETE CASCADE,
+          name TEXT NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL,
+          CHECK (end_date >= start_date)
+        );
+        CREATE INDEX IF NOT EXISTS idx_school_holiday_periods_region ON school_holiday_periods(region_id);
+      `);
+    },
+    () => {
       const cols = db.prepare("SELECT name FROM pragma_table_info('day_assignments')").all() as Array<{ name: string }>;
       if (!cols.some(c => c.name === 'end_day')) {
         db.exec('ALTER TABLE day_assignments ADD COLUMN end_day INTEGER NOT NULL DEFAULT 0');

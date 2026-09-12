@@ -229,6 +229,24 @@ describe('MapView', () => {
     expect(screen.getAllByTestId('polyline').length).toBeGreaterThan(0)
   })
 
+  it('FE-COMP-MAPVIEW-006b: a caller-coloured route takes its own core and casing', () => {
+    render(<MapView route={[[[48.0, 2.0], [49.0, 3.0]]]} routeColors={[{ line: '#ff9f0a', casing: '#c2740a' }]} />)
+
+    const [casing, core] = screen.getAllByTestId('polyline')
+      .map(el => JSON.parse(el.getAttribute('data-path-options') as string))
+    expect(casing.color).toBe('#c2740a')
+    expect(core.color).toBe('#ff9f0a')
+  })
+
+  it('FE-COMP-MAPVIEW-006c: a line with no colour of its own keeps the route blue', () => {
+    render(<MapView route={[[[48.0, 2.0], [49.0, 3.0]]]} routeColors={[undefined]} />)
+
+    const [casing, core] = screen.getAllByTestId('polyline')
+      .map(el => JSON.parse(el.getAttribute('data-path-options') as string))
+    expect(casing.color).toBe('#0a5cc2')
+    expect(core.color).toBe('#0a84ff')
+  })
+
   it('FE-COMP-MAPVIEW-007: does not render polyline when route is null', () => {
     render(<MapView route={null} />)
     expect(screen.queryByTestId('polyline')).toBeNull()

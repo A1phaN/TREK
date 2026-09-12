@@ -452,7 +452,9 @@ describe('TripPlannerPage — plan tab', () => {
   it('FE-PAGE-TPW-013: the collapse buttons toggle each side panel', () => {
     renderPage()
 
-    const [leftBtn, rightBtn] = screen.getAllByRole('button')
+    // By name, not by position: the map layer carries controls of its own, so the
+    // tabs are not simply the first two buttons on the page.
+    const [leftBtn, rightBtn] = screen.getAllByLabelText('common.collapse')
     fireEvent.click(leftBtn)
     expect(hookState.toggleLeft).toHaveBeenCalled()
 
@@ -469,9 +471,8 @@ describe('TripPlannerPage — plan tab', () => {
   // announce themselves with nothing but a hover colour (#2247).
   it('FE-PAGE-TPW-013b: each collapse tab is named for what it does', () => {
     renderPage({ leftHidden: true, rightHidden: false })
-    const [leftBtn, rightBtn] = screen.getAllByRole('button')
-    expect(leftBtn).toHaveAttribute('aria-label', 'trip.mobilePlan')
-    expect(rightBtn).toHaveAttribute('aria-label', 'common.collapse')
+    expect(screen.getByLabelText('trip.mobilePlan')).toBeInTheDocument()
+    expect(screen.getByLabelText('common.collapse')).toBeInTheDocument()
   })
 
   // At a foldable's ~860px the viewport centre sits under the Places panel, so the
@@ -486,6 +487,17 @@ describe('TripPlannerPage — plan tab', () => {
     const { container } = renderPage({ leftWidth: 340, rightWidth: 300, rightHidden: true })
     const cluster = container.querySelector('div[style*="translateX(-50%)"][style*="z-index: 25"]') as HTMLElement
     expect(cluster.style.left).toBe('calc(350px + 0.5 * (100% - 350px - 0px))')
+  })
+
+  // Leaflet's base-layer switcher owns the bottom-LEFT corner at z-index 1000, so an
+  // overview control placed there is simply covered by it (#1736).
+  it('FE-PAGE-TPW-013d: the trip-overview control hugs the right edge, clear of the layer switcher', () => {
+    renderPage()
+
+    const stack = screen.getByTestId('trip-overview-pill').closest('[style*="position: absolute"]') as HTMLElement
+    expect(stack).not.toBeNull()
+    expect(stack.style.right).not.toBe('')
+    expect(stack.style.left).toBe('')
   })
 
   it('FE-PAGE-TPW-014: a collapsed panel keeps its toggle but drops the hover highlight', () => {
