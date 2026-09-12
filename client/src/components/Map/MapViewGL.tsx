@@ -208,8 +208,8 @@ interface Props {
 }
 
 /** How eagerly place markers merge into a cluster. */
-const CLUSTER_RADIUS = 30
-const CLUSTER_MAX_ZOOM = 10
+const CLUSTER_RADIUS = 20
+const CLUSTER_MAX_ZOOM = 8
 
 /** The cluster source and the three layers over it. Extracted so the rebuild on a mode
  *  change and the initial build cannot drift apart. */

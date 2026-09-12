@@ -483,6 +483,13 @@ export default function RoadtripLimitsCard({ onSave, onResetDayBoundaries, loadi
                     />
                   ))}
                 </Panel>
+                <Panel icon={Signpost} title={t('roadtrip.stops.section')} note={t('roadtrip.stops.daysHint')}>
+                  <AvoidRow icon={Link2} label={t('roadtrip.stops.inDays')}
+                    on={settings.roadtrip_service_stops_in_days !== false}
+                    disabled={!onSave}
+                    onToggle={() => onSave?.('roadtrip_service_stops_in_days', settings.roadtrip_service_stops_in_days === false)}
+                  />
+                </Panel>
               </div>
 
               <div className="flex min-w-0 flex-col gap-4">
@@ -646,13 +653,7 @@ export default function RoadtripLimitsCard({ onSave, onResetDayBoundaries, loadi
                   <AvoidRow icon={Signpost} label={t('roadtrip.hazards.show')} on={settings.roadtrip_show_hazards === true} disabled={!onSave}
                     onToggle={() => onSave?.('roadtrip_show_hazards', !settings.roadtrip_show_hazards)} />
                 </Panel>
-                <Panel icon={Signpost} title={t('roadtrip.stops.section')} note={t('roadtrip.stops.daysHint')}>
-                  <AvoidRow icon={Link2} label={t('roadtrip.stops.inDays')}
-                    on={settings.roadtrip_service_stops_in_days !== false}
-                    disabled={!onSave}
-                    onToggle={() => onSave?.('roadtrip_service_stops_in_days', settings.roadtrip_service_stops_in_days === false)}
-                  />
-                </Panel>
+
               </div>
             </div>
           </div>

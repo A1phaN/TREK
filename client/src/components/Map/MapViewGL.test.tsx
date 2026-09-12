@@ -408,8 +408,8 @@ describe('MapViewGL', () => {
     expect(glMap.addSource).toHaveBeenCalledWith('trip-place-clusters', expect.objectContaining({
       type: 'geojson',
       cluster: true,
-      clusterRadius: 30,
-      clusterMaxZoom: 10,
+      clusterRadius: 20,
+      clusterMaxZoom: 8,
     }))
     expect(glMap.addLayer).toHaveBeenCalledWith(expect.objectContaining({ id: 'trip-place-clusters-circle' }))
     expect(glMap.addLayer).toHaveBeenCalledWith(expect.objectContaining({ id: 'trip-place-clusters-count' }))

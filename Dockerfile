@@ -54,7 +54,7 @@ COPY server/package.json ./server/
 # would copy up every inode it touches and duplicate the whole tree in the image.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends tzdata dumb-init wget ca-certificates python3 build-essential \
-    libkitinerary-bin && \
+    libkitinerary-bin libsqlite3-0 && \
     npm ci --workspace=server --omit=dev && \
     ln -sf "$(find /usr/lib -name kitinerary-extractor -type f | head -1)" /usr/local/bin/kitinerary-extractor; \
     apt-get purge -y python3 build-essential && \

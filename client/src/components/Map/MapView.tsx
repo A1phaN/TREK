@@ -1049,8 +1049,8 @@ export const MapView = memo(function MapView({
         chunkedLoading
         chunkInterval={30}
         chunkDelay={0}
-        maxClusterRadius={30}
-        disableClusteringAtZoom={11}
+        maxClusterRadius={20}
+        disableClusteringAtZoom={9}
         spiderfyOnMaxZoom
         showCoverageOnHover={false}
         zoomToBoundsOnClick
