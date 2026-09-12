@@ -668,6 +668,82 @@ describe('calculateSettlement — finalBudgets', () => {
     expect(result.finalBudgets.find(f => f.user_id === 2)!).toMatchObject({ expenses: 0, reimbursed: -40, pending: 40, final: 0 });
     checkIdentity(result.finalBudgets);
   });
+
+  it('lists the rows each figure is made of, signed the way the figure is', () => {
+    // The first case read row by row, with 20 of Bob's 50 already sent: Alice
+    // fronted the one expense, received the 20, and the open flow is the 30 coming
+    // to her; on Bob's side the same transfer and flow are going out.
+    setupDb(
+      [makeItem(1, 100)],
+      [makeMember(1, 1, 'alice'), makeMember(1, 2, 'bob')],
+      [makePayer(1, 1, 100, 'alice')],
+      [makeSettlementRow(1, 2, 1, 20)],
+    );
+    const result = budget.calculateSettlement(1);
+
+    expect(result.finalBudgets.find(f => f.user_id === 1)!.sources).toEqual({
+      fronted: [{ item_id: 1, cents: 10000 }],
+      moved: [{ settlement_id: 1, from_user_id: 2, to_user_id: 1, cents: 2000 }],
+      outstanding: [{ from_user_id: 2, to_user_id: 1, cents: 3000 }],
+    });
+    expect(result.finalBudgets.find(f => f.user_id === 2)!.sources).toEqual({
+      fronted: [],
+      moved: [{ settlement_id: 1, from_user_id: 2, to_user_id: 1, cents: -2000 }],
+      outstanding: [{ from_user_id: 2, to_user_id: 1, cents: -3000 }],
+    });
+  });
+
+  it('keeps an expense with no split members out of the rows, as it is out of the ledger', () => {
+    // Item 1 has a payer but nobody to split it with: a planning-only entry that
+    // charges nobody, so it cannot be listed as something Alice fronted either.
+    setupDb(
+      [makeItem(1, 100), makeItem(2, 40)],
+      [makeMember(2, 1, 'alice'), makeMember(2, 2, 'bob')],
+      [makePayer(1, 1, 100, 'alice'), makePayer(2, 1, 40, 'alice')],
+    );
+    const result = budget.calculateSettlement(1);
+
+    const alice = result.finalBudgets.find(f => f.user_id === 1)!;
+    expect(alice.expenses).toBe(40);
+    expect(alice.sources.fronted).toEqual([{ item_id: 2, cents: 4000 }]);
+  });
+
+  it('spreads a foreign-currency figure over its rows so they still add up in the display currency', () => {
+    // Two USD expenses booked at their own frozen rates and one in the trip's euros,
+    // viewed in pounds: every row goes through the conversion its figure went
+    // through, and the cents lost to rounding land on rows instead of between them.
+    const sum = (rows: { cents: number }[]) => rows.reduce((a, r) => a + r.cents, 0);
+    setupDb(
+      [
+        { ...makeItem(1, 100), currency: 'USD', exchange_rate: 1.08 },
+        { ...makeItem(2, 33.33), currency: 'USD', exchange_rate: 1.1 },
+        makeItem(3, 50),
+      ],
+      [
+        makeMember(1, 1, 'alice'), makeMember(1, 2, 'bob'), makeMember(1, 3, 'carol'),
+        makeMember(2, 1, 'alice'), makeMember(2, 2, 'bob'), makeMember(2, 3, 'carol'),
+        makeMember(3, 1, 'alice'), makeMember(3, 2, 'bob'), makeMember(3, 3, 'carol'),
+      ],
+      [makePayer(1, 1, 100, 'alice'), makePayer(2, 1, 33.33, 'alice'), makePayer(3, 2, 50, 'bob')],
+      [makeSettlementRow(1, 3, 1, 20, 'GBP', 0.8547), makeSettlementRow(2, 3, 2, 7.77, 'GBP', 0.8547)],
+    );
+    for (const eurPerGbp of [1.17, 1.1523, 1.2]) {
+      const result = budget.calculateSettlement(1, { base: 'GBP', tripCurrency: 'EUR', rates: { GBP: 1, EUR: eurPerGbp } });
+
+      checkIdentity(result.finalBudgets);
+      for (const f of result.finalBudgets) {
+        expect(sum(f.sources.fronted)).toBe(Math.round(f.expenses * 100));
+        expect(sum(f.sources.moved)).toBe(Math.round(f.reimbursed * 100));
+        expect(sum(f.sources.outstanding)).toBe(Math.round(f.pending * 100));
+      }
+      // Alice's two rows each stay within a cent of their own conversion: the
+      // remainder is handed out, not rounded away one row at a time.
+      const alice = result.finalBudgets.find(f => f.user_id === 1)!;
+      expect(alice.sources.fronted.map(r => r.item_id)).toEqual([1, 2]);
+      expect(Math.abs(alice.sources.fronted[0].cents - Math.round(100 / 1.08 * 100) / eurPerGbp)).toBeLessThan(1);
+      expect(Math.abs(alice.sources.fronted[1].cents - Math.round(33.33 / 1.1 * 100) / eurPerGbp)).toBeLessThan(1);
+    }
+  });
 });
 
 describe('splitEqualShares — client parity (#2176)', () => {

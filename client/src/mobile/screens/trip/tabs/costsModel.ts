@@ -31,14 +31,9 @@ export function baseTotal(e: BudgetItem, ctx: CostsCtx): number {
   return ctx.convert(e.total_price || 0, currencyOf(e, ctx))
 }
 
-/** How much a given participant fronted for this expense, in the base currency. */
-export function paidByOf(e: BudgetItem, userId: number, ctx: CostsCtx): number {
-  return ctx.convert(paidByUser(e, userId), currencyOf(e, ctx))
-}
-
 /** How much `ctx.me` personally fronted for this expense, in the base currency. */
 export function myPaidOf(e: BudgetItem, ctx: CostsCtx): number {
-  return paidByOf(e, ctx.me, ctx)
+  return ctx.convert(paidByUser(e, ctx.me), currencyOf(e, ctx))
 }
 
 /** A given member's share of this expense (explicit custom amount, else equal split), base currency. */

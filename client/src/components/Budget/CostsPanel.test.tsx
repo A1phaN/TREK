@@ -835,33 +835,53 @@ describe('CostsPanel — overview', () => {
   })
 
   it('FE-W5COSTS-004b: the final budget gives one amount per traveler and its arithmetic on click', async () => {
-    // Dinner 90 fronted by Alice, taxi 30 by Bob, both split evenly: the trip costs
-    // each of them 60. Bob has already sent 15 of the 30 he owes, 15 is still open.
+    // Dinner is 100 USD fronted by Alice, booked by the server at the rate frozen
+    // on entry as 92 €; taxi 30 € by Bob; both split evenly, so the trip costs each
+    // of them 61. Bob has sent 15 of the 31 he owed, 16 is still open. No live rate
+    // is loaded here, so a client converting the dinner itself would print 100 €.
     const user = userEvent.setup()
-    mount([dinner(), taxi()], {
+    mount([{ ...dinner(), currency: 'USD', total_price: 100, payers: [{ user_id: 1, amount: 100 }] }, taxi()], {
       balances: [
-        { user_id: 1, username: 'alice', avatar_url: null, balance: 15 },
-        { user_id: 2, username: 'bob', avatar_url: null, balance: -15 },
+        { user_id: 1, username: 'alice', avatar_url: null, balance: 16 },
+        { user_id: 2, username: 'bob', avatar_url: null, balance: -16 },
       ],
-      flows: [{ from: { user_id: 2, username: 'bob' }, to: { user_id: 1, username: 'alice' }, amount: 15 }],
+      flows: [{ from: { user_id: 2, username: 'bob' }, to: { user_id: 1, username: 'alice' }, amount: 16 }],
       settlements: [{ id: 9, from_user_id: 2, to_user_id: 1, amount: 15, currency: 'EUR', created_at: '2025-06-17 10:00:00' }],
       finalBudgets: [
-        { user_id: 1, username: 'alice', avatar_url: null, expenses: 90, reimbursed: 15, pending: 15, final: 60 },
-        { user_id: 2, username: 'bob', avatar_url: null, expenses: 30, reimbursed: -15, pending: -15, final: 60 },
+        {
+          user_id: 1, username: 'alice', avatar_url: null, expenses: 92, reimbursed: 15, pending: 16, final: 61,
+          sources: {
+            fronted: [{ item_id: 101, cents: 9200 }],
+            moved: [{ settlement_id: 9, from_user_id: 2, to_user_id: 1, cents: 1500 }],
+            outstanding: [{ from_user_id: 2, to_user_id: 1, cents: 1600 }],
+          },
+        },
+        {
+          user_id: 2, username: 'bob', avatar_url: null, expenses: 30, reimbursed: -15, pending: -16, final: 61,
+          sources: {
+            fronted: [{ item_id: 102, cents: 3000 }],
+            moved: [{ settlement_id: 9, from_user_id: 2, to_user_id: 1, cents: -1500 }],
+            outstanding: [{ from_user_id: 2, to_user_id: 1, cents: -1600 }],
+          },
+        },
       ],
     })
 
     const card = (await screen.findByText('Final budget')).parentElement as HTMLElement
-    await waitFor(() => expect(within(card).getAllByText('60,00 €')).toHaveLength(2))
+    await waitFor(() => expect(within(card).getAllByText('61,00 €')).toHaveLength(2))
     // The main view stays one figure per person until someone asks for more.
     expect(within(card).queryByText('Expenses paid')).toBeNull()
 
     const alice = within(card).getByRole('button', { name: /You/ })
     await user.click(alice)
     expect(alice).toHaveAttribute('aria-expanded', 'true')
-    expect(within(card).getByText('+90,00 €')).toBeInTheDocument()
-    // Received and still pending both lower her cost.
+    // The dinner is the server's 92 €, once as the line and once as its only row;
+    // the raw 100 USD never shows up in the card.
+    expect(within(card).getAllByText('+92,00 €')).toHaveLength(2)
+    expect(within(card).queryByText(/100,00/)).toBeNull()
+    // Received and still pending both lower her cost, each line with its one row.
     expect(within(card).getAllByText('−15,00 €')).toHaveLength(2)
+    expect(within(card).getAllByText('−16,00 €')).toHaveLength(2)
     expect(within(card).getByText('Dinner')).toBeInTheDocument()
     expect(within(card).queryByText('Taxi')).toBeNull()
     expect(within(card).getAllByText(/^bob → /)).toHaveLength(2)
@@ -869,8 +889,9 @@ describe('CostsPanel — overview', () => {
     // Opening Bob closes Alice: what he sent back and what he still owes raise his.
     await user.click(within(card).getByRole('button', { name: /bob/ }))
     expect(alice).toHaveAttribute('aria-expanded', 'false')
-    expect(within(card).getByText('+30,00 €')).toBeInTheDocument()
+    expect(within(card).getAllByText('+30,00 €')).toHaveLength(2)
     expect(within(card).getAllByText('+15,00 €')).toHaveLength(2)
+    expect(within(card).getAllByText('+16,00 €')).toHaveLength(2)
     expect(within(card).getByText('Taxi')).toBeInTheDocument()
     expect(within(card).queryByText('Dinner')).toBeNull()
   })

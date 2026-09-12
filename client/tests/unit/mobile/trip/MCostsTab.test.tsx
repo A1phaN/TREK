@@ -14,7 +14,7 @@ import { resetAllStores, seedStore } from '../../../helpers/store'
 import { server } from '../../../helpers/msw/server'
 import { fireEvent, render, screen, waitFor, within } from '../../../helpers/render'
 
-// FE-MOB-COSTT-001 to FE-MOB-COSTT-037
+// FE-MOB-COSTT-001 to FE-MOB-COSTT-043
 
 // The add/edit expense sheet is the shared desktop-sized form; the panel only
 // owns when it opens and what happens on save, so it is stubbed here.
@@ -580,41 +580,70 @@ describe('MCostsTab', () => {
     expect(within(row).getByText('$15.00')).toBeInTheDocument()
   })
 
-  it('FE-MOB-COSTT-041: shows what the trip costs each traveler and opens the arithmetic on tap', async () => {
+  it('FE-MOB-COSTT-043: shows what the trip costs each traveler and opens the arithmetic on tap', async () => {
+    // The rows come from the server in display cents. Bob's museum is a GBP expense
+    // the server booked at its frozen rate as $58.00; the live rate this test seeds
+    // would make it $60.00, and that figure must never reach the card.
     serveSettlement({
       ...SETTLEMENT,
-      settlements: [{ id: 5, from_user_id: 3, to_user_id: 1, amount: 15, currency: 'USD', created_at: '2026-05-02 10:00:00' }],
+      settlements: [{ id: 5, from_user_id: 3, to_user_id: 1, amount: 10, currency: 'USD', created_at: '2026-05-02 10:00:00' }],
       finalBudgets: [
-        { user_id: 1, username: 'Me', avatar_url: null, expenses: 100, reimbursed: 15, pending: 12.5, final: 72.5 },
+        {
+          user_id: 1, username: 'Me', avatar_url: null, expenses: 100, reimbursed: 10, pending: -25, final: 115,
+          sources: {
+            fronted: [{ item_id: 11, cents: 8000 }, { item_id: 14, cents: 2000 }],
+            moved: [{ settlement_id: 5, from_user_id: 3, to_user_id: 1, cents: 1000 }],
+            outstanding: [{ from_user_id: 1, to_user_id: 2, cents: -4000 }, { from_user_id: 3, to_user_id: 1, cents: 1500 }],
+          },
+        },
+        {
+          user_id: 3, username: 'Bob', avatar_url: null, expenses: 58, reimbursed: -10, pending: -10, final: 78,
+          sources: {
+            fronted: [{ item_id: 12, cents: 5800 }],
+            moved: [{ settlement_id: 5, from_user_id: 3, to_user_id: 1, cents: -1000 }],
+            outstanding: [{ from_user_id: 3, to_user_id: 1, cents: -1500 }, { from_user_id: 99, to_user_id: 3, cents: 500 }],
+          },
+        },
       ],
     })
     await renderTab()
     const card = up(screen.getByText('costs.finalBudget'), 1)
 
-    // One amount per traveler; the two the ledger left out cost nothing.
-    expect(within(card).getByText('$72.50')).toBeInTheDocument()
-    expect(within(card).getAllByText('$0.00')).toHaveLength(2)
+    // One amount per traveler; Ada, whom the ledger left out, costs nothing.
+    expect(within(card).getByText('$115.00')).toBeInTheDocument()
+    expect(within(card).getByText('$78.00')).toBeInTheDocument()
+    expect(within(card).getByText('$0.00')).toBeInTheDocument()
     expect(within(card).queryByText('costs.finalPending')).not.toBeInTheDocument()
 
-    const mine = within(card).getByRole('button', { name: /\$72\.50/ })
+    const mine = within(card).getByRole('button', { name: /\$115\.00/ })
     fireEvent.click(mine)
     expect(mine).toHaveAttribute('aria-expanded', 'true')
-    // Each line signed by what it does to the final.
+    // Each line signed by what it does to the final, and its rows signed the same
+    // way, so they add up to it on sight.
     expect(within(card).getByText('+$100.00')).toBeInTheDocument()
+    expect(within(card).getByText('+$80.00')).toBeInTheDocument()
+    expect(within(card).getByText('+$20.00')).toBeInTheDocument()
+    expect(within(card).getAllByText('−$10.00')).toHaveLength(2)
+    expect(within(card).getByText('+$25.00')).toBeInTheDocument()
+    expect(within(card).getByText('+$40.00')).toBeInTheDocument()
     expect(within(card).getByText('−$15.00')).toBeInTheDocument()
-    expect(within(card).getByText('−$12.50')).toBeInTheDocument()
-    // The rows behind it: only the expenses I fronted, the transfer I received,
-    // and the flows still open on my side.
     expect(within(card).getByText('Ramen')).toBeInTheDocument()
     expect(within(card).getByText('Taxi')).toBeInTheDocument()
     expect(within(card).queryByText('Museum')).not.toBeInTheDocument()
     expect(within(card).getAllByText('Bob → costs.you')).toHaveLength(2)
     expect(within(card).getByText('costs.you → Ada')).toBeInTheDocument()
-    expect(within(card).queryByText('? → Bob')).not.toBeInTheDocument()
 
-    fireEvent.click(mine)
+    // Opening Bob closes me. His museum row is the server's figure, not a live conversion.
+    const bob = within(card).getByRole('button', { name: /\$78\.00/ })
+    fireEvent.click(bob)
     expect(mine).toHaveAttribute('aria-expanded', 'false')
-    expect(within(card).queryByText('+$100.00')).not.toBeInTheDocument()
+    expect(within(card).getAllByText('+$58.00')).toHaveLength(2)
+    expect(within(card).queryByText(/60\.00/)).not.toBeInTheDocument()
+    expect(within(card).getByText('Museum')).toBeInTheDocument()
+
+    fireEvent.click(bob)
+    expect(bob).toHaveAttribute('aria-expanded', 'false')
+    expect(within(card).queryByText('+$58.00')).not.toBeInTheDocument()
   })
 
   it('FE-MOB-COSTT-040: the expense filters apply to payments the same way they do on desktop', async () => {

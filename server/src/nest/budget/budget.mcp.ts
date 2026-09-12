@@ -390,7 +390,7 @@ export class BudgetMcp {
 
   @Tool({
     name: 'get_settlement_summary',
-    description: "See each member's net balance, the suggested payments to settle shared expenses, and what the trip finally costs each member once every reimbursement is accounted for (`finalBudgets`). Amounts are in the trip's base currency. Call this before recording a settlement so you know who should pay whom and how much.",
+    description: "See each member's net balance, the suggested payments to settle shared expenses, and what the trip finally costs each member once every reimbursement is accounted for (`finalBudgets`, each figure with the rows it is made of under `sources`). Amounts are in the trip's base currency. Call this before recording a settlement so you know who should pay whom and how much.",
     inputSchema: {
       tripId: z.number().int().positive(),
       base: z.string().max(10).optional().describe('ISO currency code to compute balances in; defaults to the trip currency'),

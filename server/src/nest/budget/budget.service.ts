@@ -69,11 +69,18 @@ function sumMoney(amounts: number[]): number {
   return amounts.reduce((a, v) => a + Math.round(v * 100), 0) / 100;
 }
 
-function allocateDisplayCents(cents: number[], factor: number): number[] {
+/**
+ * Convert a set of trip cents to display cents so that they still add up: floor
+ * each one, then hand the cents lost to flooring to the largest fractions. `total`
+ * is what the set has to sum to. By default that is the rounded conversion of its
+ * own sum; the rows behind a figure pass the figure's already allocated cents
+ * instead, so a list nested under a line lands exactly on that line.
+ */
+function allocateDisplayCents(cents: number[], factor: number, total = Math.round(cents.reduce((a, c) => a + c, 0) * factor)): number[] {
   if (factor === 1) return [...cents];
   const exact = cents.map(c => c * factor);
   const out = exact.map(v => Math.floor(v));
-  const drift = Math.round(cents.reduce((a, c) => a + c, 0) * factor) - out.reduce((a, v) => a + v, 0);
+  const drift = total - out.reduce((a, v) => a + v, 0);
   const byFraction = exact
     .map((v, i) => ({ i, frac: v - Math.floor(v) }))
     .sort((a, b) => b.frac - a.frac || a.i - b.i);
@@ -857,7 +864,10 @@ export class BudgetService {
    * cost me", which no other figure on the Costs screen gives: a participant's
    * gross outlay minus the reimbursements already recorded minus the ones still
    * to come. It is derived from the same integer cents rather than recomputed, so
-   * a breakdown can never contradict the balance printed next to it.
+   * a breakdown can never contradict the balance printed next to it. The rows
+   * behind each figure (`sources`) travel with it, in the same display cents: an
+   * expense list converted again on the client with today's rate would not add up
+   * to a figure that was booked at the rate frozen on entry.
    */
   calculateSettlement(
     tripId: string | number,
@@ -949,6 +959,10 @@ export class BudgetService {
     // are derived from.
     const frontedCents: Record<number, number> = {};
     const reimbursedCents: Record<number, number> = {};
+    // ...and the rows they are made of, so the breakdown lists them in these same
+    // cents rather than converting the expense list a second time on the client.
+    const frontedRows: Record<number, { item_id: number; cents: number }[]> = {};
+    const movedRows: Record<number, { settlement_id: number; from_user_id: number; to_user_id: number; cents: number }[]> = {};
 
     for (const item of items) {
       const members = allMembers.filter(m => m.budget_item_id === item.id);
@@ -981,6 +995,7 @@ export class BudgetService {
         const paid = toTripCents(p.amount, item.currency, item.exchange_rate);
         ensure(p.user_id, p).cents += paid;
         frontedCents[p.user_id] = (frontedCents[p.user_id] || 0) + paid;
+        if (paid !== 0) (frontedRows[p.user_id] ??= []).push({ item_id: item.id, cents: paid });
         creditCents += paid;
       }
       // …and each split participant owes their share — a custom per-member amount
@@ -1025,6 +1040,9 @@ export class BudgetService {
       // subtraction equal to the balance it is taken from.
       reimbursedCents[s.to_user_id] = (reimbursedCents[s.to_user_id] || 0) + inTrip;
       reimbursedCents[s.from_user_id] = (reimbursedCents[s.from_user_id] || 0) - inTrip;
+      const moved = { settlement_id: s.id, from_user_id: s.from_user_id, to_user_id: s.to_user_id };
+      (movedRows[s.to_user_id] ??= []).push({ ...moved, cents: inTrip });
+      (movedRows[s.from_user_id] ??= []).push({ ...moved, cents: -inTrip });
     }
 
     // Into the display currency as one set, then simplify — balances and flows are
@@ -1075,13 +1093,35 @@ export class BudgetService {
       })),
       flows,
       settlements,
-      finalBudgets: ledger.map((b, i) => ({
-        user_id: b.user_id, username: b.username, avatar_url: b.avatar_url,
-        expenses: frontedDisplayCents[i] / 100,
-        reimbursed: reimbursedDisplayCents[i] / 100,
-        pending: displayCents[i] / 100,
-        final: (frontedDisplayCents[i] - reimbursedDisplayCents[i] - displayCents[i]) / 100,
-      })) satisfies BudgetParticipantFinal[],
+      finalBudgets: ledger.map((b, i) => {
+        // The rows behind each figure, converted against the figure itself: the
+        // same largest-remainder split, with the cents already allocated to the
+        // figure as the target, so each list adds up to the line it sits under.
+        const fronted = frontedRows[b.user_id] || [];
+        const moved = movedRows[b.user_id] || [];
+        const frontedDisplay = allocateDisplayCents(fronted.map(r => r.cents), displayFactor, frontedDisplayCents[i]);
+        const movedDisplay = allocateDisplayCents(moved.map(r => r.cents), displayFactor, reimbursedDisplayCents[i]);
+        return {
+          user_id: b.user_id, username: b.username, avatar_url: b.avatar_url,
+          expenses: frontedDisplayCents[i] / 100,
+          reimbursed: reimbursedDisplayCents[i] / 100,
+          pending: displayCents[i] / 100,
+          final: (frontedDisplayCents[i] - reimbursedDisplayCents[i] - displayCents[i]) / 100,
+          sources: {
+            fronted: fronted.map((r, k) => ({ item_id: r.item_id, cents: frontedDisplay[k] })),
+            moved: moved.map((r, k) => ({ ...r, cents: movedDisplay[k] })),
+            // The flows are display cents already, and the greedy pass drains every
+            // balance completely, so the flows on a person's side sum to their balance.
+            outstanding: flows
+              .filter(f => f.from.user_id === b.user_id || f.to.user_id === b.user_id)
+              .map(f => ({
+                from_user_id: f.from.user_id,
+                to_user_id: f.to.user_id,
+                cents: Math.round(f.amount * 100) * (f.to.user_id === b.user_id ? 1 : -1),
+              })),
+          },
+        };
+      }) satisfies BudgetParticipantFinal[],
     };
   }
 

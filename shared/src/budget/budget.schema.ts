@@ -269,6 +269,12 @@ export type BudgetUpdateSettlementRequest = z.infer<typeof budgetUpdateSettlemen
  * A participant who fronted nothing and owes nothing is absent, exactly like
  * they are from `balances` — a client listing the trip's roster fills the gap
  * with zeroes rather than expecting a row per member.
+ *
+ * `sources` lists the rows each of the three figures is made of, in whole cents
+ * of the same display currency. The server spreads a figure over its rows with
+ * the same largest-remainder split the figure itself came from, so every list
+ * sums to its figure exactly; a client that converted the expense list on its
+ * own, with whatever rate it has today, would not land on the same number.
  */
 export const budgetParticipantFinalSchema = z.object({
   user_id: z.number(),
@@ -282,6 +288,19 @@ export const budgetParticipantFinalSchema = z.object({
   pending: z.number(),
   /** What the trip leaves them out of pocket once everything has been settled. */
   final: z.number(),
+  sources: z.object({
+    /** Per expense they paid on: what they fronted, negative for a refund they received. Σ = expenses. */
+    fronted: z.array(z.object({ item_id: z.number(), cents: z.number().int() })),
+    /** Per recorded transfer on their side: positive when received, negative when sent. Σ = reimbursed. */
+    moved: z.array(z.object({
+      settlement_id: z.number(),
+      from_user_id: z.number(),
+      to_user_id: z.number(),
+      cents: z.number().int(),
+    })),
+    /** Per suggested flow on their side: positive when it comes to them, negative when they owe it. Σ = pending. */
+    outstanding: z.array(z.object({ from_user_id: z.number(), to_user_id: z.number(), cents: z.number().int() })),
+  }),
 });
 export type BudgetParticipantFinal = z.infer<typeof budgetParticipantFinalSchema>;
 

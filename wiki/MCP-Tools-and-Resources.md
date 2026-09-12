@@ -146,7 +146,7 @@ Requires `budget:read` or `budget:write` scope. Budget addon must be enabled.
 | `delete_budget_item` | Remove a budget item. |
 | `set_budget_item_members` | Set which members are splitting a budget item (replaces current list). |
 | `toggle_budget_member_paid` | Mark or unmark a member as having paid their share. |
-| `get_settlement_summary` | Each member's net balance, the suggested payments to settle shared expenses, and each member's final budget (`finalBudgets`: expenses paid, reimbursements received, reimbursements pending, final cost), in the trip's base currency. Call this before recording a settlement. |
+| `get_settlement_summary` | Each member's net balance, the suggested payments to settle shared expenses, and each member's final budget (`finalBudgets`: expenses paid, net reimbursements, pending reimbursements, final cost, each figure with the rows it is made of under `sources`), in the trip's base currency. Call this before recording a settlement. |
 | `list_settlements` | List the recorded settle-up payments for a trip — who paid whom, how much, and when. |
 | `create_settlement` | Record a settle-up payment: one member paid another the given amount, with the payment's currency and the day it happened. |
 | `update_settlement` | Update a recorded settle-up payment (payer, recipient, amount, currency and the day it happened). |

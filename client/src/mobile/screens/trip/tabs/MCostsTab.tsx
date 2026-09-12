@@ -27,9 +27,10 @@ import { CountPill, TabScroller } from './tabChrome'
 import { STATUS_COLOR, type MTabScreenProps } from './tabModel'
 import {
   baseTotal, buildCostsCsv, categoryBreakdown, categoryFilterKeys, computeTotals, currencyOf,
-  dayFilterKeys, filterBudgetItems, filterSettlements, groupLedgerByDay, isUnfinished, memberShareOf, paidByOf, tint,
+  dayFilterKeys, filterBudgetItems, filterSettlements, groupLedgerByDay, isUnfinished, memberShareOf, tint,
   type CostsCtx, type CostsSegment, type CostsSettlement, type CostsSettlementResponse,
 } from './costsModel'
+import type { BudgetParticipantFinal } from '@trek/shared'
 import type { BudgetItem, BudgetItemReceipt, TripMember } from '../../../../types'
 
 type TFn = (key: string, params?: Record<string, string | number>) => string
@@ -330,7 +331,7 @@ export default function MCostsTab({ planner, shell }: MTabScreenProps) {
                   : <ChevronDown size={13} strokeWidth={2.2} className="flex-none text-m-faint" />}
               </button>
               {open && (
-                <FinalBudgetBreakdown row={row} items={budgetItems} settlement={settlement} ctx={ctx} base={base} locale={locale} t={t} personName={personName} />
+                <FinalBudgetBreakdown row={row} items={budgetItems} base={base} locale={locale} t={t} personName={personName} />
               )}
             </div>
           )
@@ -783,26 +784,23 @@ function PaymentRow({ settlement, ctx, base, locale, t, personName, canEdit, onE
   )
 }
 
-/** Avatar or initials circle; `variant` picks the accent (member chips) or neutral (balances) tone. */
 /**
  * The three lines behind one traveler's final budget, then the rows they come
- * from. The figures are the server's — netted with the balances — and each line
- * is signed by what it does to the final, so the column reads as a subtraction.
+ * from. Figures and rows are the server's, in the display currency and netted
+ * with the balances; each line is signed by what it does to the final, so the
+ * column reads as a subtraction and the rows add up to the line above them.
  */
-function FinalBudgetBreakdown({ row, items, settlement, ctx, base, locale, t, personName }: {
-  row: { user_id: number; expenses: number; reimbursed: number; pending: number }
+function FinalBudgetBreakdown({ row, items, base, locale, t, personName }: {
+  row: BudgetParticipantFinal
   items: BudgetItem[]
-  settlement: CostsSettlementResponse | null
-  ctx: CostsCtx
   base: string
   locale: string
   t: TFn
   personName: (id: number) => string
 }) {
-  const money = (v: number) => formatMoney(v, base, locale)
-  const signed = (v: number) => (v < 0 ? '−' : '+') + money(Math.abs(v))
-  const { fronted, moved, outstanding } = finalBudgetSources(
-    row.user_id, items, settlement?.settlements || [], settlement?.flows || [], e => paidByOf(e, row.user_id, ctx))
+  const signed = (v: number) => (v < 0 ? '−' : '+') + formatMoney(Math.abs(v), base, locale)
+  const { fronted, moved, outstanding } = finalBudgetSources(row, items)
+  const transfer = (fromId: number, toId: number) => `${personName(fromId)} → ${personName(toId)}`
   const line = (key: string, label: string, value: string) => (
     <div key={key} className="flex items-baseline gap-2 py-[2px] font-geist text-[0.6875rem]">
       <span className="min-w-0 flex-1 truncate text-m-muted">{label}</span>
@@ -821,17 +819,14 @@ function FinalBudgetBreakdown({ row, items, settlement, ctx, base, locale, t, pe
       {line('expenses', t('costs.finalExpenses'), signed(row.expenses))}
       {line('reimbursed', t('costs.finalReimbursed'), signed(-row.reimbursed))}
       {line('pending', t('costs.finalPending'), signed(-row.pending))}
-      {section(t('costs.finalExpenses'), fronted.map(({ item, amount }) => line(`e${item.id}`, item.name, money(amount))))}
-      {section(t('costs.finalReimbursed'), moved.map(s => line(
-        `s${s.id}`, `${personName(s.from_user_id)} → ${personName(s.to_user_id)}`, money(ctx.convert(s.amount, (s.currency || base).toUpperCase())),
-      )))}
-      {section(t('costs.finalPending'), outstanding.map((f, i) => line(
-        `f${i}`, `${personName(f.from.user_id)} → ${personName(f.to.user_id)}`, money(f.amount),
-      )))}
+      {section(t('costs.finalExpenses'), fronted.map(r => line(`e${r.item_id}`, r.name, signed(r.amount))))}
+      {section(t('costs.finalReimbursed'), moved.map(r => line(`s${r.settlement_id}`, transfer(r.from_user_id, r.to_user_id), signed(-r.amount))))}
+      {section(t('costs.finalPending'), outstanding.map((r, i) => line(`f${i}`, transfer(r.from_user_id, r.to_user_id), signed(-r.amount))))}
     </div>
   )
 }
 
+/** Avatar or initials circle; `variant` picks the accent (member chips) or neutral (balances) tone. */
 function MemberAvatar({ name, avatarUrl, isMe, variant, size, t }: {
   name: string
   avatarUrl?: string | null

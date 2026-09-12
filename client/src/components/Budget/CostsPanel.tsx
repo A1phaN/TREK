@@ -136,8 +136,7 @@ export default function CostsPanel({ tripId, tripMembers = [] }: CostsPanelProps
 
   // ── derived expense maths (everything converted to the base currency) ────
   const baseTotal = (e: BudgetItem) => convert(e.total_price || 0, curOf(e))
-  const paidByOf = (e: BudgetItem, userId: number) => convert(paidByUser(e, userId), curOf(e))
-  const myPaidOf = (e: BudgetItem) => paidByOf(e, me)
+  const myPaidOf = (e: BudgetItem) => convert(paidByUser(e, me), curOf(e))
   // "Unfinished": a recorded total nobody has paid yet — counts toward the trip
   // total but stays out of settlements until who-paid is filled in. A negative
   // total (a refund, #2176) is just as unfinished until its recipient is named.
@@ -979,13 +978,14 @@ export default function CostsPanel({ tripId, tripMembers = [] }: CostsPanelProps
   }
 
   /** The three lines behind one traveler's final budget, and the rows they add up from. */
-  function FinalBudgetBreakdown({ row }: { row: Pick<BudgetParticipantFinal, 'user_id' | 'expenses' | 'reimbursed' | 'pending'> }) {
+  function FinalBudgetBreakdown({ row }: { row: BudgetParticipantFinal }) {
     // Each line is signed by what it does to the final, so the column reads as the
     // subtraction it is: a reimbursement this traveler *sent* raises their cost and
-    // shows as a plus, which "received: −50" could never say.
+    // shows as a plus, which "received: −50" could never say. The rows under a line
+    // carry the same sign, so they visibly add up to it. Their amounts are the
+    // server's display cents, not a conversion of the expense list done here.
     const signed = (v: number) => (v < 0 ? '−' : '+') + fmt(Math.abs(v))
-    const { fronted, moved, outstanding } = finalBudgetSources(
-      row.user_id, budgetItems, settlement?.settlements || [], settlement?.flows || [], e => paidByOf(e, row.user_id))
+    const { fronted, moved, outstanding } = finalBudgetSources(row, budgetItems)
     const lineCls = { display: 'flex', alignItems: 'baseline', gap: 10, fontSize: 'calc(12px * var(--fs-scale-body, 1))' } as const
     const detail = (label: string, value: string) => (
       <div style={lineCls}>
@@ -1008,10 +1008,10 @@ export default function CostsPanel({ tripId, tripMembers = [] }: CostsPanelProps
           <div>
             <div className={labelCls}>{t('costs.finalExpenses')}</div>
             <div style={listCls}>
-              {fronted.map(({ item, amount }) => (
-                <div key={item.id} style={lineCls}>
-                  <span className="text-content-muted" style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
-                  <span className="text-content" style={{ whiteSpace: 'nowrap' }}>{fmt(amount)}</span>
+              {fronted.map(r => (
+                <div key={r.item_id} style={lineCls}>
+                  <span className="text-content-muted" style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
+                  <span className="text-content" style={{ whiteSpace: 'nowrap' }}>{signed(r.amount)}</span>
                 </div>
               ))}
             </div>
@@ -1021,10 +1021,10 @@ export default function CostsPanel({ tripId, tripMembers = [] }: CostsPanelProps
           <div>
             <div className={labelCls}>{t('costs.finalReimbursed')}</div>
             <div style={listCls}>
-              {moved.map(s => (
-                <div key={s.id} style={lineCls}>
-                  <span className="text-content-muted" style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{transferLabel(s.from_user_id, s.to_user_id)}</span>
-                  <span className="text-content" style={{ whiteSpace: 'nowrap' }}>{fmt(convert(s.amount, (s.currency || base).toUpperCase()))}</span>
+              {moved.map(r => (
+                <div key={r.settlement_id} style={lineCls}>
+                  <span className="text-content-muted" style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{transferLabel(r.from_user_id, r.to_user_id)}</span>
+                  <span className="text-content" style={{ whiteSpace: 'nowrap' }}>{signed(-r.amount)}</span>
                 </div>
               ))}
             </div>
@@ -1034,10 +1034,10 @@ export default function CostsPanel({ tripId, tripMembers = [] }: CostsPanelProps
           <div>
             <div className={labelCls}>{t('costs.finalPending')}</div>
             <div style={listCls}>
-              {outstanding.map((f, i) => (
+              {outstanding.map((r, i) => (
                 <div key={i} style={lineCls}>
-                  <span className="text-content-muted" style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{transferLabel(f.from.user_id, f.to.user_id)}</span>
-                  <span className="text-content" style={{ whiteSpace: 'nowrap' }}>{fmt(f.amount)}</span>
+                  <span className="text-content-muted" style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{transferLabel(r.from_user_id, r.to_user_id)}</span>
+                  <span className="text-content" style={{ whiteSpace: 'nowrap' }}>{signed(-r.amount)}</span>
                 </div>
               ))}
             </div>

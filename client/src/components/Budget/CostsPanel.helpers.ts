@@ -11,6 +11,7 @@
  * Amounts are the raw input strings, parsed on use (same as customAmounts).
  */
 
+import type { BudgetParticipantFinal } from '@trek/shared'
 import { currencyDecimals } from '../../utils/formatters'
 
 // The split and receipt fields guard their own precision on every keystroke, so the
@@ -61,33 +62,37 @@ export function paidByUser(
 }
 
 /** The figures a final budget is made of, for someone the server left out of the ledger. */
-export function finalBudgetFor<F extends { user_id: number }>(
-  finals: F[],
-  member: { id: number; username: string },
-): F | { user_id: number; username: string; avatar_url: null; expenses: number; reimbursed: number; pending: number; final: number } {
+export function finalBudgetFor(finals: BudgetParticipantFinal[], member: { id: number; username: string }): BudgetParticipantFinal {
   // Absent means they neither fronted anything nor were split into an expense:
   // the trip has cost them nothing, which is worth a row of its own.
-  return finals.find(f => f.user_id === member.id)
-    || { user_id: member.id, username: member.username, avatar_url: null, expenses: 0, reimbursed: 0, pending: 0, final: 0 }
+  return finals.find(f => f.user_id === member.id) || {
+    user_id: member.id, username: member.username, avatar_url: null,
+    expenses: 0, reimbursed: 0, pending: 0, final: 0,
+    sources: { fronted: [], moved: [], outstanding: [] },
+  }
 }
 
 /**
- * The rows behind one traveler's final budget: the expenses they fronted, the
- * transfers already recorded on their side, and the flows still open on it.
- * `paidOf` converts what they fronted into the display currency — the shells
- * each own their exchange rates, so this stays free of them.
+ * The rows behind one traveler's final budget, ready to print. They arrive as
+ * ids and display cents: the server spreads each of the three figures over its
+ * rows with the same largest-remainder split the figure came from, so every list
+ * adds up to the line it sits under, in whatever currency was asked for and
+ * whether or not the live rates have loaded yet. Only the expense names are
+ * looked up here; who "you" is in a transfer is the shell's call.
  */
-export function finalBudgetSources<I, S extends { from_user_id: number; to_user_id: number }, F extends { from: { user_id: number }; to: { user_id: number } }>(
-  userId: number,
-  items: I[],
-  settlements: S[],
-  flows: F[],
-  paidOf: (item: I) => number,
-): { fronted: { item: I; amount: number }[]; moved: S[]; outstanding: F[] } {
+export function finalBudgetSources(
+  row: Pick<BudgetParticipantFinal, 'sources'>,
+  items: { id: number; name: string }[],
+): {
+  fronted: { item_id: number; name: string; amount: number }[]
+  moved: { settlement_id: number; from_user_id: number; to_user_id: number; amount: number }[]
+  outstanding: { from_user_id: number; to_user_id: number; amount: number }[]
+} {
+  const { fronted, moved, outstanding } = row.sources
   return {
-    fronted: items.map(item => ({ item, amount: paidOf(item) })).filter(x => x.amount !== 0),
-    moved: settlements.filter(s => s.from_user_id === userId || s.to_user_id === userId),
-    outstanding: flows.filter(f => f.from.user_id === userId || f.to.user_id === userId),
+    fronted: fronted.map(r => ({ item_id: r.item_id, name: items.find(i => i.id === r.item_id)?.name ?? '?', amount: r.cents / 100 })),
+    moved: moved.map(r => ({ settlement_id: r.settlement_id, from_user_id: r.from_user_id, to_user_id: r.to_user_id, amount: r.cents / 100 })),
+    outstanding: outstanding.map(r => ({ from_user_id: r.from_user_id, to_user_id: r.to_user_id, amount: r.cents / 100 })),
   }
 }
 

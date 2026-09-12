@@ -87,9 +87,9 @@ Costs works out the minimum number of transfers needed to settle all debts (usin
 
 - **Settle up** — the transfer flows: who pays whom and how much. The number of open flows sits in the card header, and each flow has a **Settle** button that records it as done.
 - **Balances** — net balances: each member's overall surplus or deficit.
-- **Final budget** — what the trip costs each member once every reimbursement is accounted for: **expenses paid − reimbursements received − pending reimbursements**. Clicking a name opens that breakdown, with the expenses the member paid, the payments already recorded and the transfers still open on their side.
+- **Final budget** — what the trip costs each member once every reimbursement is accounted for: **expenses paid − net reimbursements − pending reimbursements**. Clicking a name opens that breakdown, with the expenses the member paid, the payments already recorded and the transfers still open on their side. The server works those rows out in the currency you are viewing in, at the exchange rate each expense was booked at, so every list adds up to the line above it even before live rates have loaded.
 
-The final budget equals each member's share of the paid expenses, so recording a payment moves an amount from *pending* to *received* without changing it. An expense nobody has paid yet stays out of it, as it stays out of the balances.
+The final budget comes to each member's share of the paid expenses (exact in the trip's own currency; in another display currency, rounding can leave a single figure a cent off while the column still adds up), so recording a payment moves an amount from *pending* to *net reimbursements* without changing it. An expense nobody has paid yet stays out of it, as it stays out of the balances.
 
 **Settle up** in the panel header records every open flow at once. **Add payment** on the card records a single transfer by hand, for a repayment that did not follow a suggested flow. Recorded payments then appear in the expense ledger as their own rows, with edit and undo beside them.
 

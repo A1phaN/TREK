@@ -262,47 +262,51 @@ describe('paidByUser', () => {
 })
 
 describe('finalBudgetFor', () => {
-  const finals = [{ user_id: 1, username: 'alice', avatar_url: null, expenses: 100, reimbursed: 50, pending: 0, final: 50 }]
+  const finals = [{
+    user_id: 1, username: 'alice', avatar_url: null, expenses: 100, reimbursed: 50, pending: 0, final: 50,
+    sources: { fronted: [{ item_id: 1, cents: 10000 }], moved: [], outstanding: [] },
+  }]
 
   it("returns the server's row for a participant in the ledger", () => {
     expect(finalBudgetFor(finals, { id: 1, username: 'alice' })).toBe(finals[0])
   })
 
-  it('reads a participant the ledger left out as costing nothing', () => {
-    expect(finalBudgetFor(finals, { id: 2, username: 'bob' }))
-      .toEqual({ user_id: 2, username: 'bob', avatar_url: null, expenses: 0, reimbursed: 0, pending: 0, final: 0 })
+  it('reads a participant the ledger left out as costing nothing, with nothing behind it', () => {
+    expect(finalBudgetFor(finals, { id: 2, username: 'bob' })).toEqual({
+      user_id: 2, username: 'bob', avatar_url: null, expenses: 0, reimbursed: 0, pending: 0, final: 0,
+      sources: { fronted: [], moved: [], outstanding: [] },
+    })
   })
 })
 
 describe('finalBudgetSources', () => {
-  const items = [
-    { id: 1, payers: [{ user_id: 1, amount: 60 }] },
-    { id: 2, payers: [{ user_id: 2, amount: 40 }] },
-    { id: 3, payers: [{ user_id: 1, amount: -10 }] },
-  ]
-  const settlements = [
-    { id: 1, from_user_id: 2, to_user_id: 1 },
-    { id: 2, from_user_id: 1, to_user_id: 3 },
-    { id: 3, from_user_id: 2, to_user_id: 3 },
-  ]
-  const flows = [
-    { from: { user_id: 3 }, to: { user_id: 1 }, amount: 5 },
-    { from: { user_id: 3 }, to: { user_id: 2 }, amount: 7 },
-  ]
+  const items = [{ id: 1, name: 'Dinner' }, { id: 2, name: 'Taxi' }]
+  const sources = {
+    fronted: [{ item_id: 1, cents: 6000 }, { item_id: 3, cents: -1000 }],
+    moved: [
+      { settlement_id: 1, from_user_id: 2, to_user_id: 1, cents: 1500 },
+      { settlement_id: 2, from_user_id: 1, to_user_id: 3, cents: -500 },
+    ],
+    outstanding: [{ from_user_id: 3, to_user_id: 1, cents: 501 }],
+  }
 
-  it('keeps what the participant fronted, a refund they received included', () => {
-    const { fronted } = finalBudgetSources(1, items, settlements, flows, i => paidByUser(i, 1))
-    expect(fronted.map(f => [f.item.id, f.amount])).toEqual([[1, 60], [3, -10]])
+  it("names the expenses and prints the server's cents as amounts, a refund's negative row included", () => {
+    const { fronted } = finalBudgetSources({ sources }, items)
+    // An expense the list does not know yet keeps its row; only the name is missing.
+    expect(fronted).toEqual([{ item_id: 1, name: 'Dinner', amount: 60 }, { item_id: 3, name: '?', amount: -10 }])
   })
 
-  it('keeps transfers and open flows on either side of the participant, and nobody else\'s', () => {
-    const { moved, outstanding } = finalBudgetSources(1, items, settlements, flows, i => paidByUser(i, 1))
-    expect(moved.map(s => s.id)).toEqual([1, 2])
-    expect(outstanding).toEqual([flows[0]])
+  it('keeps the transfers and open flows signed as the server sent them', () => {
+    const { moved, outstanding } = finalBudgetSources({ sources }, items)
+    expect(moved).toEqual([
+      { settlement_id: 1, from_user_id: 2, to_user_id: 1, amount: 15 },
+      { settlement_id: 2, from_user_id: 1, to_user_id: 3, amount: -5 },
+    ])
+    expect(outstanding).toEqual([{ from_user_id: 3, to_user_id: 1, amount: 5.01 }])
   })
 
-  it('finds nothing for a participant with no activity', () => {
-    expect(finalBudgetSources(9, items, settlements, flows, i => paidByUser(i, 9)))
+  it('is empty for a participant with no activity', () => {
+    expect(finalBudgetSources({ sources: { fronted: [], moved: [], outstanding: [] } }, items))
       .toEqual({ fronted: [], moved: [], outstanding: [] })
   })
 })
