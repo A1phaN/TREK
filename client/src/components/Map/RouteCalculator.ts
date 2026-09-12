@@ -407,7 +407,7 @@ export async function calculateRouteWithLegs(
   }
 
   const avoiding = profile === 'driving' && avoid.length > 0 && valhallaAvailable()
-    ? [...avoid].sort()
+    ? [...avoid].sort((a, b) => a.localeCompare(b))
     : []
 
   const coords = waypoints.map((p) => `${p.lng},${p.lat}`).join(';')
