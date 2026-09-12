@@ -597,4 +597,33 @@ describe('MCostsTab', () => {
     fireEvent.change(screen.getByLabelText('costs.searchPlaceholder'), { target: { value: 'ramen' } })
     expect(screen.queryByText('costs.payment')).not.toBeInTheDocument()
   })
+
+  it('FE-MOB-COSTT-041: editing a recorded payment opens it pre-filled and saves the change', async () => {
+    const payment = { id: 501, from_user_id: 1, to_user_id: 2, amount: 25, currency: 'USD', settled_at: '2026-04-28', created_at: '2026-04-30T09:00:00Z' }
+    serveSettlement({ ...SETTLEMENT, settlements: [payment] })
+    const update = vi.spyOn(budgetApi, 'updateSettlement').mockResolvedValue({})
+    await renderTab()
+
+    fireEvent.click(within(rowOf('costs.payment')).getByRole('button', { name: 'common.edit' }))
+    const dialog = screen.getByRole('dialog', { name: 'costs.editPayment' })
+    expect(within(dialog).getByDisplayValue('25.00')).toBeInTheDocument()
+
+    const submit = within(dialog).getByRole('button', { name: 'common.save' })
+    fireEvent.change(within(dialog).getByPlaceholderText('0.00'), { target: { value: '30' } })
+    fireEvent.click(submit)
+
+    expect(update).toHaveBeenCalledWith(7, 501, { from_user_id: 1, to_user_id: 2, amount: 30, currency: 'USD', settled_at: '2026-04-28' })
+    await waitFor(() => expect(settlementBases).toHaveLength(2))
+  })
+
+  it('FE-MOB-COSTT-042: undoing a payment deletes it outright, no confirmation', async () => {
+    const payment = { id: 502, from_user_id: 1, to_user_id: 2, amount: 25, currency: 'USD', created_at: '2026-04-30T09:00:00Z' }
+    serveSettlement({ ...SETTLEMENT, settlements: [payment] })
+    const del = vi.spyOn(budgetApi, 'deleteSettlement').mockResolvedValue({ success: true })
+    await renderTab()
+
+    fireEvent.click(within(rowOf('costs.payment')).getByRole('button', { name: 'costs.undo' }))
+    expect(del).toHaveBeenCalledWith(7, 502)
+    await waitFor(() => expect(settlementBases).toHaveLength(2))
+  })
 })

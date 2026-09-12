@@ -1,19 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertCircle, ArrowDown, ArrowLeftRight, ArrowRight, ArrowUp, Check, ChevronDown, ChevronUp,
-  Layers, Pencil, Plus, StickyNote, Trash2, Receipt,
+  Layers, Pencil, Plus, RotateCcw, StickyNote, Trash2, Receipt,
 } from 'lucide-react'
 import MDancingTrek from '../../../components/MDancingTrek'
 import { useAuthStore } from '../../../../store/authStore'
 import { useSettingsStore } from '../../../../store/settingsStore'
 import { useExchangeRates } from '../../../../hooks/useExchangeRates'
 import { useTranslation } from '../../../../i18n'
-import { formatMoney } from '../../../../utils/formatters'
+import { amountToInputString, formatMoney } from '../../../../utils/formatters'
 import { downloadBlob, openFile } from '../../../../utils/fileDownload'
 import { budgetApi } from '../../../../api/client'
 import MCostSheet from '../sheets/MCostSheet'
 import { ReceiptPreviewModal } from '../../../../components/Budget/ReceiptPreviewModal'
-import { readUserNote } from '../../../../components/Budget/CostsPanel.helpers'
+import { readUserNote, settlementDate } from '../../../../components/Budget/CostsPanel.helpers'
 import { catMeta, COST_CAT_META } from '../../../../components/Budget/costsCategories'
 import { CustomDatePicker } from '../../../../components/shared/CustomDateTimePicker'
 import { localToday } from '../../../../components/Planner/today'
@@ -78,6 +78,7 @@ export default function MCostsTab({ planner, shell }: MTabScreenProps) {
   const [dayOpen, setDayOpen] = useState(false)
   const [settleOpen, setSettleOpen] = useState(true)
   const [addPaymentOpen, setAddPaymentOpen] = useState(false)
+  const [editingSettlement, setEditingSettlement] = useState<CostsSettlement | null>(null)
   const [expenseModalOpen, setExpenseModalOpen] = useState(false)
   const [editingExpense, setEditingExpense] = useState<BudgetItem | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<BudgetItem | null>(null)
@@ -148,6 +149,17 @@ export default function MCostsTab({ planner, shell }: MTabScreenProps) {
   const handleDeleteExpense = async (item: BudgetItem) => {
     try {
       await planner.tripActions.deleteBudgetItem(tripId, item.id)
+      loadSettlement()
+    } catch {
+      toast.error(t('common.unknownError'))
+    }
+  }
+
+  // Mirrors CostsPanel.tsx's undoSettlement: deleting the recorded transfer
+  // brings the suggested flow back, so it reads as "undo" rather than delete.
+  const handleUndoSettlement = async (id: number) => {
+    try {
+      await budgetApi.deleteSettlement(tripId, id)
       loadSettlement()
     } catch {
       toast.error(t('common.unknownError'))
@@ -470,6 +482,9 @@ export default function MCostsTab({ planner, shell }: MTabScreenProps) {
                 locale={locale}
                 t={t}
                 personName={personName}
+                canEdit={canEdit}
+                onEdit={() => setEditingSettlement(en.settlement)}
+                onUndo={() => handleUndoSettlement(en.settlement.id)}
               />
             ))}
           </div>
@@ -505,8 +520,12 @@ export default function MCostsTab({ planner, shell }: MTabScreenProps) {
       )}
 
       <AddPaymentSheet
-        open={addPaymentOpen}
-        onClose={() => setAddPaymentOpen(false)}
+        open={addPaymentOpen || editingSettlement != null}
+        editing={editingSettlement}
+        onClose={() => {
+          setAddPaymentOpen(false)
+          setEditingSettlement(null)
+        }}
         tripId={tripId}
         base={base}
         people={tripMembers}
@@ -515,6 +534,7 @@ export default function MCostsTab({ planner, shell }: MTabScreenProps) {
         t={t}
         onSaved={() => {
           setAddPaymentOpen(false)
+          setEditingSettlement(null)
           loadSettlement()
         }}
       />
@@ -676,17 +696,21 @@ function ExpenseRow({ item, ctx, base, locale, t, canEdit, onEdit, onDelete, onT
 
 /**
  * A recorded settle-up payment mixed into the day-grouped ledger (spec 03
- * §3.7 desktop parity — see `CostsPanel.tsx`'s `SettlementRow`). Read-only:
- * editing/undoing a payment stays a desktop-only action for now, this row
- * only closes the "it vanishes into thin air" gap on mobile.
+ * §3.7 desktop parity — see `CostsPanel.tsx`'s `SettlementRow`). Edit opens
+ * `AddPaymentSheet` pre-filled; undo deletes it outright (the recorded
+ * transfer is what closes the flow, so undoing it reopens the flow — same
+ * as desktop's `undoSettlement`, no confirmation prompt either).
  */
-function PaymentRow({ settlement, ctx, base, locale, t, personName }: {
+function PaymentRow({ settlement, ctx, base, locale, t, personName, canEdit, onEdit, onUndo }: {
   settlement: CostsSettlement
   ctx: CostsCtx
   base: string
   locale: string
   t: TFn
   personName: (id: number) => string
+  canEdit: boolean
+  onEdit: () => void
+  onUndo: () => void
 }) {
   const cur = (settlement.currency || base).toUpperCase()
   const amount = ctx.convert(settlement.amount, cur)
@@ -706,6 +730,17 @@ function PaymentRow({ settlement, ctx, base, locale, t, personName }: {
           </span>
         </div>
       </div>
+
+      {canEdit && (
+        <div className="flex flex-none flex-col gap-1 rounded-full border border-[color:var(--m-gbr)] bg-[color:var(--m-glass)] p-[5px]">
+          <button type="button" onClick={onEdit} aria-label={t('common.edit')} className="flex h-[26px] w-[26px] items-center justify-center rounded-full text-m-muted">
+            <Pencil size={12} strokeWidth={2} />
+          </button>
+          <button type="button" onClick={onUndo} aria-label={t('costs.undo')} className="flex h-[26px] w-[26px] items-center justify-center rounded-full text-m-muted">
+            <RotateCcw size={12} strokeWidth={2} />
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -735,16 +770,18 @@ function MemberAvatar({ name, avatarUrl, isMe, variant, size, t }: {
 }
 
 /**
- * "Add payment" — records a manual settle-up transfer (`budgetApi.createSettlement`).
- * No pixel spec exists for this form (the demo only toasts "Demo: add payment",
- * 03-trip-tabs.md §3.8) and no mobile/exported-desktop sheet covers it, so this
- * is a small local sheet built from the trip form-sheet chrome, kept to the
- * fields the settle-up card itself needs: from, to, amount in the display
- * currency, and the day it happened (editable like an expense's, unlike the
- * legacy created_at-only date — see `settlementDate` in CostsPanel.helpers.ts).
+ * "Add/edit payment" — records or updates a manual settle-up transfer
+ * (`budgetApi.createSettlement`/`updateSettlement`). No pixel spec exists for
+ * this form (the demo only toasts "Demo: add payment", 03-trip-tabs.md §3.8)
+ * and no mobile/exported-desktop sheet covers it, so this is a small local
+ * sheet built from the trip form-sheet chrome, kept to the fields the
+ * settle-up card itself needs: from, to, amount in the display currency, and
+ * the day it happened (editable like an expense's, unlike the legacy
+ * created_at-only date — see `settlementDate` in CostsPanel.helpers.ts).
  */
-function AddPaymentSheet({ open, onClose, tripId, base, people, me, toast, t, onSaved }: {
+function AddPaymentSheet({ open, editing, onClose, tripId, base, people, me, toast, t, onSaved }: {
   open: boolean
+  editing: CostsSettlement | null
   onClose: () => void
   tripId: number
   base: string
@@ -762,12 +799,12 @@ function AddPaymentSheet({ open, onClose, tripId, base, people, me, toast, t, on
 
   useEffect(() => {
     if (!open) return
-    setFromId(me)
-    setToId(people.find(p => p.id !== me)?.id ?? me)
-    setAmount('')
-    setDay(localToday())
+    setFromId(editing?.from_user_id ?? me)
+    setToId(editing?.to_user_id ?? people.find(p => p.id !== me)?.id ?? me)
+    setAmount(editing ? amountToInputString(editing.amount, (editing.currency || base).toUpperCase()) : '')
+    setDay(editing ? settlementDate(editing) : localToday())
     setSaving(false)
-  }, [open, me, people])
+  }, [open, editing, me, base, people])
 
   const amt = Number.parseFloat(amount.replace(',', '.')) || 0
   const valid = amt > 0 && fromId !== toId
@@ -775,8 +812,10 @@ function AddPaymentSheet({ open, onClose, tripId, base, people, me, toast, t, on
   const save = async () => {
     if (!valid || saving) return
     setSaving(true)
+    const data = { from_user_id: fromId, to_user_id: toId, amount: amt, currency: base, settled_at: day }
     try {
-      await budgetApi.createSettlement(tripId, { from_user_id: fromId, to_user_id: toId, amount: amt, currency: base, settled_at: day })
+      if (editing) await budgetApi.updateSettlement(tripId, editing.id, data)
+      else await budgetApi.createSettlement(tripId, data)
       onSaved()
     } catch {
       toast.error(t('common.unknownError'))
@@ -785,9 +824,11 @@ function AddPaymentSheet({ open, onClose, tripId, base, people, me, toast, t, on
     }
   }
 
+  const title = editing ? t('costs.editPayment') : t('costs.addPayment')
+
   return (
-    <MSheet open={open} onClose={onClose} ariaLabel={t('costs.addPayment')}>
-      <FormSheetHeader title={t('costs.addPayment')} onClose={onClose} closeLabel={t('common.close')} />
+    <MSheet open={open} onClose={onClose} ariaLabel={title}>
+      <FormSheetHeader title={title} onClose={onClose} closeLabel={t('common.close')} />
       <div className="min-h-0 flex-1 overflow-y-auto px-[18px] pb-[6px] pt-1">
         <Eyebrow className="mb-[7px] uppercase">{t('costs.from')}</Eyebrow>
         <div className="flex flex-wrap gap-[6px]">
@@ -818,7 +859,7 @@ function AddPaymentSheet({ open, onClose, tripId, base, people, me, toast, t, on
         <Eyebrow className="mb-[7px] mt-[14px] uppercase">{t('costs.day')}</Eyebrow>
         <CustomDatePicker value={day} onChange={setDay} style={{ width: '100%' }} />
       </div>
-      <FormSheetFooter onCancel={onClose} cancelLabel={t('common.cancel')} onSubmit={save} submitLabel={t('costs.addPayment')} submitDisabled={!valid || saving} />
+      <FormSheetFooter onCancel={onClose} cancelLabel={t('common.cancel')} onSubmit={save} submitLabel={editing ? t('common.save') : t('costs.addPayment')} submitDisabled={!valid || saving} />
     </MSheet>
   )
 }
