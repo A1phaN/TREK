@@ -398,7 +398,8 @@ export function CustomDatePicker({
                 let left = r.left;
                 if (left + w > vw - pad) left = Math.max(pad, vw - w - pad);
                 if (vw < 360) left = Math.max(pad, (vw - w) / 2);
-                if (r.bottom + 4 + h <= vh - pad) return { top: r.bottom + 4, left };
+                const below = r.bottom + 4;
+                if (below + h <= vh - pad) return { top: below, left };
                 // Flipped: anchor from the trigger's own top edge via `bottom`
                 // instead of subtracting a guessed height from `top`. A guessed
                 // `top` leaves a gap sized by however wrong the guess was — in a
@@ -406,7 +407,10 @@ export function CustomDatePicker({
                 // land the popup over unrelated fields instead of the trigger it
                 // belongs to. Anchoring the opposite edge means the popup always
                 // sits flush against the trigger no matter its real height.
-                return { bottom: Math.max(pad, vh - r.top + 4), left };
+                if (r.top - 4 - h >= pad) return { bottom: vh - r.top + 4, left };
+                // No room on either side (a phone in landscape): keep the top edge
+                // inside the viewport and let the popup cover the trigger instead.
+                return { top: Math.max(pad, Math.min(below, vh - h - pad)), left };
               })(),
               zIndex: 99999,
               background: 'var(--bg-card)',
