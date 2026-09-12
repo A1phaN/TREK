@@ -365,3 +365,28 @@ describe('daily travel window', () => {
     expect(planned.chains[1]!.schedule.entries[1]!.arrival).toBe('10:00');
   });
 });
+
+describe('booked checkout', () => {
+  it('waits at the hotel until noon on the checkout day', () => {
+    const hotel = stop(2, { checkoutAt: 2 * 1440 + 720, dwellMinutes: 30 });
+    const stops = [stop(1), hotel, stop(3)];
+    const plan = calculate(stops, [60, 60]);
+    expect(plan.issue).toBeNull();
+    expect(plan.chains[0]!.schedule.entries[1]!.arrival).toBe('09:00');
+    expect(plan.chains[0]!.schedule.entries[1]!.departure).toBe('12:00');
+    expect(plan.chains[1]!.schedule.entries[0]!.arrival).toBe('12:00');
+    expect(plan.chains[1]!.schedule.entries[1]!.arrival).toBe('13:00');
+  });
+  it('honours an early checkout and multiple nights', () => {
+    const stops = [stop(1, { checkoutAt: 3 * 1440 + 420 }), stop(2)];
+    const plan = calculate(stops, [60], [day(2), day(3)]);
+    expect(plan.issue).toBeNull();
+    expect(plan.chains[2]!.schedule.entries[0]!.arrival).toBe('07:00');
+    expect(plan.chains[2]!.schedule.entries[1]!.arrival).toBe('08:00');
+  });
+  it('does not move time backwards when arrival is after checkout', () => {
+    const stops = [stop(1, { time: '13:00', checkoutAt: 1440 + 720 }), stop(2)];
+    const plan = calculate(stops, [60]);
+    expect(plan.chains[0]!.schedule.entries[1]!.arrival).toBe('14:00');
+  });
+});

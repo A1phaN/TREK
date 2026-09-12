@@ -1,6 +1,9 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': 'Βρείτε κατάλυμα',
+  'roadtrip.stay.portalHint':
+    'Ελέγξτε προορισμό, ημερομηνίες και επισκέπτες στην πύλη. Στο CHECK24 αναζητήστε χειροκίνητα.',
   'roadtrip.charging.available': 'διαθέσιμα',
   'roadtrip.charging.unknown': 'Δεν υπάρχουν αξιόπιστα δεδομένα',
   'roadtrip.charging.stale': 'Παρωχημένη κατάσταση',

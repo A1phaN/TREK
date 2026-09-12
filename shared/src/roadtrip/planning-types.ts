@@ -18,6 +18,7 @@ export interface RoadtripStop {
   time: string | null;
 
   dwellMinutes: number | null;
+  checkoutAt?: number;
   endDay?: boolean;
 
   legMode: string | null;

@@ -37,6 +37,7 @@ import type { RefuelCandidate } from '../../components/Roadtrip/refuelSuggestion
 import { useFollowTrack } from '../../components/Roadtrip/useFollowTrack'
 import { useRouteAlternatives } from '../../components/Roadtrip/useRouteAlternatives'
 import { buildAlternativeOverlays } from '../../components/Roadtrip/alternativeOverlays'
+import { stopArrival } from '../../components/Roadtrip/stopArrival'
 import type { CorridorPoi } from '../../components/Roadtrip/useCorridorPois'
 import { projectOntoRoute, type LatLng } from '../../components/Roadtrip/corridor'
 import {
@@ -573,6 +574,7 @@ export function useTripPlanner() {
     routeProfile,
     roadtripVias.byDay,
     dayBoundaries.boundaries,
+    tripAccommodations,
   )
   // Lives here rather than in the panel because the map draws what it finds.
   const roadtripCorridor = useRoadtripCorridor(roadtripRoutes)
@@ -737,6 +739,7 @@ export function useTripPlanner() {
       if (!insert) return
       setStopDraft({
         poi: hit,
+        arrivalTime: displayed ? stopArrival(displayed, roadtripInsertIndexFor(hit), hit.alongKm) : null,
         ...insert,
         dayNumber: roadtripDayNumber,
         // Only for a hit somebody could sleep at, and it is what gives the popup its
@@ -895,6 +898,16 @@ export function useTripPlanner() {
     if (!stopDraft) return
     const { poi, dayId, position } = stopDraft
     try {
+      if (stopDraft.editing) {
+        await tripActions.updatePlace(tripId, stopDraft.editing.placeId, { stop_type: stopType, duration_minutes: dwellMinutes })
+        if (stopDraft.editing.accommodationId) {
+          await accommodationsApi.delete(tripId, stopDraft.editing.accommodationId)
+          await loadAccommodations()
+        }
+        updateRouteForDay(dayId)
+        setStopDraft(null)
+        return
+      }
       const place = await tripActions.addPlace(tripId, {
         name: poi.name,
         lat: poi.lat,
@@ -927,19 +940,8 @@ export function useTripPlanner() {
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t('common.unknownError'))
     }
-  }, [stopDraft, tripId, tripActions, updateRouteForDay, toast, t, roadtripVias, viaLiesBefore])
+  }, [stopDraft, tripId, tripActions, updateRouteForDay, toast, t, roadtripVias, viaLiesBefore, loadAccommodations])
 
-  /**
-   * Saves a corridor hit as somewhere to sleep rather than as a pause on the drive.
-   *
-   * Three writes and deliberately not one transaction: the place, its day, and the row in
-   * day_accommodations. A hotel keeps its number in the chain — it is where the day ends,
-   * not something the drive passes through — so it gets no `stop_type` and no dwell.
-   *
-   * The check-out day is the traveller's answer, defaulting to the day after. Both times
-   * are optional and go through as empty when nobody filled them in: a hotel found on a
-   * map has no idea when its reception opens, and the server stores null.
-   */
   const saveStopDraftAsNight = useCallback(async ({ endDayId, checkIn, checkOut }: {
     endDayId: number
     checkIn: string
@@ -948,6 +950,16 @@ export function useTripPlanner() {
     if (!stopDraft) return
     const { poi, dayId, position } = stopDraft
     try {
+      if (stopDraft.editing) {
+        const booking = { place_id: stopDraft.editing.placeId, start_day_id: dayId, end_day_id: endDayId, check_in: checkIn || null, check_out: checkOut || null }
+        if (stopDraft.editing.accommodationId) await accommodationsApi.update(tripId, stopDraft.editing.accommodationId, booking)
+        else await accommodationsApi.create(tripId, booking)
+        await tripActions.updatePlace(tripId, stopDraft.editing.placeId, { stop_type: poi.category === 'campsite' ? 'campsite' : 'hotel' })
+        await loadAccommodations()
+        updateRouteForDay(dayId)
+        setStopDraft(null)
+        return
+      }
       const place = await tripActions.addPlace(tripId, {
         name: poi.name,
         lat: poi.lat,
@@ -956,6 +968,7 @@ export function useTripPlanner() {
         website: poi.website || undefined,
         phone: poi.phone || undefined,
         osm_id: poi.osm_id,
+        stop_type: poi.category === 'campsite' ? 'campsite' : 'hotel',
       })
       if (place?.id) {
         const plan = reanchorAfterInsert(
@@ -1435,7 +1448,7 @@ export function useTripPlanner() {
   const askRefuel = useCallback((dayId: number, dry: DryPoint & { lat: number; lng: number }) => {
     const day = roadtripRoutes.days.find(d => d.dayId === dayId)
     if (!day) return
-    const line = (day.drivingGeometry ?? day.geometry).map(([lat, lng]) => ({ lat, lng }))
+    const line = (dry.inboundLine ?? day.drivingGeometry ?? day.geometry).map(([lat, lng]) => ({ lat, lng }))
     if (line.length < 2) return
     const vehicle = roadtripSettings.roadtrip_vehicle
     const refuelTypes = refuelStopTypeFor(vehicle === 'electric' || vehicle === 'combustion' ? vehicle : null)
@@ -1478,7 +1491,7 @@ export function useTripPlanner() {
       drivenKm += (leg.distance ?? 0) / 1000
       return poi.alongKm <= drivenKm
     })
-    const at = Math.min((stationLeg >= 0 ? stationLeg : dry.legIndex) + 1, day.stops.length - 1)
+    const at = dry.inboundLine ? -dry.legIndex - 1 : Math.min((stationLeg >= 0 ? stationLeg : dry.legIndex) + 1, day.stops.length - 1)
     // That index counts along the CARD, and after a night drive a card is not one stored
     // day: its first stops belong to yesterday. The new stop goes in front of the one it
     // was measured against, so it is that stop's own day and position that place it —
@@ -1534,11 +1547,20 @@ export function useTripPlanner() {
     if (!stopDraft) return
     const { poi, dayId, position } = stopDraft
     setStopDraft(null)
+    if (stopDraft.editing) {
+      const place = places.find(place => place.id === stopDraft.editing?.placeId)
+      if (place) {
+        setEditingPlace(place)
+        setEditingAssignmentId(resolvePoolAssignmentId(assignments, place.id))
+        setShowPlaceForm(true)
+      }
+      return
+    }
     // Carries the kind and the dwell the popup had already worked out. Leaving them
     // behind is what turned a fuel stop into a numbered destination on the way to the
     // full form, silently and in every total.
     openAddPlaceFromPoi(poi, dayId, position, stop ?? null)
-  }, [stopDraft, openAddPlaceFromPoi])
+  }, [stopDraft, openAddPlaceFromPoi, places, assignments])
 
   /**
    * A place on this trip that came from the same OSM object.
@@ -1547,7 +1569,7 @@ export function useTripPlanner() {
    * would be the quickest way to add one petrol station twice.
    */
   const stopDraftDuplicate = useMemo(() => {
-    if (!stopDraft?.poi.osm_id) return null
+    if (stopDraft?.editing || !stopDraft?.poi.osm_id) return null
     return places.find(p => p.osm_id === stopDraft.poi.osm_id)?.name ?? null
   }, [stopDraft, places])
 
@@ -1623,11 +1645,38 @@ export function useTripPlanner() {
   // place's lone assignment to hydrate & persist its times; with 0 or 2+
   // assignments the time is ambiguous and the modal hides the fields (#1247).
   const openPlaceEditor = useCallback((place: Place, preferredAssignmentId: number | null = null) => {
+    if (roadtripActive && (isServiceStopType(place.stop_type) || tripAccommodations.some(stay => stay.place_id === place.id)) && typeof place.lat === 'number' && typeof place.lng === 'number') {
+      const visitId = preferredAssignmentId ?? resolvePoolAssignmentId(assignments, place.id)
+      const entry = Object.entries(assignments).find(([, visits]) => visits.some(visit => visit.id === visitId))
+      if (entry) {
+        const dayId = Number(entry[0])
+        const visit = entry[1].find(visit => visit.id === visitId)!
+        const stay = tripAccommodations.find(stay => stay.place_id === place.id && stay.start_day_id === dayId)
+        const category = place.stop_type ?? (stay ? 'hotel' : '')
+        const routedDay = roadtripRoutes.days.find(day => day.stops.some(stop => stop.assignmentId === visitId))
+        const arrivalTime = routedDay?.schedule.entries[routedDay.stops.findIndex(stop => stop.assignmentId === visitId)]?.arrival ?? null
+        setStopDraft({
+          poi: { osm_id: place.osm_id ?? '', name: place.name, lat: place.lat, lng: place.lng, category, poi_type: category, address: place.address ?? null, website: place.website ?? null, phone: place.phone ?? null, opening_hours: null, cuisine: null, source: 'trek', offRouteKm: 0, alongKm: 0 },
+          arrivalTime, dayId, dayNumber: days.find(day => day.id === dayId)?.day_number ?? 0, position: visit.order_index ?? 0,
+          editing: { placeId: place.id, stopType: place.stop_type ?? (stay ? 'hotel' : null), dwellMinutes: place.duration_minutes ?? 30, accommodationId: stay?.id, checkIn: stay?.check_in ?? '', checkOut: stay?.check_out ?? '' },
+          ...(isOvernightCategory(category) ? { overnight: { ...overnightOptions(dayId), ...(stay ? { defaultEndDayId: stay.end_day_id } : {}) } } : {}),
+        })
+        return
+      }
+    }
     setEditingPlace(place)
     setEditingAssignmentId(preferredAssignmentId ?? resolvePoolAssignmentId(assignments, place.id))
     setPlaceFormDayId(null)
     setShowPlaceForm(true)
-  }, [assignments])
+  }, [assignments, roadtripActive, tripAccommodations, days, overnightOptions, roadtripRoutes.days])
+
+  const editRoadtripStay = useCallback((draft: NonNullable<typeof stayDraft>) => {
+    const stay = tripAccommodations.find(stay => stay.place_id === draft.placeId && stay.check_out)
+    const place = places.find(place => place.id === draft.placeId)
+    const visit = stay && assignments[String(stay.start_day_id)]?.find(visit => visit.place_id === draft.placeId)
+    if (stay && place && visit) openPlaceEditor(place, visit.id)
+    else setStayDraft(draft)
+  }, [tripAccommodations, places, assignments, openPlaceEditor])
 
   const handleDeletePlace = useCallback((placeId) => {
     setDeletePlaceId(placeId)
@@ -2065,7 +2114,7 @@ export function useTripPlanner() {
     ? { active: !!endDayStop.endDay || dayBoundaries.boundaries.some(b => b.to_assignment_id === null && b.from_assignment_id === endDayStop.assignmentId), onToggle: () => setRoadtripEndDay(endDayStop) }
     : undefined
   const roadtripStay = roadtripActive && selectedPlace
-    ? { minutes: selectedPlace.duration_minutes ?? null, onEdit: can('place_edit', trip) ? () => setStayDraft({ placeId: selectedPlace.id, name: selectedPlace.name, minutes: selectedPlace.duration_minutes ?? null, arrival: null }) : undefined }
+    ? { minutes: endDayStop ? endDayStop.dwellMinutes : selectedPlace.duration_minutes ?? null, onEdit: can('place_edit', trip) ? () => editRoadtripStay({ placeId: selectedPlace.id, name: selectedPlace.name, minutes: selectedPlace.duration_minutes ?? null, arrival: null }) : undefined }
     : undefined
 
   // Build placeId → order-number map from the selected day's assignments
@@ -2128,7 +2177,7 @@ export function useTripPlanner() {
     roadtripVias, addRoadtripVia, moveRoadtripVia, removeRoadtripVia, dayBoundaryControls, resetDayBoundaries,
     refuel, askRefuel, acceptRefuel,
     routeAlternatives, askRouteAlternatives, chooseRouteAlternative, alternativeOverlays, alternativeFocusPoints, mapFocusPoints, roadtripMapVias, focusRoadtripPoint,
-    stayDraft, setStayDraft, setRoadtripStay, roadtripEndDay, roadtripStay,
+    stayDraft, setStayDraft, editRoadtripStay, setRoadtripStay, roadtripEndDay, roadtripStay,
     highlightedAlternative, setHighlightedAlternative,
     moveRoadtripStopToDay,
     dropPoiOnRoute,

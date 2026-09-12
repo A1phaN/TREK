@@ -2299,7 +2299,8 @@ export function MapViewGL({
           does, which is why the lift is only there. */}
       <div style={{
         position: 'absolute', left: leftWidth + 20, zIndex: 1000, pointerEvents: 'none',
-        bottom: isMobile && hasDayDetail
+        top: hasInspector ? 80 : undefined,
+        bottom: hasInspector ? undefined : isMobile && hasDayDetail
           ? 'calc(var(--bottom-nav-h, 0px) + 20px + var(--day-panel-h, 0px) + 12px)'
           : 'calc(var(--bottom-nav-h, 0px) + 12px)',
       }}>

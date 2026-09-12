@@ -12,6 +12,7 @@ import {
   splitIntoRuns,
   spillChains,
   dayWindow,
+  parseClock,
   effectiveRangeKm,
   parseAvoid,
   type RoadtripStop,
@@ -29,6 +30,9 @@ interface StoredDay {
   default_transport_mode: string | null;
 }
 interface VisitRow {
+  check_in: string | null;
+  check_out: string | null;
+  checkout_day: number | null;
   id: number;
   day_id: number;
   place_id: number;
@@ -66,8 +70,10 @@ export class RoadtripPlanService {
     const visits = this.db.all<VisitRow>(
       `SELECT a.id, a.day_id, a.place_id, p.name, p.lat, p.lng,
       COALESCE(a.assignment_time, p.place_time) AS time, p.duration_minutes, a.end_day,
-      a.leg_transport_mode, a.incoming_leg_transport_mode, p.stop_type, p.fill_percent
+      a.leg_transport_mode, a.incoming_leg_transport_mode, p.stop_type, p.fill_percent, stay.check_in, stay.check_out, checkout.day_number AS checkout_day
       FROM day_assignments a JOIN days d ON d.id = a.day_id JOIN places p ON p.id = a.place_id
+      LEFT JOIN day_accommodations stay ON stay.id = (SELECT id FROM day_accommodations WHERE place_id = p.id AND start_day_id = d.id ORDER BY id LIMIT 1)
+      LEFT JOIN days checkout ON checkout.id = stay.end_day_id
       WHERE d.trip_id = ? ORDER BY d.day_number, a.order_index, a.created_at`,
       tripId,
     );
@@ -107,7 +113,8 @@ export class RoadtripPlanService {
           name: v.name,
           lat: v.lat!,
           lng: v.lng!,
-          time: v.time,
+          time: v.time ?? v.check_in ?? null,
+          ...(v.checkout_day != null && parseClock(v.check_out) !== null ? { checkoutAt: v.checkout_day * 1440 + parseClock(v.check_out)! } : {}),
           dwellMinutes: v.duration_minutes,
           endDay: v.end_day === 1,
           legMode: v.leg_transport_mode,

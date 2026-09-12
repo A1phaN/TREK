@@ -1,6 +1,8 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': '숙소 찾기',
+  'roadtrip.stay.portalHint': '포털에서 목적지, 날짜, 인원을 확인하세요. CHECK24에서는 직접 검색하세요.',
   'roadtrip.charging.available': '이용 가능',
   'roadtrip.charging.unknown': '신뢰할 수 있는 데이터 없음',
   'roadtrip.charging.stale': '오래된 상태',

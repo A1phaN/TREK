@@ -1,6 +1,9 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': 'Szállás keresése',
+  'roadtrip.stay.portalHint':
+    'Ellenőrizd az úti célt, dátumokat és vendégeket a portálon. A CHECK24 oldalon keress kézzel.',
   'roadtrip.charging.available': 'szabad',
   'roadtrip.charging.unknown': 'Nincs megbízható adat',
   'roadtrip.charging.stale': 'Elavult állapot',

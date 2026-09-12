@@ -1,6 +1,14 @@
 import type { RouteAvoidClass } from './planning-types';
 
-export const SERVICE_STOP_TYPES = ['fuel', 'charging', 'rest_area', 'campsite', 'restaurant', 'sights'] as const;
+export const SERVICE_STOP_TYPES = [
+  'fuel',
+  'charging',
+  'rest_area',
+  'campsite',
+  'restaurant',
+  'sights',
+  'hotel',
+] as const;
 
 export const SERVICE_COLORS: Record<string, string> = {
   fuel: '#E8590C',
@@ -9,6 +17,7 @@ export const SERVICE_COLORS: Record<string, string> = {
   campsite: '#16A34A',
   restaurant: '#EF4444',
   sights: '#EC4899',
+  hotel: '#2563EB',
 };
 
 export function serviceColor(stopType: string | null | undefined): string {
@@ -48,6 +57,7 @@ export function formatClock(minutes: number): string {
 }
 
 export interface ScheduleStop {
+  departureAt?: number;
   anchor: string | null;
 
   dwellMinutes: number | null;
@@ -143,7 +153,11 @@ export function computeSchedule(stops: ScheduleStop[], legSeconds: (number | und
     const { arrival, lateBy } = resolveArrival(anchor, cursor, dayOffset);
     if (lateBy !== null) warnings.push({ index: i, code: 'late', minutes: lateBy });
 
-    if (arrival === null) continue;
+    if (arrival === null) {
+      const leg = legSeconds[i];
+      if (stop.departureAt !== undefined && leg !== undefined) cursor = stop.departureAt + Math.round(leg / 60);
+      continue;
+    }
 
     const offset = Math.floor(arrival / DAY_MINUTES);
     if (offset > dayOffset) dayOffset = offset;
@@ -152,11 +166,16 @@ export function computeSchedule(stops: ScheduleStop[], legSeconds: (number | und
     anchored[i]! = anchor !== null;
 
     const leg = legSeconds[i];
-    cursor = leg === undefined ? null : arrival + (stop.dwellMinutes ?? 0) + Math.round(leg / 60);
+    cursor =
+      leg === undefined
+        ? null
+        : (stop.departureAt === undefined ? arrival + (stop.dwellMinutes ?? 0) : Math.max(arrival, stop.departureAt)) +
+          Math.round(leg / 60);
   }
 
   const firstKnown = arrivals.findIndex((a) => a !== null);
   for (let i = firstKnown - 1; i >= 0; i--) {
+    if (stops[i]!.departureAt !== undefined) break;
     const leg = legSeconds[i];
     const next = arrivals[i + 1]!;
     if (leg === undefined || next === null) break;
@@ -171,7 +190,12 @@ export function computeSchedule(stops: ScheduleStop[], legSeconds: (number | und
   for (let i = 0; i < stops.length; i++) {
     const raw = arrivals[i]!;
     if (raw === null) {
-      entries.push({ arrival: null, departure: null, anchored: false, dayOffset: 0 });
+      entries.push({
+        arrival: null,
+        departure: stops[i]!.departureAt === undefined ? null : formatClock(stops[i]!.departureAt!),
+        anchored: false,
+        dayOffset: 0,
+      });
       continue;
     }
     const arrival = raw + shift;
@@ -181,7 +205,11 @@ export function computeSchedule(stops: ScheduleStop[], legSeconds: (number | und
     lastOffset = offset;
     entries.push({
       arrival: formatClock(arrival),
-      departure: formatClock(arrival + (stops[i]!.dwellMinutes ?? 0)),
+      departure: formatClock(
+        stops[i]!.departureAt === undefined
+          ? arrival + (stops[i]!.dwellMinutes ?? 0)
+          : Math.max(arrival, stops[i]!.departureAt! + shift),
+      ),
       anchored: anchored[i]!,
       dayOffset: offset,
     });
@@ -217,6 +245,8 @@ export function sumLegSeconds(legSeconds: (number | undefined)[]): number {
 }
 
 export interface DryPoint {
+  inboundLine?: [number, number][];
+
   legIndex: number;
 
   intoLegKm: number;

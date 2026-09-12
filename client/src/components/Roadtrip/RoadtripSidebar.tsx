@@ -837,7 +837,7 @@ function ServiceStop({ stop, entry, late, driveFindings, selected, onSelect, onE
             className="flex min-w-0 items-center gap-2 font-semibold leading-6 tracking-[-0.012em] text-content-secondary"
             style={{ fontSize: FS.name }}
           >
-            <span className="min-w-0 truncate">{stop.name}</span>{stop.stopType === 'charging' && <ChargingInfo placeId={stop.placeId} compact />}
+            <span className="min-w-0 truncate">{stop.name}</span>{stop.stopType === 'charging' && <ChargingInfo placeId={stop.placeId} compact />}<CheckoutDeparture stop={stop} entry={entry} />
           </span>
           <span className="flex flex-wrap items-center gap-1">
             <StayBadge minutes={stop.dwellMinutes} onEdit={onEditStay} />
@@ -959,6 +959,17 @@ function DriveFindingBadge({ warning }: { warning: ScheduleWarning }): React.Rea
  * the state the whole view gets opened for. It is also the only filled accent left in the
  * rail: selection moved to the row's own background, so nothing else competes with it.
  */
+function CheckoutDeparture({ stop, entry }: { stop: RoadtripStop; entry?: ScheduleEntry }): React.ReactElement | null {
+  const { t } = useTranslation()
+  const is12h = useSettingsStore(s => s.settings.time_format) === '12h'
+  if (stop.checkoutAt === undefined || !entry?.departure) return null
+  return <Tooltip label={t('roadtrip.spill.departs', { time: formatClockTime(entry.departure, is12h) })}>
+    <span dir="ltr" tabIndex={0} className="inline-flex shrink-0 items-center gap-1 rounded bg-surface-secondary px-1 py-0.5 align-middle whitespace-nowrap font-medium text-[length:calc(10px*var(--fs-scale-caption,1))] leading-none tabular-nums text-content-muted">
+      <Clock size={10} aria-hidden />{formatClockTime(entry.departure, is12h)}
+    </span>
+  </Tooltip>
+}
+
 function Arrival({ entry }: { entry: ScheduleEntry }): React.ReactElement {
   const { t } = useTranslation()
   const is12h = useSettingsStore(s => s.settings.time_format) === '12h'
@@ -1094,7 +1105,7 @@ function Stop({ stop, number, entry, late, driveFindings, selected, continues, s
             className="flex min-w-0 items-center gap-2 font-semibold leading-6 tracking-[-0.012em] text-content"
             style={{ fontSize: FS.name }}
           >
-            <span className={stop.stopType === 'charging' ? 'min-w-0 truncate' : 'min-w-0 break-words'}>{stop.name}</span>{stop.stopType === 'charging' && <ChargingInfo placeId={stop.placeId} compact />}
+            <span className={stop.stopType === 'charging' || stop.checkoutAt !== undefined ? 'min-w-0 truncate' : 'min-w-0 break-words'}>{stop.name}</span>{stop.stopType === 'charging' && <ChargingInfo placeId={stop.placeId} compact />}<CheckoutDeparture stop={stop} entry={entry} />
           </span>
           {/* Two halves under one border: the word says what the number means, so the
               number needs no unit of explanation beside it. */}
@@ -1257,7 +1268,7 @@ function SpillBlock({ spill, children }: {
                   The stop it leaves from is not named — it is drawn on yesterday's card
                   directly above, and a second row for it would read as a stop made
                   twice. */}
-              {departure ? (
+              {departure && spill.fromStop?.checkoutAt === undefined ? (
                 <span
                   dir="ltr"
                   className="ms-auto shrink-0 whitespace-nowrap font-semibold leading-6 tabular-nums"
@@ -1330,17 +1341,8 @@ function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, on
   const dayColorsOn = useRoadtripSettings(s => !!s.roadtrip_day_colors)
   const tint = dayColorsOn ? dayColor(day.dayNumber).line : null
   const last = day.stops.length - 1
-  /**
-   * The findings a stop wears, minus the one the refuel band already says better.
-   *
-   * The range warning marks the stop somebody FINDS OUT at and counts the whole tank;
-   * the band sits on the leg the fuel actually ends on and offers somewhere to stop. Both
-   * at once says the same thing twice, in the wrong order — the answer above the problem
-   * — so the warning stands down wherever the band is showing.
-   */
-  const showingBand = !!refuel && !loading
   const findingsFor = (i: number) =>
-    day.driveWarnings.filter(w => w.index === i && !(showingBand && w.code === 'range'))
+    day.driveWarnings.filter(w => w.index === i && w.code !== 'range')
   // The running number a stop wears, with the service stops passed over — so a day with a
   // charger halfway through still counts one, two, three the way its map pins do.
   let counted = 0
@@ -1353,7 +1355,7 @@ function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, on
    * `stop.ownerIndex` instead, because a stop driven onto this date through the night is
    * still stored on the day it set off from (`nightSpill.ts`).
    */
-  const renderStop = (stop: RoadtripStop, i: number): React.ReactElement => {
+  const renderStopContent = (stop: RoadtripStop, i: number): React.ReactElement => {
     if (stop.automaticNight) return (
       <li key={stop.assignmentId}>
         <AutomaticDayStop stop={stop} entry={day.schedule.entries[i]} onFocus={onFocusPoint} />
@@ -1482,6 +1484,18 @@ function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, on
    * Built rather than mapped straight through, because a spill is drawn inside a block of
    * its own and a block cannot be opened halfway down a `map`.
    */
+  const renderStop = (stop: RoadtripStop, i: number): React.ReactElement => (
+    <React.Fragment key={stop.assignmentId}>
+      {refuel && !loading ? (day.dryPoints ?? []).filter(dry => dry.legIndex === -i - 1).map(dry => (
+        <li key={`inbound-${i}`}>
+          <RefuelBand dry={dry} dayId={day.dayId} refuel={refuel}
+            onAsk={() => onAskRefuel?.(day.dayId, dry)}
+            onAccept={onAcceptRefuel ? poi => onAcceptRefuel(day.dayId, poi, dry) : undefined} />
+        </li>
+      )) : null}
+      {renderStopContent(stop, i)}
+    </React.Fragment>
+  )
   const runs: { spill: SpillMark | null; from: number; to: number }[] = []
   {
     let at = 0

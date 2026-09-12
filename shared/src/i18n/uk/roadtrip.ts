@@ -1,6 +1,8 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': 'Знайти житло',
+  'roadtrip.stay.portalHint': 'Перевірте місце, дати та гостей на порталі. У CHECK24 шукайте вручну.',
   'roadtrip.charging.available': 'вільні',
   'roadtrip.charging.unknown': 'Немає надійних даних',
   'roadtrip.charging.stale': 'Статус застарів',

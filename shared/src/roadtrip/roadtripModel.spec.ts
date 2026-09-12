@@ -791,3 +791,34 @@ describe('deriveDriveWarnings — filling only part way', () => {
     expect(out.emptyAt).toEqual([]);
   });
 });
+
+describe('checkout without daily travel times', () => {
+  it('keeps the car at the hotel until the next day', () => {
+    const schedule = computeSchedule(
+      [
+        { anchor: '16:00', dwellMinutes: 30, departureAt: 1440 + 720 },
+        { anchor: null, dwellMinutes: 0 },
+      ],
+      [3600],
+    );
+    expect(schedule.entries[0]!.departure).toBe('12:00');
+    expect(schedule.entries[1]!.arrival).toBe('13:00');
+    expect(schedule.entries[1]!.dayOffset).toBe(1);
+  });
+});
+
+it('uses checkout as departure even without an arrival or daily start', () => {
+  const schedule = computeSchedule(
+    [
+      { anchor: null, dwellMinutes: 60 },
+      { anchor: null, dwellMinutes: 60, departureAt: 1440 + 480 },
+      { anchor: null, dwellMinutes: 0 },
+    ],
+    [3600, 7200],
+  );
+  expect(schedule.entries[0]!.arrival).toBeNull();
+  expect(schedule.entries[1]!.arrival).toBeNull();
+  expect(schedule.entries[1]!.departure).toBe('08:00');
+  expect(schedule.entries[2]!.arrival).toBe('10:00');
+  expect(schedule.entries[2]!.dayOffset).toBe(1);
+});

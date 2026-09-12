@@ -718,6 +718,12 @@ describe('useRoadtripRoutes', () => {
       // Walked along the roads this day drives, not along the drawn line: 50 km down that
       // one is still on the join, north of Berlin, a whole leg from where the tank empties.
       expect(dry.lat).toBeLessThan(BERLIN[0])
+      setting({ roadtrip_range_km: 150 })
+      await waitFor(() => expect(result.current.days[1].dryPoints![0].legIndex).toBe(-1))
+      const inboundDry = result.current.days[1].dryPoints![0]
+      expect(inboundDry).toMatchObject({ intoLegKm: 50, drivenMeters: 50000, inboundLine: [LUENEBURG, BERLIN] })
+      expect(inboundDry.lat).toBeGreaterThan(BERLIN[0])
+      expect(inboundDry.lat).toBeLessThan(LUENEBURG[0])
     })
   })
 })

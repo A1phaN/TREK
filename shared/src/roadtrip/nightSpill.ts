@@ -73,7 +73,11 @@ export function spillChains(plan: PlanDay[], quietDays: QuietDay[], legFor: LegL
     const routed = d.stops.slice(0, -1).map((s, i) => legFor(s, d.stops[i + 1]!));
     const legs = routed.map((l) => l?.seg);
     const schedule = computeSchedule(
-      d.stops.map((s) => ({ anchor: s.time, dwellMinutes: s.dwellMinutes })),
+      d.stops.map((s) => ({
+        anchor: s.time,
+        dwellMinutes: s.dwellMinutes,
+        departureAt: s.checkoutAt === undefined ? undefined : s.checkoutAt - d.dayNumber * 1440,
+      })),
       legs.map((l) => l?.duration),
     );
 
@@ -86,7 +90,7 @@ export function spillChains(plan: PlanDay[], quietDays: QuietDay[], legFor: LegL
         if (previous !== null && clock < previous) day += 1;
         previous = clock;
       }
-      const offset = day;
+      const offset = d.stops.some((s) => s.checkoutAt !== undefined) ? (entry?.dayOffset ?? day) : day;
       const marks = schedule.warnings.filter((w) => w.index === i);
 
       const reachable = offset > 0 && numbers.has(d.dayNumber + offset);

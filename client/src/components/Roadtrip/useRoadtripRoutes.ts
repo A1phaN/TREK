@@ -3,11 +3,11 @@ import { assembleRoadtrip, foldRouteRun, type RoadtripStop, type RoadtripRoutes,
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { calculateRouteWithLegs, RoutingRefusedError } from '../Map/RouteCalculator'
 import { resolveLegMode } from '../Planner/legMode'
-import { splitIntoRuns, parseAvoid, type DriveLimits } from './roadtripModel'
+import { splitIntoRuns, parseClock, parseAvoid, type DriveLimits } from './roadtripModel'
 import { spillChains } from './nightSpill'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useVehicleRange } from './useVehicleRange'
-import type { Assignment, AssignmentsMap, Day, RouteAvoidClass, SnappedWaypoint } from '../../types'
+import type { Assignment, AssignmentsMap, Accommodation, Day, RouteAvoidClass, SnappedWaypoint } from '../../types'
 import type { RoadtripVia, RoadtripDayBoundary } from '@trek/shared'
 import { dayWindow } from './dayWindow'
 import { useTranslation } from '../../i18n/TranslationContext'
@@ -69,10 +69,16 @@ const seamShape = (from: RoadtripStop, viasByDay: Record<number, RoadtripVia[]>)
 /** The drive from one stop to the next, identified the same way `planKey` identifies them. */
 const legKey = (from: RoadtripStop, to: RoadtripStop): string => `${stopKey(from)}>${stopKey(to)}`
 
-const asStop = (a: Assignment, ownerDayId: number, ownerIndex: number): RoadtripStop | null => {
+const EMPTY_ACCOMMODATIONS: Accommodation[] = []
+
+const asStop = (a: Assignment, ownerDayId: number, ownerIndex: number, accommodations: Accommodation[], days: Day[]): RoadtripStop | null => {
   const p = a.place
   if (!p || typeof p.lat !== 'number' || typeof p.lng !== 'number') return null
+  const stay = accommodations.find(stay => stay.place_id === a.place_id && stay.start_day_id === ownerDayId)
+  const checkoutDay = days.find(day => day.id === stay?.end_day_id)?.day_number
+  const checkoutTime = parseClock(stay?.check_out)
   return {
+    ...(checkoutDay != null && checkoutTime !== null ? { checkoutAt: checkoutDay * 1440 + checkoutTime } : {}),
     assignmentId: a.id,
     ownerDayId,
     ownerIndex,
@@ -80,7 +86,7 @@ const asStop = (a: Assignment, ownerDayId: number, ownerIndex: number): Roadtrip
     name: p.name,
     lat: p.lat,
     lng: p.lng,
-    time: a.assignment_time ?? p.place_time ?? null,
+    time: a.assignment_time ?? p.place_time ?? stay?.check_in ?? null,
     dwellMinutes: typeof p.duration_minutes === 'number' ? p.duration_minutes : null,
     endDay: a.end_day === true,
     legMode: a.leg_transport_mode ?? null,
@@ -115,6 +121,7 @@ export function useRoadtripRoutes(
    */
   viasByDay: Record<number, RoadtripVia[]> = {},
   boundaries: RoadtripDayBoundary[] = [],
+  accommodations: Accommodation[] = EMPTY_ACCOMMODATIONS,
 ): RoadtripRoutes {
   const { t } = useTranslation()
   const routeProfile = fallbackProfile || 'driving'
@@ -197,7 +204,7 @@ export function useRoadtripRoutes(
         const stops = (assignments[String(d.id)] ?? [])
           .slice()
           .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
-          .map(a => asStop(a, d.id, 0))
+          .map(a => asStop(a, d.id, 0, accommodations, days))
           .filter((s): s is RoadtripStop => s !== null)
           // The index is filled in after the drop, because it is the index into THIS
           // list: an assignment whose place has no coordinates never becomes a stop, and
@@ -212,7 +219,7 @@ export function useRoadtripRoutes(
         }
       })
       .filter(d => d.stops.length > 1)
-  }, [days, assignments])
+  }, [days, assignments, accommodations])
 
   const quietDays = useMemo<QuietDay[]>(() => {
     return [...days]
@@ -225,12 +232,12 @@ export function useRoadtripRoutes(
         stops: (assignments[String(d.id)] ?? [])
           .slice()
           .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
-          .map(a => asStop(a, d.id, 0))
+          .map(a => asStop(a, d.id, 0, accommodations, days))
           .filter((s): s is RoadtripStop => s !== null)
           .map((s, i) => ({ ...s, ownerIndex: i })),
       }))
       .filter(d => d.stops.length < 2)
-  }, [days, assignments])
+  }, [days, assignments, accommodations])
 
   // Only the geometry decides whether legs have to be re-fetched: renaming a place or
   // editing its notes must not fire a routing round.

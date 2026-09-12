@@ -119,3 +119,19 @@ Roadtrip charging stops show compact availability and published energy-price bad
 > **AI / MCP:** get_roadtrip_charging_info reads the same availability, tariff components, freshness and source information for a saved charging stop.
 
 GDACS warning popups show the current episode score when supplied, falling back to the overall event score. The compact scale indicates GDACS humanitarian impact, not whether roads are passable.
+
+### Accommodation portals in Roadtrip
+
+The Add as a stop dialog offers trivago and CHECK24 for hotels, or PiNCAMP and Pitchup for campsites. The portal opens in a new tab without adding a stop or making a booking. trivago receives the search text; PiNCAMP receives a geographic area extending roughly 20 km from the stop; Pitchup receives the stop coordinates. All three receive the trip dates when both days have dates and departure is after arrival. Review the destination, dates and guest count on the portal. CHECK24 requires a manual search. Check-in and check-out use the shared TREK time picker.
+
+All Looking for categories, including accommodation, are added as Roadtrip service stops. In Roadtrip mode, Edit in a planned place's details opens the stop dialog with its saved duration and overnight dates and times. Saving updates the existing stop; More details still opens the full place editor. The shared stop-type contract also accepts hotel through MCP.
+
+A booked check-out time controls departure from an overnight stop on its check-out day. STAY is calculated from arrival until check-out, including multiple nights, and updates with the route. Explicit arrival times remain authoritative. Clicking STAY for a booking with check-out opens the overnight editor. Browser planning and MCP use the same scheduling logic.
+
+The overnight dialog prefills check-in from the calculated arrival when available; existing manual check-in values take priority. Before adding a corridor result, the suggested arrival is estimated along the current routed leg. Without any known arrival, checkout still anchors the onward drive, but STAY remains unknown instead of displaying the old default duration.
+
+Ordinary places retain the full place editor in Roadtrip mode. The compact stop editor is used for service stops and accommodation. When visits move into another day, their calculated departure continues into that day's following stops, including midnight offsets.
+
+Stops reached after midnight move to the next calculated Roadtrip day with a FROM DAY label. This also creates a display day when no saved day exists yet and retains arrival times for a day containing only one moved stop.
+
+Range warnings also locate an empty battery or tank on connections between days. The warning offers reachable stations on that connection and inserts a selected stop before its destination.

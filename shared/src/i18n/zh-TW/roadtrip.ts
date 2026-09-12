@@ -1,6 +1,8 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': '尋找住宿',
+  'roadtrip.stay.portalHint': '請在平台核對目的地、日期和入住人數。CHECK24需手動搜尋。',
   'roadtrip.charging.available': '可用',
   'roadtrip.charging.unknown': '暫無可靠資料',
   'roadtrip.charging.stale': '狀態已過時',

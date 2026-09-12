@@ -1196,7 +1196,7 @@ export const MapView = memo(function MapView({
     {/* 20px off the sidebar, not 12: the pill is round and frosted, so at the
         smaller gap its shadow ran into the sidebar edge and the two read as one
         surface. */}
-    <div style={{ position: 'absolute', left: leftWidth + 20, bottom: switcherBottom, zIndex: 1000, pointerEvents: 'none' }}>
+    <div style={{ position: 'absolute', left: leftWidth + 20, top: hasInspector ? 80 : undefined, bottom: hasInspector ? undefined : switcherBottom, zIndex: 1000, pointerEvents: 'none' }}>
       <MapLayerSwitcher active={baseLayer} onToggle={toggleBaseLayer} />
     </div>
     </div>

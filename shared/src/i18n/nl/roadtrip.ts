@@ -1,6 +1,8 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': 'Accommodatie zoeken',
+  'roadtrip.stay.portalHint': 'Controleer bestemming, datums en gasten op het portaal. Zoek handmatig op CHECK24.',
   'roadtrip.charging.available': 'beschikbaar',
   'roadtrip.charging.unknown': 'Geen betrouwbare gegevens',
   'roadtrip.charging.stale': 'Status verouderd',

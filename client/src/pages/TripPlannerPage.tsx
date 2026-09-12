@@ -269,7 +269,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
     saveRoadtripLimit, roadtripSettingsLoading, storedAssignments,
     roadtripVias, addRoadtripVia, moveRoadtripVia, removeRoadtripVia, resetDayBoundaries,
     routeAlternatives, askRouteAlternatives, refuel, askRefuel, acceptRefuel, chooseRouteAlternative, alternativeOverlays, alternativeFocusPoints, mapFocusPoints, roadtripMapVias, focusRoadtripPoint, dayBoundaryControls,
-    stayDraft, setStayDraft, setRoadtripStay, roadtripEndDay, roadtripStay,
+    stayDraft, setStayDraft, editRoadtripStay, setRoadtripStay, roadtripEndDay, roadtripStay,
     highlightedAlternative, setHighlightedAlternative,
     moveRoadtripStopToDay,
     dropPoiOnRoute,
@@ -551,7 +551,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
                       onMoveStopToDay={can('day_edit', trip) ? moveRoadtripStopToDay : undefined}
                       onAskAlternatives={can('day_edit', trip) ? askRouteAlternatives : undefined}
                       openAlternatives={routeAlternatives.open}
-                      onEditStay={can('place_edit', trip) ? setStayDraft : undefined}
+                      onEditStay={can('place_edit', trip) ? editRoadtripStay : undefined}
                       onSetStopKind={can('place_edit', trip) ? setRoadtripStopKind : undefined}
                       onSetStopFill={can('place_edit', trip) ? setRoadtripStopFill : undefined}
                       onFollowTrack={can('day_edit', trip) && followTrack.available ? followTrack.open : undefined}

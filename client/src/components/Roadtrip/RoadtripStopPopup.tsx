@@ -2,10 +2,12 @@ import React, { useState } from 'react'
 import { ParkingSquare, Hourglass, AlertTriangle, BedDouble } from 'lucide-react'
 import Modal from '../shared/Modal'
 import CustomSelect from '../shared/CustomSelect'
+import CustomTimePicker from '../shared/CustomTimePicker'
+import StayPortals from './StayPortals'
 import { useTranslation } from '../../i18n/TranslationContext'
 import { safeExternalHref } from '../../utils/safeUrl'
 import { formatDate } from '../../utils/formatters'
-import { formatDurationShort, SERVICE_COLORS } from './roadtripModel'
+import { formatDurationShort } from './roadtripModel'
 import { STOP_KINDS, STOP_KIND_BY_KEY } from './stopKinds'
 import type { CorridorPoi } from './useCorridorPois'
 import type { RoadtripStopType } from '@trek/shared'
@@ -28,6 +30,8 @@ import type { RoadtripStopType } from '@trek/shared'
 const DWELL_CHOICES = [5, 10, 20, 30, 45, 60]
 
 export interface RoadtripStopDraft {
+  editing?: { placeId: number; dwellMinutes: number; stopType: RoadtripStopType | null; accommodationId?: number; checkIn?: string; checkOut?: string }
+  arrivalTime?: string | null
   poi: CorridorPoi
   dayId: number
   /** Where in the day's chain it goes, worked out from how far along the drive it sits. */
@@ -81,15 +85,15 @@ export default function RoadtripStopPopup({
   // scheme for a bare host and drops anything that is not http(s).
   const websiteHref = safeExternalHref(draft?.poi.website)
   const suggested = STOP_KINDS.find(k => k.key === draft?.poi.category)
-  const [stopType, setStopType] = useState<RoadtripStopType | null>(suggested?.key ?? null)
-  const [dwell, setDwell] = useState<number>(suggested?.defaultMinutes ?? 30)
+  const [stopType, setStopType] = useState<RoadtripStopType | null>(draft?.editing ? draft.editing.stopType : suggested?.key ?? null)
+  const [dwell, setDwell] = useState<number>(draft?.editing?.dwellMinutes ?? suggested?.defaultMinutes ?? 30)
   // A hotel is a night by default and a campsite a pause, which is what each already
   // means everywhere else — but both offer the other, because a campsite is somewhere
   // people sleep and a hotel is somewhere people stop for lunch.
-  const [night, setNight] = useState<boolean>(draft?.poi.category === 'hotel')
+  const [night, setNight] = useState<boolean>(draft?.editing ? !!draft.editing.accommodationId : draft?.poi.category === 'hotel')
   const [endDayId, setEndDayId] = useState<number | null>(draft?.overnight?.defaultEndDayId ?? null)
-  const [checkIn, setCheckIn] = useState('')
-  const [checkOut, setCheckOut] = useState('')
+  const [checkIn, setCheckIn] = useState(draft?.editing?.checkIn || draft?.arrivalTime || '')
+  const [checkOut, setCheckOut] = useState(draft?.editing?.checkOut ?? '')
   const [saving, setSaving] = useState(false)
 
   if (!draft) return null
@@ -116,8 +120,10 @@ export default function RoadtripStopPopup({
   }
 
   return (
-    <Modal isOpen onClose={onClose} title={t('roadtrip.stop.addTitle')} size="sm">
+    <Modal isOpen onClose={onClose} title={t(draft.editing ? 'common.edit' : 'roadtrip.stop.addTitle')} size={overnight ? 'xl' : 'sm'}>
       <div className="flex flex-col gap-4">
+        <div className={overnight ? "grid grid-cols-1 gap-5 sm:grid-cols-2" : ""}>
+        <div className="flex min-w-0 flex-col gap-4">
         <div className="flex items-start gap-3">
           <span
             className="grid h-9 w-9 shrink-0 place-items-center rounded-xl"
@@ -201,28 +207,15 @@ export default function RoadtripStopPopup({
                 <span className="text-caption font-medium uppercase tracking-wide text-content-faint">
                   {t('day.checkIn')}
                 </span>
-                <input
-                  type="time"
-                  value={checkIn}
-                  onChange={e => setCheckIn(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg border border-edge bg-surface px-2 py-1 text-body text-content focus:border-accent focus:outline-none"
-                />
+                <CustomTimePicker value={checkIn} onChange={setCheckIn} aria-label={t('day.checkIn')} placeholder="" style={{ marginTop: 6, width: '100%' }} />
               </label>
               <label className="min-w-0 flex-1">
                 <span className="text-caption font-medium uppercase tracking-wide text-content-faint">
                   {t('day.checkOut')}
                 </span>
-                <input
-                  type="time"
-                  value={checkOut}
-                  onChange={e => setCheckOut(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg border border-edge bg-surface px-2 py-1 text-body text-content focus:border-accent focus:outline-none"
-                />
+                <CustomTimePicker value={checkOut} onChange={setCheckOut} aria-label={t('day.checkOut')} placeholder="" style={{ marginTop: 6, width: '100%' }} />
               </label>
             </div>
-            {/* What OSM knows about the house, which is the whole of what we offer: no
-                price, no availability, no link into a booking portal. TREK links to maps
-                and to the place's own site, never to a vendor. */}
             {websiteHref || draft.poi.phone ? (
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-caption">
                 {websiteHref ? (
@@ -258,7 +251,7 @@ export default function RoadtripStopPopup({
                   type="button"
                   aria-pressed={on}
                   onClick={() => {
-                    setStopType(on ? null : key)
+                    setStopType(key)
                     // Picking a kind is also picking how long it takes, until the user
                     // says otherwise — a charge is not a fuel stop.
                     if (!on) setDwell(STOP_KIND_BY_KEY[key].defaultMinutes)
@@ -303,6 +296,12 @@ export default function RoadtripStopPopup({
         </>
         )}
 
+        </div>
+        {overnight ? <StayPortals lat={draft.poi.lat} lng={draft.poi.lng} name={draft.poi.name} camping={draft.poi.category === 'campsite'}
+          arrival={overnight.days.find(day => day.id === draft.dayId)?.date}
+          departure={overnight.days.find(day => day.id === (endDayId ?? overnight.defaultEndDayId))?.date} /> : null}
+        </div>
+
         <div className="flex items-center gap-2 border-t border-edge-faint pt-3">
           <button
             type="button"
@@ -317,7 +316,7 @@ export default function RoadtripStopPopup({
             disabled={saving}
             className="ms-auto rounded-lg bg-accent px-3.5 py-1.5 text-body font-semibold text-accent-text transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            {t('roadtrip.poi.add')}
+            {t(draft.editing ? 'common.save' : 'roadtrip.poi.add')}
           </button>
         </div>
       </div>

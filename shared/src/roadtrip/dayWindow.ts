@@ -181,6 +181,7 @@ export function planDayWindow(
       name: labels.end,
       time: null,
       dwellMinutes: 0,
+      checkoutAt: undefined,
       stopType: null,
       fillPercent: null,
       automaticNight: { phase: 'end', fromDayNumber: number, position, manual: targets.has(number) },
@@ -275,6 +276,26 @@ export function planDayWindow(
     append(stop, clock);
     previous = stop;
 
+    if (stop.checkoutAt !== undefined) {
+      const checkoutDay = Math.floor(stop.checkoutAt / 1440);
+      const checkoutTime = stop.checkoutAt % 1440;
+      const arrivalAt = number * 1440 + clock;
+      if (stop.checkoutAt > arrivalAt) {
+        const entries = chainAt(number).schedule.entries;
+        entries[entries.length - 1]!.departure = formatClock(checkoutTime);
+        while (number < checkoutDay) {
+          previous = night(previous);
+          if (issue) return failed(issue);
+        }
+        clock = checkoutTime;
+        if (previous.automaticNight?.phase === 'start') {
+          const entries = chainAt(number).schedule.entries;
+          entries[entries.length - 1]!.arrival = formatClock(clock);
+          entries[entries.length - 1]!.departure = formatClock(clock);
+        }
+      }
+      continue;
+    }
     let dwell = Math.max(0, stop.dwellMinutes ?? 0);
     while (dwell > 0) {
       const remaining = targets.has(number) ? dwell : Math.max(0, window.end - clock);

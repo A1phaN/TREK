@@ -17,6 +17,7 @@ import type {
 } from './planning-types';
 import {
   computeSchedule,
+  parseClock,
   deriveDriveWarnings,
   refuelsRange,
   isServiceStopType,
@@ -24,6 +25,7 @@ import {
   type DriveLimits,
   type VehicleKind,
 } from './roadtripModel';
+import { splitScheduledDays } from './splitScheduledDays';
 
 const stopKey = (s: RoadtripStop): string =>
   `${s.lat.toFixed(5)},${s.lng.toFixed(5)},${s.legMode ?? ''},${s.incomingLegMode ?? ''}`;
@@ -85,11 +87,15 @@ export function assembleRoadtrip({
             ...d,
             spills: [],
             schedule: computeSchedule(
-              d.stops.map((s) => ({ anchor: s.time, dwellMinutes: s.dwellMinutes })),
+              d.stops.map((s) => ({
+                anchor: s.time,
+                dwellMinutes: s.dwellMinutes,
+                departureAt: s.checkoutAt === undefined ? undefined : s.checkoutAt - d.dayNumber * 1440,
+              })),
               d.stops.slice(0, -1).map((s, i) => storedLegFor(s, d.stops[i + 1]!)?.seg.duration),
             ),
           }))
-      : chains;
+      : splitScheduledDays(chains, [...plan, ...quietDays], storedLegFor);
   const legFor = automaticSchedule ? timed.legFor : storedLegFor;
 
   const lines: [number, number][][] = [];
@@ -150,42 +156,62 @@ export function assembleRoadtrip({
       legs.reduce((sum, l) => sum + (l?.duration ?? 0), 0) + inbound.reduce((sum, l) => sum + (l?.duration ?? 0), 0);
     const schedule = chain.schedule;
     const legVias = routed.map((l) => l?.vias ?? []);
-    const stops = chain.stops.map((s) => {
+    const stops = chain.stops.map((s, index) => {
       const snap = s.automaticNight ? undefined : allSnaps[stopKey(s)];
       const line = spurFor(snap);
       if (line) accessLines.push({ line, meters: snap!.meters, stopKey: stopKey(s) });
-      return { ...s, offRoadMeters: line ? snap!.meters : null };
+      const entry = schedule.entries[index];
+      const arrival = parseClock(entry?.arrival);
+      const dwellMinutes =
+        s.checkoutAt !== undefined && arrival !== null
+          ? Math.max(0, s.checkoutAt - ((chain.dayNumber + (entry?.dayOffset ?? 0)) * 1440 + arrival))
+          : s.checkoutAt !== undefined
+            ? null
+            : s.dwellMinutes;
+      return { ...s, dwellMinutes, offRoadMeters: line ? snap!.meters : null };
     });
 
-    const inboundKm =
-      inbound
-        .filter((l) => l && (l.mode === undefined || l.mode === 'driving'))
-        .reduce((sum, l) => sum + (l?.distance ?? 0), 0) / 1000;
-    const startKm = carryKm === null ? null : carryKm + inboundKm;
-    const drive = deriveDriveWarnings(
-      legs,
-
-      stops.map((s) => refuelsRange(s.stopType, vehicleKind)),
-      limits,
-      startKm,
-
-      stops.map((s) => s.fillPercent),
-    );
-    carryKm = drive.carryKm;
-
-    const drivingLine = routed
-      .filter((l) => l && l.seg.mode !== undefined && l.seg.mode === 'driving')
-      .flatMap((l) => l?.line ?? []);
-    const dryPoints = drive.emptyAt
-      .map((dry) => {
-        const at = pointAtMeters(
-          drivingLine.map(([lat, lng]) => ({ lat, lng })),
-          dry.drivenMeters,
-        );
-        return at ? { ...dry, lat: at.lat, lng: at.lng } : null;
-      })
-      .filter((d): d is DryPoint & { lat: number; lng: number } => d !== null);
-
+    const drive = { warnings: [] as ReturnType<typeof deriveDriveWarnings>['warnings'], day: null as ReturnType<typeof deriveDriveWarnings>['day'] };
+    const dryPoints: (DryPoint & { lat: number; lng: number })[] = [];
+    const drivingLine: [number, number][] = [];
+    let drivenMeters = 0;
+    let drivingSeconds = 0;
+    for (let i = 0; i < stops.length; i++) {
+      const incoming = inboundAt.get(i);
+      if (incoming?.seg) {
+        const incomingDrive = deriveDriveWarnings([incoming.seg], [false, false], limits, carryKm);
+        carryKm = incomingDrive.carryKm;
+        drive.warnings.push(...incomingDrive.warnings.map(w => ({ ...w, index: i })));
+        for (const dry of incomingDrive.emptyAt) {
+          const at = pointAtMeters(incoming.line.map(([lat, lng]) => ({ lat, lng })), dry.drivenMeters);
+          if (at) dryPoints.push({ ...dry, legIndex: -i - 1, inboundLine: incoming.line, lat: at.lat, lng: at.lng });
+        }
+        if (!incoming.seg.mode || incoming.seg.mode === 'driving') drivingSeconds += incoming.seg.duration ?? 0;
+      }
+      const leg = routed[i];
+      const outgoing = deriveDriveWarnings(
+        i < stops.length - 1 ? [leg?.seg] : [],
+        [refuelsRange(stops[i]!.stopType, vehicleKind), false],
+        limits,
+        carryKm,
+        [stops[i]!.fillPercent],
+      );
+      carryKm = outgoing.carryKm;
+      drive.warnings.push(...outgoing.warnings.map(w => ({ ...w, index: i + 1 })));
+      for (const dry of outgoing.emptyAt) {
+        const at = pointAtMeters((leg?.line ?? []).map(([lat, lng]) => ({ lat, lng })), dry.intoLegKm * 1000);
+        if (at) dryPoints.push({ ...dry, legIndex: i, drivenMeters: drivenMeters + dry.intoLegKm * 1000, lat: at.lat, lng: at.lng });
+      }
+      if (leg && (!leg.seg.mode || leg.seg.mode === 'driving')) {
+        drivingLine.push(...leg.line);
+        drivenMeters += leg.seg.distance ?? 0;
+        drivingSeconds += leg.seg.duration ?? 0;
+      }
+    }
+    const drivingMinutes = Math.round(drivingSeconds / 60);
+    if (limits.dayMinutes && drivingMinutes > limits.dayMinutes) {
+      drive.day = { code: 'dayDriving', minutes: drivingMinutes, limitMinutes: limits.dayMinutes };
+    }
     const drivingGeometry = drivingLine.length === geometry.length ? geometry : drivingLine;
     out.push({
       automaticSchedule,
@@ -208,7 +234,7 @@ export function assembleRoadtrip({
       dayWarning: drive.day,
     });
   }
-  const drives = out.filter((d) => d.stops.length > 1 || d.stops.some((s) => s.automaticNight));
+  const drives = out.filter((d) => d.stops.length > 1 || !!d.spills?.length || d.stops.some((s) => s.automaticNight));
   const originalStops = [...plan, ...quietDays].sort((a, b) => a.dayNumber - b.dayNumber).flatMap((day) => day.stops);
   const boundaryPath = originalStops.slice(0, -1).flatMap((from, position) => {
     const to = originalStops[position + 1]!;
@@ -246,7 +272,7 @@ export function assembleRoadtrip({
     ),
 
     quietDays: out
-      .filter((d) => d.stops.length < 2 && !d.stops.some((s) => s.automaticNight))
+      .filter((d) => d.stops.length < 2 && !d.spills?.length && !d.stops.some((s) => s.automaticNight))
       .map((d) => ({ dayId: d.dayId, dayNumber: d.dayNumber, date: d.date, title: d.title, stops: d.stops })),
     loading,
   };

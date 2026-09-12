@@ -17,7 +17,7 @@ export default function VisitControls({ endDay, stay }: { endDay?: EndDayControl
         className="flex min-w-0 items-center justify-between gap-2 rounded-[10px] bg-surface-hover px-3 py-2 text-start enabled:hover:bg-surface-tertiary disabled:cursor-default">
         <span className="flex items-center gap-1.5 text-[length:calc(12px*var(--fs-scale-body,1))] font-medium uppercase text-content-secondary"><Clock size={13} className="shrink-0 text-content-faint" aria-hidden />{t('roadtrip.stop.stayShort')}</span>
         {' '}<span className="flex shrink-0 items-center gap-1.5 text-[length:calc(12px*var(--fs-scale-body,1))] font-medium text-content-secondary">
-          {formatDurationShort((stay.minutes ?? 0) * 60)}{stay.onEdit && <Pencil size={12} className="text-content-faint" aria-hidden />}
+          {stay.minutes === null ? '+' : formatDurationShort(stay.minutes * 60)}{stay.onEdit && <Pencil size={12} className="text-content-faint" aria-hidden />}
         </span>
       </button>}
     </div>
