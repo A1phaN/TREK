@@ -27,7 +27,8 @@ const settings: TranslationStrings = {
   'settings.routingBase': 'Saját útvonaltervező',
   'settings.routingBaseHint': 'Saját OSRM-példány. Üresen hagyva a nyilvános kiszolgálókat használja, amelyek másodpercenként körülbelül egy kérést engednek — egy napra elég, egy autós útra kevés. A kiszolgáló újraindítása után lép életbe.',
   'settings.valhallaBase': 'Saját Valhalla-példány',
-  'settings.valhallaBaseHint': 'Saját Valhalla-példány. Akkor kérdezzük meg, ha egy szakasznak kerülnie kell a fizetős utakat, az autópályákat vagy a kompokat — a nyilvános OSRM-kiszolgálók erre nem tudnak válaszolni. Üresen a FOSSGIS nyilvános Valhalláját használja, kivéve ha fent saját útvonaltervező szerepel; akkor egyáltalán nem kérdezünk második motort. A szerver újraindítása után lép életbe.',
+  'settings.valhallaBaseHint':
+    'A TREK alapértelmezés szerint a FOSSGIS nyilvános Valhalláját használja a fizetős utak, autópályák és kompok elkerüléséhez. Itt megadhatja saját Valhallája URL-jét, hogy azt használja helyette. Ha csak saját útvonaltervező van beállítva, a nyilvános Valhalla nem használatos. Saját URL megadása után indítsa újra a szervert, és töltse újra az oldalt.',
   'settings.mapHint': 'URL sablon a térképcsempékhez',
   'settings.mapProvider': 'Térkép szolgáltató',
   'settings.mapProviderHint': 'A Trip Planner és Journey térképekre érvényes. Az Atlas mindig Leafletet használ.',

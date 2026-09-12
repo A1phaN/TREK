@@ -1389,6 +1389,32 @@ describe('MapViewGL', () => {
     expect(glMarkers.created[1].element.innerHTML).toContain('#6b7280')
   })
 
+  it('clusters roadtrip stations and zooms before offering overlapping stations individually', async () => {
+    loadOnAttach()
+    vi.mocked(glMap.getZoom).mockReturnValue(8)
+    const poi: Poi = {
+      osm_id: 'n1', name: 'Station A', lat: 48.854, lng: 2.332, category: 'charging_station',
+      poi_type: 'charging_station', address: null, website: null, phone: null,
+      opening_hours: null, cuisine: null, source: 'openstreetmap',
+    }
+    const other = { ...poi, osm_id: 'n2', name: 'Station B' }
+    const onPoiClick = vi.fn()
+    render(<MapViewGL places={[]} fitKey={1} pois={[poi, other]} clusterLoosely onPoiClick={onPoiClick} />)
+    await act(async () => {})
+    const cluster = glMarkers.created.find(pin => pin.element.querySelector('[data-poi-cluster="2"]'))!
+    expect(cluster).toBeDefined()
+    act(() => { cluster.element.click() })
+    expect(glMap.fitBounds).toHaveBeenCalledWith(expect.anything(), { padding: 70, maxZoom: 18 })
+    expect(onPoiClick).not.toHaveBeenCalled()
+    vi.mocked(glMap.getZoom).mockReturnValueOnce(18)
+    act(() => { cluster.element.click() })
+    const calls = vi.mocked(glPopup.setDOMContent).mock.calls
+    const list = calls[calls.length - 1][0]
+    act(() => { list.querySelectorAll('button')[1].click() })
+    expect(onPoiClick).toHaveBeenCalledWith(other)
+    vi.mocked(glMap.getZoom).mockReturnValue(10)
+  })
+
   it('FE-COMP-MAPVIEWGL-043: plugin markers render as tone dots with a text-only popup', async () => {
     loadOnAttach()
     const markers: PluginMapMarker[] = [

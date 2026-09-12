@@ -1,3 +1,5 @@
+import ChargingInfo from './ChargingInfo'
+import { useRoadtripSettings } from '../../hooks/useRoadtripSettings'
 import React, { useState } from 'react'
 import {
   CarFront, Footprints, Bike, Zap, AlertTriangle,
@@ -27,8 +29,10 @@ import type { RouteVia } from '../../types'
 import { FS } from './typeScale'
 import type { RouteSegment } from '../../types'
 import EmptyState from '../shared/EmptyState'
+import AutomaticDayStop from './AutomaticDayStop'
 
 interface RoadtripSidebarProps {
+  onFocusPoint?: (lat: number, lng: number) => void
   /** Legs and totals for the whole trip, computed once in the planner hook. */
   routes: RoadtripRoutes
   selectedAssignmentId?: number | null
@@ -769,7 +773,7 @@ function ServiceStop({ stop, entry, late, driveFindings, selected, onSelect, onE
   const { t } = useTranslation()
   // Read here rather than threaded down: both stop shapes need the same two, and the
   // badge is the only thing in the rail that depends on them.
-  const fillPercent = useSettingsStore(st => st.settings.roadtrip_fill_percent)
+  const fillPercent = useRoadtripSettings(s => s.roadtrip_fill_percent)
   const { vehicleKind } = useVehicleRange()
   const kind = STOP_KIND_BY_KEY[stop.stopType ?? '']
   const Icon = kind?.Icon ?? ParkingSquare
@@ -830,10 +834,10 @@ function ServiceStop({ stop, entry, late, driveFindings, selected, onSelect, onE
           {/* Truncated, not wrapped: a service stop is a waypoint, and its full name lives
               on the map pin — where a place's name is the row's whole reason to exist. */}
           <span
-            className="min-w-0 truncate font-semibold leading-6 tracking-[-0.012em] text-content-secondary"
+            className="flex min-w-0 items-center gap-2 font-semibold leading-6 tracking-[-0.012em] text-content-secondary"
             style={{ fontSize: FS.name }}
           >
-            {stop.name}
+            <span className="min-w-0 truncate">{stop.name}</span>{stop.stopType === 'charging' && <ChargingInfo placeId={stop.placeId} compact />}<CheckoutDeparture stop={stop} entry={entry} />
           </span>
           <span className="flex flex-wrap items-center gap-1">
             <StayBadge minutes={stop.dwellMinutes} onEdit={onEditStay} />
@@ -955,6 +959,17 @@ function DriveFindingBadge({ warning }: { warning: ScheduleWarning }): React.Rea
  * the state the whole view gets opened for. It is also the only filled accent left in the
  * rail: selection moved to the row's own background, so nothing else competes with it.
  */
+function CheckoutDeparture({ stop, entry }: { stop: RoadtripStop; entry?: ScheduleEntry }): React.ReactElement | null {
+  const { t } = useTranslation()
+  const is12h = useSettingsStore(s => s.settings.time_format) === '12h'
+  if (stop.checkoutAt === undefined || !entry?.departure) return null
+  return <Tooltip label={t('roadtrip.spill.departs', { time: formatClockTime(entry.departure, is12h) })}>
+    <span dir="ltr" tabIndex={0} className="inline-flex shrink-0 items-center gap-1 rounded bg-surface-secondary px-1 py-0.5 align-middle whitespace-nowrap font-medium text-[length:calc(10px*var(--fs-scale-caption,1))] leading-none tabular-nums text-content-muted">
+      <Clock size={10} aria-hidden />{formatClockTime(entry.departure, is12h)}
+    </span>
+  </Tooltip>
+}
+
 function Arrival({ entry }: { entry: ScheduleEntry }): React.ReactElement {
   const { t } = useTranslation()
   const is12h = useSettingsStore(s => s.settings.time_format) === '12h'
@@ -1018,7 +1033,7 @@ function Stop({ stop, number, entry, late, driveFindings, selected, continues, s
   const { t } = useTranslation()
   // Read here rather than threaded down: both stop shapes need the same two, and the
   // badge is the only thing in the rail that depends on them.
-  const fillPercent = useSettingsStore(st => st.settings.roadtrip_fill_percent)
+  const fillPercent = useRoadtripSettings(s => s.roadtrip_fill_percent)
   const { vehicleKind } = useVehicleRange()
   return (
     <button
@@ -1087,10 +1102,10 @@ function Stop({ stop, number, entry, late, driveFindings, selected, continues, s
           {/* Wraps rather than truncates: the name is what the row is for, and thirty of
               them cut off mid-word is a list nobody reads. */}
           <span
-            className="min-w-0 break-words font-semibold leading-6 tracking-[-0.012em] text-content"
+            className="flex min-w-0 items-center gap-2 font-semibold leading-6 tracking-[-0.012em] text-content"
             style={{ fontSize: FS.name }}
           >
-            {stop.name}
+            <span className={stop.stopType === 'charging' || stop.checkoutAt !== undefined ? 'min-w-0 truncate' : 'min-w-0 break-words'}>{stop.name}</span>{stop.stopType === 'charging' && <ChargingInfo placeId={stop.placeId} compact />}<CheckoutDeparture stop={stop} entry={entry} />
           </span>
           {/* Two halves under one border: the word says what the number means, so the
               number needs no unit of explanation beside it. */}
@@ -1203,13 +1218,7 @@ function SpillBlock({ spill, children }: {
         boxShadow: `inset 0 1px 0 color-mix(in srgb, var(--info) 20%, transparent)`,
       }}
     >
-      {/* Moonlight from the left, falling on the mascot. A radial wash rather than a
-          second background colour: it has no edge of its own, so the head reads as lit
-          rather than as another box stacked on the first. */}
-      <div
-        className="px-2 pb-1 pt-2"
-        style={{ backgroundImage: `radial-gradient(140px 64px at 22px 26px, color-mix(in srgb, var(--info) 12%, transparent), transparent 72%)` }}
-      >
+      <div className="px-2 pb-1 pt-2">
         <div className="flex items-center gap-2 text-info">
           <MDancingTrek scene="idle" mood="sleepy" size={26} />
           <span
@@ -1231,7 +1240,7 @@ function SpillBlock({ spill, children }: {
             reason the block exists, and the kilometres on it are the ones the card's
             header now counts. Not clickable: alternatives are asked for on the day the
             leg is stored on, and offering the same leg twice would be two answers. */}
-        <div className="grid" style={RAIL_GRID}>
+        <div className={spill.automatic ? 'hidden' : 'grid'} style={RAIL_GRID}>
           <span className="relative z-[1] flex flex-col items-center" aria-hidden>
             <span className="flex-1" style={RAIL_DASH} />
           </span>
@@ -1259,7 +1268,7 @@ function SpillBlock({ spill, children }: {
                   The stop it leaves from is not named — it is drawn on yesterday's card
                   directly above, and a second row for it would read as a stop made
                   twice. */}
-              {departure ? (
+              {departure && spill.fromStop?.checkoutAt === undefined ? (
                 <span
                   dir="ltr"
                   className="ms-auto shrink-0 whitespace-nowrap font-semibold leading-6 tabular-nums"
@@ -1294,7 +1303,8 @@ function SpillBlock({ spill, children }: {
  * move, a stay edit or a refuel offer still names the day the server knows it by. See
  * `nightSpill.ts`.
  */
-function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, onMoveStopToDay, drag, onAskAlternatives, openAlternatives, onEditStay, onSetStopKind, onSetStopFill, onFollowTrack, viaCount, trackName, refuel, onAskRefuel, onAcceptRefuel, loading, collapsed, onToggle }: {
+function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, onMoveStopToDay, drag, onAskAlternatives, openAlternatives, onEditStay, onSetStopKind, onSetStopFill, onFollowTrack, viaCount, trackName, refuel, onAskRefuel, onAcceptRefuel, loading, collapsed, onToggle, onFocusPoint }: {
+  onFocusPoint?: RoadtripSidebarProps['onFocusPoint']
   day: RoadtripDay
   /** Folded down to the header, and off the map with it. */
   collapsed?: boolean
@@ -1328,20 +1338,11 @@ function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, on
   const distanceUnit = useSettingsStore(s => s.settings.distance_unit)
   // The colour the map draws this day in, or none at all while the map is drawing one
   // blue line for the whole trip.
-  const dayColorsOn = useSettingsStore(s => !!s.settings.roadtrip_day_colors)
+  const dayColorsOn = useRoadtripSettings(s => !!s.roadtrip_day_colors)
   const tint = dayColorsOn ? dayColor(day.dayNumber).line : null
   const last = day.stops.length - 1
-  /**
-   * The findings a stop wears, minus the one the refuel band already says better.
-   *
-   * The range warning marks the stop somebody FINDS OUT at and counts the whole tank;
-   * the band sits on the leg the fuel actually ends on and offers somewhere to stop. Both
-   * at once says the same thing twice, in the wrong order — the answer above the problem
-   * — so the warning stands down wherever the band is showing.
-   */
-  const showingBand = !!refuel && !loading
   const findingsFor = (i: number) =>
-    day.driveWarnings.filter(w => w.index === i && !(showingBand && w.code === 'range'))
+    day.driveWarnings.filter(w => w.index === i && w.code !== 'range')
   // The running number a stop wears, with the service stops passed over — so a day with a
   // charger halfway through still counts one, two, three the way its map pins do.
   let counted = 0
@@ -1354,7 +1355,21 @@ function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, on
    * `stop.ownerIndex` instead, because a stop driven onto this date through the night is
    * still stored on the day it set off from (`nightSpill.ts`).
    */
-  const renderStop = (stop: RoadtripStop, i: number): React.ReactElement => {
+  const renderStopContent = (stop: RoadtripStop, i: number): React.ReactElement => {
+    if (stop.automaticNight) return (
+      <li key={stop.assignmentId}>
+        <AutomaticDayStop stop={stop} entry={day.schedule.entries[i]} onFocus={onFocusPoint} />
+        {i < last && day.legs[i]?.distance !== 0 ? <DriveBand leg={day.legs[i]} /> : null}
+        {refuel && !loading ? (day.dryPoints ?? []).filter(dry => dry.legIndex === i).map(dry => (
+          <RefuelBand key={`dry-${dry.legIndex}`} dry={dry} dayId={day.dayId} refuel={refuel}
+            onAsk={() => onAskRefuel?.(day.dayId, dry)}
+            onAccept={onAcceptRefuel ? poi => onAcceptRefuel(day.dayId, poi, dry) : undefined} />
+        )) : null}
+        {i < last ? (day.legVias[i] ?? []).map((via, vi) => (
+          <RouteViaStop key={`via-${vi}-${via.lat},${via.lng}`} via={via} />
+        )) : null}
+      </li>
+    )
     const service = isServiceStopType(stop.stopType)
     if (!service) counted += 1
     // Every finding at this index is read on its own. Taking the first match let an
@@ -1424,10 +1439,10 @@ function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, on
             onPickFill={onSetStopFill ? anchor => setFilling({ anchor, stop }) : undefined}
           />
         )}
-        {i < last ? (
+        {i < last && (!day.stops[i + 1].automaticNight || day.legs[i]?.distance !== 0) ? (
           <DriveBand
             leg={day.legs[i]}
-            onAskAlternatives={onAskAlternatives ? () => onAskAlternatives(day.dayId, i) : undefined}
+            onAskAlternatives={onAskAlternatives && !day.stops[i + 1].automaticNight ? () => onAskAlternatives(day.dayId, i) : undefined}
             alternativesOpen={openAlternatives?.dayId === day.dayId && openAlternatives.index === i}
           />
         ) : null}
@@ -1469,6 +1484,18 @@ function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, on
    * Built rather than mapped straight through, because a spill is drawn inside a block of
    * its own and a block cannot be opened halfway down a `map`.
    */
+  const renderStop = (stop: RoadtripStop, i: number): React.ReactElement => (
+    <React.Fragment key={stop.assignmentId}>
+      {refuel && !loading ? (day.dryPoints ?? []).filter(dry => dry.legIndex === -i - 1).map(dry => (
+        <li key={`inbound-${i}`}>
+          <RefuelBand dry={dry} dayId={day.dayId} refuel={refuel}
+            onAsk={() => onAskRefuel?.(day.dayId, dry)}
+            onAccept={onAcceptRefuel ? poi => onAcceptRefuel(day.dayId, poi, dry) : undefined} />
+        </li>
+      )) : null}
+      {renderStopContent(stop, i)}
+    </React.Fragment>
+  )
   const runs: { spill: SpillMark | null; from: number; to: number }[] = []
   {
     let at = 0
@@ -1556,7 +1583,7 @@ function DaySection({ day, selectedAssignmentId, onSelectStop, onReorderStop, on
             </Tooltip>
           ) : null}
           <span className={`${DAY_BADGE} bg-surface-card`} style={{ fontSize: FS.label }}>
-            {t('roadtrip.day.stopCount', { count: day.stops.filter(s => !isServiceStopType(s.stopType)).length })}
+            {t('roadtrip.day.stopCount', { count: day.stops.filter(s => !s.automaticNight && !isServiceStopType(s.stopType)).length })}
           </span>
           {/* The other half of "where possible". The setting is a weighting, so a day
               with no untolled crossing comes back on the toll road — and the only thing
@@ -1714,7 +1741,7 @@ function QuietDaySection({ day, onMoveStopToDay, drag }: {
 export default function RoadtripSidebar({
   routes, selectedAssignmentId, onSelectStop, onReorderStop, onMoveStopToDay, onAskAlternatives, openAlternatives, onEditStay,
   onSetStopKind, onSetStopFill, onFollowTrack, viaCounts, trackNames, refuel, onAskRefuel, onAcceptRefuel,
-  collapsedDayIds, onToggleDay,
+  collapsedDayIds, onToggleDay, onFocusPoint,
 }: RoadtripSidebarProps): React.ReactElement {
   const { t } = useTranslation()
   // One drag state for the whole rail rather than one per day: a stop that cannot leave
@@ -1751,12 +1778,18 @@ export default function RoadtripSidebar({
     <div className="flex min-h-0 flex-1 flex-col gap-3 pt-1">
       <div className="shrink-0">
         <TripSummary routes={routes} />
+        {routes.dayWindowIssue ? (
+          <p role="status" className="mx-3.5 mt-2 rounded-xl bg-warning-soft p-3 text-caption text-content">
+            {t(`roadtrip.window.${routes.dayWindowIssue}`)}
+          </p>
+        ) : null}
       </div>
       <div className="roadtrip-rail-scroll flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto pb-3.5">
         {routes.days.map(day => (
           <DaySection
             key={day.dayId}
             day={day}
+            onFocusPoint={onFocusPoint}
             selectedAssignmentId={selectedAssignmentId}
             onSelectStop={onSelectStop}
             onReorderStop={onReorderStop}
@@ -1767,7 +1800,7 @@ export default function RoadtripSidebar({
             onEditStay={onEditStay}
             onSetStopKind={onSetStopKind}
             onSetStopFill={onSetStopFill}
-            onFollowTrack={onFollowTrack}
+            onFollowTrack={day.dayId < 0 ? undefined : onFollowTrack}
             viaCount={viaCounts?.[day.dayId] ?? 0}
             trackName={trackNames?.[day.dayId]}
             refuel={refuel}

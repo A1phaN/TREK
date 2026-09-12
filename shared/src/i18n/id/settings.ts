@@ -27,7 +27,8 @@ const settings: TranslationStrings = {
   'settings.routingBase': 'Mesin rute sendiri',
   'settings.routingBaseHint': 'Instans OSRM milik sendiri. Kosong berarti server publik, yang mengizinkan sekitar satu permintaan per detik — cukup untuk sehari, mepet untuk perjalanan darat. Berlaku setelah server dimulai ulang.',
   'settings.valhallaBase': 'Instans Valhalla sendiri',
-  'settings.valhallaBaseHint': 'Instans Valhalla sendiri. Ia ditanya ketika satu ruas harus menghindari tol, jalan bebas hambatan, atau feri — server OSRM publik tidak bisa menjawabnya. Kosong memakai Valhalla publik dari FOSSGIS, kecuali di atas sudah diisi mesin rute sendiri; maka tidak ada mesin kedua yang ditanya. Berlaku setelah server dijalankan ulang.',
+  'settings.valhallaBaseHint':
+    'Secara bawaan, TREK menggunakan Valhalla publik FOSSGIS untuk menghindari tol, jalan bebas hambatan, dan feri. Masukkan URL Valhalla Anda sendiri di sini untuk menggunakannya sebagai pengganti. Jika hanya instans perutean sendiri yang dikonfigurasi, Valhalla publik tidak digunakan. Setelah memasukkan URL sendiri, mulai ulang server dan muat ulang halaman.',
   'settings.mapHint': 'Template URL untuk tile peta',
   'settings.mapProvider': 'Penyedia peta',
   'settings.mapProviderHint': 'Berlaku untuk peta Trip Planner dan Journey. Atlas selalu menggunakan Leaflet.',

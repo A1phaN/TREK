@@ -1,6 +1,61 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': 'Konaklama bul',
+  'roadtrip.stay.portalHint':
+    'Portalda varış yerini, tarihleri ve konukları kontrol edin. CHECK24 üzerinde elle arayın.',
+  'roadtrip.charging.available': 'boş',
+  'roadtrip.charging.unknown': 'Güvenilir veri yok',
+  'roadtrip.charging.stale': 'Durum güncel değil',
+  'roadtrip.charging.prices': 'Yayımlanan tarifeler',
+  'roadtrip.charging.note':
+    'Yayımlanan tarife; vergi, koşullar ve ek ücretler uygulanabilir. Şarj kartı fiyatınız farklı olabilir.',
+  'roadtrip.charging.coverage': 'Açık veri; kapsam bölge ve operatöre göre değişir.',
+  'roadtrip.import.title': 'Google Maps rotasını içe aktar',
+  'roadtrip.import.note': 'Duraklar seçilen güne eklenir. TREK rotayı yeniden hesaplar.',
+  'roadtrip.import.unresolved': 'Konum bulunamadı; bu durak atlanacak.',
+  'roadtrip.import.day': 'Gün',
+  'roadtrip.hazards.show': 'Tehlike bölgelerini göster',
+  'roadtrip.hazards.current': 'Güncel uyarılar',
+  'roadtrip.hazards.note': 'Uyarılar yol kapatmaları değildir. Rota değişmez.',
+  'roadtrip.hazards.point': 'Yalnızca konum; etkilenen alan bilinmiyor.',
+  'roadtrip.hazards.loading': 'Uyarılar yükleniyor…',
+  'roadtrip.hazards.unavailable': 'Kullanılamıyor',
+  'roadtrip.hazards.offline': 'Çevrimdışı: güncel uyarılar kullanılamıyor',
+  'roadtrip.hazards.partial': 'Sınırlı kapsam',
+  'roadtrip.stops.section': 'Hizmet durakları',
+  'roadtrip.stops.inDays': 'Günler içinde de göster',
+  'roadtrip.stops.daysHint':
+    'Bu seyahatin tüm hizmet durakları için geçerlidir. Kapalıyken yalnızca Roadtrip planında kalırlar. Günler içinde yeniden göstermek için açın.',
+  'roadtrip.window.dragHint':
+    'Çevrimiçiyken gün sonunu rota boyunca veya bir yere sürükleyin; otomatik sonu geri yüklemek için sağ tıklayın.',
+  'roadtrip.window.resetBoundaries': 'Otomatik gün sonlarını geri yükle',
+  'roadtrip.window.endHere': 'Günü burada bitir',
+  'roadtrip.window.endHereHint':
+    'Roadtrip modu ve günlük seyahat saatleri etkinken yer ayrıntılarından belirli bir durağı gün sonu olarak seçebilirsiniz.',
+  'roadtrip.window.endAt': 'Günü bitir',
+  'roadtrip.window.onRoute': 'Rota üzerinde',
+  'roadtrip.window.atStop': 'Son yerde',
+  'roadtrip.window.routeHint': 'Bitiş saatine ulaşıldığında rota üzerinde mola ver.',
+  'roadtrip.window.stopHint': 'Bir sonraki yere gün bitmeden ulaşılamıyorsa son yerde kal.',
+  'roadtrip.window.legTooLong':
+    'Bir sürüş günlük zaman aralığını aşıyor. Yol üzerine bir yer ekleyin veya rota üzerinde mola vermeyi seçin.',
+  'roadtrip.window.pointLabel': '{day}. günün bitişi saat {time}',
+  'roadtrip.window.title': 'Günlük yolculuk saatleri',
+  'roadtrip.window.start': 'Gün başlangıcı',
+  'roadtrip.window.end': 'Gün bitişi',
+  'roadtrip.window.hint':
+    'Günlük molaları planlamak için iki saati de ayarlayın. Kapatmak için birini temizleyin. Elle girilen saatler önceliklidir. Günler otomatik bağlanır.',
+  'roadtrip.window.invalid': 'Bitiş saati başlangıç saatinden sonra olmalıdır.',
+  'roadtrip.window.stop': 'Gün sonu',
+  'roadtrip.window.resume': 'Yolculuğa devam et',
+  'roadtrip.window.pointHint': 'Burası yolculuğunuzun tahmini gece molası noktasıdır.',
+  'roadtrip.window.departure': 'Ziyaretin kalan kısmından sonra {time} saatinde devam et',
+  'roadtrip.window.showPoint': 'Haritada göster',
+  'roadtrip.window.incomplete': 'Günlük molaları hesaplamak için tüm bağlantı rotaları gereklidir.',
+  'roadtrip.window.conflict':
+    'Sabit bir saat sürüş ve molalarla çakışıyor. Elle girilen saatler korunur; otomatik planlama duraklatıldı.',
+  'roadtrip.window.tooLong': 'Bu saatler 365 günden fazla ek süre gerektiriyor. Daha uzun bir günlük aralık seçin.',
   'roadtrip.mode.roadtrip': 'Yol gezisi',
   'roadtrip.mode.days': 'Günler',
   'roadtrip.mode.label': 'Plan görünümü',
@@ -64,11 +119,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Paralı yollar',
   'roadtrip.avoid.motorway': 'Otoyollar',
   'roadtrip.avoid.ferry': 'Feribotlar',
-  'roadtrip.avoid.hint': 'Bunlar yasaklanmaz, ağırlığı düşürülür. Bir sürüşün etrafından dolaşma imkânı yoksa yine kullanır ve gün bunu söyler.',
-  'roadtrip.avoid.unavailable': 'Kullanılamıyor: bu kurulum kendi motorunu kullanıyor ve bir yol sınıfını dışarıda bırakamıyor.',
+  'roadtrip.avoid.hint':
+    'Bunlar yasaklanmaz, ağırlığı düşürülür. Bir sürüşün etrafından dolaşma imkânı yoksa yine kullanır ve gün bunu söyler.',
+  'roadtrip.avoid.unavailable':
+    'Kullanılamıyor: bu kurulum kendi motorunu kullanıyor ve bir yol sınıfını dışarıda bırakamıyor.',
   'roadtrip.avoid.badge': '{count} kaçınılıyor',
   'roadtrip.avoid.missed': '{classes} kaçınılmaz',
-  'roadtrip.avoid.missedHint': 'Bu günün etrafından dolaşan bir rota yok, bu yüzden sürüş oradan geçiyor. Diğer günler kaçınabildiğinden kaçınmayı sürdürüyor.',
+  'roadtrip.avoid.missedHint':
+    'Bu günün etrafından dolaşan bir rota yok, bu yüzden sürüş oradan geçiyor. Diğer günler kaçınabildiğinden kaçınmayı sürdürüyor.',
   'roadtrip.refuel.dry': 'Depo burada bitiyor',
   'roadtrip.refuel.after': '{distance} sonra',
   'roadtrip.limit.vehicleLabel': 'Ne kullanıyorsun',
@@ -110,7 +168,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '{distance} uzunluğunda',
   'roadtrip.track.gap': 'bu günden {distance} uzakta',
   'roadtrip.track.onDay': 'bu gün boyunca',
-  'roadtrip.track.explain': 'Sürüş, birkaç ara noktayla izin üzerine çekilir. Bu etaplardaki mevcut ara noktalar değiştirilir.',
+  'roadtrip.track.explain':
+    'Sürüş, birkaç ara noktayla izin üzerine çekilir. Bu etaplardaki mevcut ara noktalar değiştirilir.',
   'roadtrip.track.action': 'Bu izi takip et',
   'roadtrip.track.working': 'Sürüş ize uyarlanıyor, tur {round}',
   'roadtrip.track.done': '{count} ara nokta yerleştirildi. Sürüş, izin {distance} yakınında kalıyor.',
@@ -129,7 +188,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Yol boyunca “{name}” ile eşleşen bir şey yok.',
   'roadtrip.poi.noneMatchFilters': 'Yol boyunca bu filtrelere uyan bir yer yok.',
   'roadtrip.poi.foundFiltered': 'yol üzerinde {total} içinden {count}',
-  'roadtrip.poi.truncated': '{count} bölümde bir yanıta sığandan fazlası vardı — geri kalanı görmek için koridoru daraltın.',
+  'roadtrip.poi.truncated':
+    '{count} bölümde bir yanıta sığandan fazlası vardı — geri kalanı görmek için koridoru daraltın.',
   'roadtrip.poi.search': 'Ara',
   'roadtrip.poi.searching': 'Aranıyor {done}/{total}',
   'roadtrip.poi.capped': 'Rota uzun — yalnızca ilk bölüm arandı.',

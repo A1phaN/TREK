@@ -1,6 +1,60 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': 'Tìm chỗ ở',
+  'roadtrip.stay.portalHint': 'Kiểm tra điểm đến, ngày và khách trên cổng đặt chỗ. Tìm thủ công trên CHECK24.',
+  'roadtrip.charging.available': 'còn trống',
+  'roadtrip.charging.unknown': 'Không có dữ liệu đáng tin cậy',
+  'roadtrip.charging.stale': 'Trạng thái đã cũ',
+  'roadtrip.charging.prices': 'Biểu giá công bố',
+  'roadtrip.charging.note':
+    'Biểu giá công bố; có thể áp dụng thuế, điều kiện và phụ phí. Giá thẻ sạc của bạn có thể khác.',
+  'roadtrip.charging.coverage': 'Dữ liệu mở; phạm vi phụ thuộc khu vực và nhà vận hành.',
+  'roadtrip.import.title': 'Nhập tuyến đường Google Maps',
+  'roadtrip.import.note': 'Các điểm dừng được thêm vào ngày đã chọn. TREK tính lại tuyến đường.',
+  'roadtrip.import.unresolved': 'Không tìm thấy vị trí; điểm dừng này sẽ bị bỏ qua.',
+  'roadtrip.import.day': 'Ngày',
+  'roadtrip.hazards.show': 'Hiển thị vùng nguy hiểm',
+  'roadtrip.hazards.current': 'Cảnh báo hiện tại',
+  'roadtrip.hazards.note': 'Cảnh báo không có nghĩa là đường bị đóng. Tuyến đường không thay đổi.',
+  'roadtrip.hazards.point': 'Chỉ có vị trí; chưa rõ vùng bị ảnh hưởng.',
+  'roadtrip.hazards.loading': 'Đang tải cảnh báo…',
+  'roadtrip.hazards.unavailable': 'Không khả dụng',
+  'roadtrip.hazards.offline': 'Ngoại tuyến: không có cảnh báo hiện tại',
+  'roadtrip.hazards.partial': 'Phạm vi hạn chế',
+  'roadtrip.stops.section': 'Điểm dừng dịch vụ',
+  'roadtrip.stops.inDays': 'Hiển thị cả trong Ngày',
+  'roadtrip.stops.daysHint':
+    'Áp dụng cho mọi điểm dừng dịch vụ của chuyến đi. Khi tắt, chúng chỉ xuất hiện trong Roadtrip. Bật để hiển thị lại trong Ngày.',
+  'roadtrip.window.dragHint':
+    'Khi trực tuyến, kéo điểm kết thúc ngày dọc tuyến đường hoặc đến một địa điểm; nhấp chuột phải để khôi phục kết thúc tự động.',
+  'roadtrip.window.resetBoundaries': 'Khôi phục kết thúc ngày tự động',
+  'roadtrip.window.endHere': 'Kết thúc ngày tại đây',
+  'roadtrip.window.endHereHint':
+    'Bạn có thể kết thúc ngày tại một điểm dừng trong chi tiết địa điểm khi chế độ Roadtrip và giờ di chuyển hằng ngày đang bật.',
+  'roadtrip.window.endAt': 'Kết thúc ngày',
+  'roadtrip.window.onRoute': 'Trên tuyến đường',
+  'roadtrip.window.atStop': 'Tại địa điểm cuối',
+  'roadtrip.window.routeHint': 'Tạm dừng trên tuyến đường khi đến giờ kết thúc.',
+  'roadtrip.window.stopHint': 'Ở lại địa điểm cuối nếu không thể đến địa điểm tiếp theo trước giờ kết thúc ngày.',
+  'roadtrip.window.legTooLong':
+    'Một chặng lái xe vượt quá khung giờ hằng ngày. Thêm địa điểm dọc đường hoặc chọn tạm dừng trên tuyến đường.',
+  'roadtrip.window.pointLabel': 'Kết thúc ngày {day} lúc {time}',
+  'roadtrip.window.title': 'Giờ di chuyển hằng ngày',
+  'roadtrip.window.start': 'Giờ bắt đầu ngày',
+  'roadtrip.window.end': 'Giờ kết thúc ngày',
+  'roadtrip.window.hint':
+    'Đặt cả hai giờ để lên kế hoạch nghỉ mỗi ngày. Xóa một giờ để tắt. Giờ nhập thủ công được ưu tiên. Các ngày được nối tự động.',
+  'roadtrip.window.invalid': 'Giờ kết thúc phải sau giờ bắt đầu.',
+  'roadtrip.window.stop': 'Kết thúc ngày',
+  'roadtrip.window.resume': 'Tiếp tục hành trình',
+  'roadtrip.window.pointHint': 'Đây là điểm tạm dừng qua đêm dự kiến của hành trình.',
+  'roadtrip.window.departure': 'Tiếp tục sau phần tham quan còn lại lúc {time}',
+  'roadtrip.window.showPoint': 'Hiện trên bản đồ',
+  'roadtrip.window.incomplete': 'Cần có tất cả tuyến đường nối để tính thời gian nghỉ hằng ngày.',
+  'roadtrip.window.conflict':
+    'Một giờ cố định xung đột với việc lái xe và nghỉ. Giờ thủ công được giữ nguyên; lập lịch tự động tạm dừng.',
+  'roadtrip.window.tooLong': 'Các giờ này cần hơn 365 ngày bổ sung. Hãy chọn khoảng thời gian mỗi ngày dài hơn.',
   'roadtrip.mode.roadtrip': 'Chuyến đi đường bộ',
   'roadtrip.mode.days': 'Ngày',
   'roadtrip.mode.label': 'Chế độ xem kế hoạch',
@@ -64,11 +118,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Đường thu phí',
   'roadtrip.avoid.motorway': 'Đường cao tốc',
   'roadtrip.avoid.ferry': 'Phà',
-  'roadtrip.avoid.hint': 'Đây là hạ trọng số, không phải cấm. Khi một chặng không có đường vòng, nó vẫn đi qua và ngày đó sẽ báo.',
-  'roadtrip.avoid.unavailable': 'Không khả dụng: bản cài này dùng máy chủ định tuyến riêng, vốn không bỏ qua được một loại đường.',
+  'roadtrip.avoid.hint':
+    'Đây là hạ trọng số, không phải cấm. Khi một chặng không có đường vòng, nó vẫn đi qua và ngày đó sẽ báo.',
+  'roadtrip.avoid.unavailable':
+    'Không khả dụng: bản cài này dùng máy chủ định tuyến riêng, vốn không bỏ qua được một loại đường.',
   'roadtrip.avoid.badge': 'tránh {count}',
   'roadtrip.avoid.missed': '{classes} không tránh được',
-  'roadtrip.avoid.missedHint': 'Ngày này không có tuyến đường vòng, nên chặng đi qua đó. Những ngày khác vẫn tránh những gì có thể.',
+  'roadtrip.avoid.missedHint':
+    'Ngày này không có tuyến đường vòng, nên chặng đi qua đó. Những ngày khác vẫn tránh những gì có thể.',
   'roadtrip.refuel.dry': 'Hết xăng ở đây',
   'roadtrip.refuel.after': 'sau {distance}',
   'roadtrip.limit.vehicleLabel': 'Bạn lái xe gì',
@@ -110,7 +167,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': 'dài {distance}',
   'roadtrip.track.gap': 'cách ngày này {distance}',
   'roadtrip.track.onDay': 'dọc theo ngày này',
-  'roadtrip.track.explain': 'Hành trình được kéo về tuyến bằng một vài điểm trung gian. Các điểm hiện có trên những chặng đó sẽ bị thay thế.',
+  'roadtrip.track.explain':
+    'Hành trình được kéo về tuyến bằng một vài điểm trung gian. Các điểm hiện có trên những chặng đó sẽ bị thay thế.',
   'roadtrip.track.action': 'Đi theo tuyến này',
   'roadtrip.track.working': 'Đang khớp hành trình với tuyến, vòng {round}',
   'roadtrip.track.done': 'Đã đặt {count} điểm trung gian. Hành trình bám tuyến trong phạm vi {distance}.',
@@ -129,7 +187,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Không có gì trên đường khớp với “{name}”.',
   'roadtrip.poi.noneMatchFilters': 'Không có gì trên đường phù hợp với các bộ lọc này.',
   'roadtrip.poi.foundFiltered': '{count} trong {total} trên đường',
-  'roadtrip.poi.truncated': 'Có {count} đoạn nhiều hơn mức một phản hồi chứa được — thu hẹp hành lang để xem phần còn lại.',
+  'roadtrip.poi.truncated':
+    'Có {count} đoạn nhiều hơn mức một phản hồi chứa được — thu hẹp hành lang để xem phần còn lại.',
   'roadtrip.poi.search': 'Tìm kiếm',
   'roadtrip.poi.searching': 'Đang tìm {done}/{total}',
   'roadtrip.poi.capped': 'Lộ trình dài — chỉ đoạn đầu được tìm kiếm.',

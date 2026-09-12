@@ -1,3 +1,4 @@
+import { roadtripPreferencesRepo } from '../repo/roadtripPreferencesRepo'
 /**
  * Trip sync manager — seeds Dexie with trip data for offline use.
  *
@@ -114,6 +115,9 @@ function isVideo(file: TripFile): boolean {
 async function syncTrip(tripId: number): Promise<void> {
   const bundle = await tripsApi.bundle(tripId) as TripBundle
 
+  await roadtripPreferencesRepo.read(tripId).catch((error: unknown) => {
+    if ((error as { response?: { status?: number } }).response?.status !== 404) throw error
+  })
   await upsertTrip(bundle.trip)
   await upsertDays(bundle.days)
   await upsertPlaces(bundle.places)

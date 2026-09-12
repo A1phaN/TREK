@@ -1,6 +1,60 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': '숙소 찾기',
+  'roadtrip.stay.portalHint': '포털에서 목적지, 날짜, 인원을 확인하세요. CHECK24에서는 직접 검색하세요.',
+  'roadtrip.charging.available': '이용 가능',
+  'roadtrip.charging.unknown': '신뢰할 수 있는 데이터 없음',
+  'roadtrip.charging.stale': '오래된 상태',
+  'roadtrip.charging.prices': '공개 요금',
+  'roadtrip.charging.note':
+    '공개 요금입니다. 세금, 조건, 추가 요금이 적용될 수 있으며 충전 카드 요금은 다를 수 있습니다.',
+  'roadtrip.charging.coverage': '공개 데이터로 지역과 운영사에 따라 범위가 다릅니다.',
+  'roadtrip.import.title': 'Google Maps 경로 가져오기',
+  'roadtrip.import.note': '경유지를 선택한 날짜에 추가합니다. TREK이 경로를 다시 계산합니다.',
+  'roadtrip.import.unresolved': '위치를 찾을 수 없어 이 경유지를 건너뜁니다.',
+  'roadtrip.import.day': '일',
+  'roadtrip.hazards.show': '위험 지역 표시',
+  'roadtrip.hazards.current': '현재 경보',
+  'roadtrip.hazards.note': '경보는 도로 폐쇄를 의미하지 않습니다. 경로는 변경되지 않습니다.',
+  'roadtrip.hazards.point': '발생 위치만 표시하며 영향 지역은 알 수 없습니다.',
+  'roadtrip.hazards.loading': '경보 불러오는 중…',
+  'roadtrip.hazards.unavailable': '사용 불가',
+  'roadtrip.hazards.offline': '오프라인: 현재 경보를 사용할 수 없습니다',
+  'roadtrip.hazards.partial': '제한된 범위',
+  'roadtrip.stops.section': '편의시설 경유지',
+  'roadtrip.stops.inDays': '일별 보기에도 표시',
+  'roadtrip.stops.daysHint':
+    '이 여행의 모든 편의시설 경유지에 적용됩니다. 끄면 Roadtrip 계획에만 표시됩니다. 켜면 일별 보기에도 다시 표시됩니다.',
+  'roadtrip.window.dragHint':
+    '온라인에서 하루 종료 지점을 경로나 장소로 드래그하고, 오른쪽 클릭으로 자동 종료를 복원할 수 있습니다.',
+  'roadtrip.window.resetBoundaries': '자동 하루 종료 복원',
+  'roadtrip.window.endHere': '여기서 하루 종료',
+  'roadtrip.window.endHereHint':
+    'Roadtrip 모드와 일일 이동 시간이 활성화된 경우 장소 상세에서 특정 경유지를 하루의 종점으로 설정할 수 있습니다.',
+  'roadtrip.window.endAt': '하루 종료 지점',
+  'roadtrip.window.onRoute': '경로 중간',
+  'roadtrip.window.atStop': '마지막 장소',
+  'roadtrip.window.routeHint': '종료 시간이 되면 경로의 도달 지점에서 멈춥니다.',
+  'roadtrip.window.stopHint': '하루 종료 전 다음 장소에 도착할 수 없으면 마지막 장소에 머뭅니다.',
+  'roadtrip.window.legTooLong':
+    '한 구간의 이동 시간이 하루 시간 범위를 초과합니다. 중간에 장소를 추가하거나 경로 중간에서 멈추도록 선택하세요.',
+  'roadtrip.window.pointLabel': '{day}일차 종료 시간 {time}',
+  'roadtrip.window.title': '일일 이동 시간',
+  'roadtrip.window.start': '하루 시작 시간',
+  'roadtrip.window.end': '하루 종료 시간',
+  'roadtrip.window.hint':
+    '매일 휴식을 계획하려면 두 시간을 모두 설정하세요. 하나를 비우면 해제됩니다. 수동 시간이 우선하며 날짜별 경로는 자동으로 연결됩니다.',
+  'roadtrip.window.invalid': '종료 시간은 시작 시간보다 늦어야 합니다.',
+  'roadtrip.window.stop': '하루 일정 종료',
+  'roadtrip.window.resume': '여행 계속',
+  'roadtrip.window.pointHint': '여기가 예상되는 야간 휴식 지점입니다.',
+  'roadtrip.window.departure': '남은 방문을 마친 후 {time}에 출발',
+  'roadtrip.window.showPoint': '지도에서 보기',
+  'roadtrip.window.incomplete': '매일 휴식을 계산하려면 모든 연결 경로가 필요합니다.',
+  'roadtrip.window.conflict':
+    '고정 시간이 이동 및 휴식과 충돌합니다. 수동 시간은 유지되며 자동 계획이 일시 중지됩니다.',
+  'roadtrip.window.tooLong': '이 시간 설정에는 365일이 넘는 추가 날짜가 필요합니다. 일일 이동 시간을 늘려 주세요.',
   'roadtrip.mode.roadtrip': '로드트립',
   'roadtrip.mode.days': '일자별',
   'roadtrip.mode.label': '계획 보기',
@@ -64,8 +118,10 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': '유료 도로',
   'roadtrip.avoid.motorway': '고속도로',
   'roadtrip.avoid.ferry': '페리',
-  'roadtrip.avoid.hint': '금지가 아니라 가중치를 낮추는 것입니다. 우회로가 없으면 그대로 지나가고, 해당 날짜에 그렇게 표시됩니다.',
-  'roadtrip.avoid.unavailable': '사용할 수 없습니다. 이 인스턴스는 자체 엔진으로 경로를 계산하며, 도로 종류를 제외하지 못합니다.',
+  'roadtrip.avoid.hint':
+    '금지가 아니라 가중치를 낮추는 것입니다. 우회로가 없으면 그대로 지나가고, 해당 날짜에 그렇게 표시됩니다.',
+  'roadtrip.avoid.unavailable':
+    '사용할 수 없습니다. 이 인스턴스는 자체 엔진으로 경로를 계산하며, 도로 종류를 제외하지 못합니다.',
   'roadtrip.avoid.badge': '{count}개 회피',
   'roadtrip.avoid.missed': '{classes} 회피 불가',
   'roadtrip.avoid.missedHint': '이 날은 우회로가 없어 그대로 지나갑니다. 다른 날은 계속 피할 수 있는 것을 피합니다.',
@@ -129,7 +185,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': '경로상에 “{name}”와(과) 일치하는 곳이 없습니다.',
   'roadtrip.poi.noneMatchFilters': '이 필터에 맞는 곳이 경로에 없습니다.',
   'roadtrip.poi.foundFiltered': '경로상 {total}곳 중 {count}곳',
-  'roadtrip.poi.truncated': '{count}개 구간에서 한 번에 반환할 수 있는 수를 넘었습니다. 회랑을 좁히면 나머지를 볼 수 있습니다.',
+  'roadtrip.poi.truncated':
+    '{count}개 구간에서 한 번에 반환할 수 있는 수를 넘었습니다. 회랑을 좁히면 나머지를 볼 수 있습니다.',
   'roadtrip.poi.search': '검색',
   'roadtrip.poi.searching': '검색 중 {done}/{total}',
   'roadtrip.poi.capped': '경로가 길어 앞부분만 검색했습니다.',

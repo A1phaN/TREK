@@ -27,7 +27,8 @@ const settings: TranslationStrings = {
   'settings.routingBase': 'Własny silnik tras',
   'settings.routingBaseHint': 'Własna instancja OSRM. Puste używa serwerów publicznych, które pozwalają na około jedno zapytanie na sekundę — wystarczy na dzień, mało na road trip. Działa po restarcie serwera.',
   'settings.valhallaBase': 'Własna instancja Valhalli',
-  'settings.valhallaBaseHint': 'Własna instancja Valhalli. Pytana wtedy, gdy odcinek ma omijać opłaty, autostrady lub promy — publiczne serwery OSRM nie potrafią na to odpowiedzieć. Puste używa publicznej Valhalli FOSSGIS, chyba że powyżej wskazano własny silnik tras; wtedy żaden drugi silnik nie jest pytany. Działa po ponownym uruchomieniu serwera.',
+  'settings.valhallaBaseHint':
+    'TREK domyślnie używa publicznej Valhalli FOSSGIS do omijania opłat, autostrad i promów. Wpisz tutaj URL własnej Valhalli, aby używać jej zamiast publicznej. Jeśli skonfigurowano tylko własną instancję wyznaczania tras, publiczna Valhalla nie jest używana. Po wpisaniu własnego adresu URL uruchom ponownie serwer i odśwież stronę.',
   'settings.mapHint': 'Szablon URL dla kafelków mapy',
   'settings.mapProvider': 'Dostawca mapy',
   'settings.mapProviderHint': 'Dotyczy map Trip Planner i Journey. Atlas zawsze używa Leaflet.',

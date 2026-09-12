@@ -112,6 +112,7 @@ export class DaysService {
         id: a.id,
         day_id: a.day_id,
         order_index: a.order_index,
+        end_day: a.end_day === 1,
         notes: a.notes,
         created_at: a.created_at,
         place: {

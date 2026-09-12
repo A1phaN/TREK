@@ -1,3 +1,4 @@
+import { ROADTRIP_PREFERENCE_KEYS } from '@trek/shared';
 import { readEnv } from '../app-config';
 import { encrypt_api_key } from '../nest/common/crypto/apiKeyCrypto';
 
@@ -4553,6 +4554,27 @@ function runMigrations(db: Database.Database): void {
         );
         CREATE INDEX IF NOT EXISTS idx_school_holiday_periods_region ON school_holiday_periods(region_id);
       `);
+    },
+    () => {
+      const cols = db.prepare("SELECT name FROM pragma_table_info('day_assignments')").all() as Array<{ name: string }>;
+      if (!cols.some(c => c.name === 'end_day')) {
+        db.exec('ALTER TABLE day_assignments ADD COLUMN end_day INTEGER NOT NULL DEFAULT 0');
+      }
+    },
+    () => {
+      db.exec(`CREATE TABLE IF NOT EXISTS roadtrip_day_boundaries (
+        trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+        day_number INTEGER NOT NULL CHECK (day_number BETWEEN 1 AND 366),
+        from_assignment_id INTEGER NOT NULL REFERENCES day_assignments(id) ON DELETE CASCADE,
+        to_assignment_id INTEGER REFERENCES day_assignments(id) ON DELETE CASCADE,
+        fraction REAL NOT NULL CHECK (fraction BETWEEN 0 AND 1),
+        PRIMARY KEY (trip_id, day_number)
+      )`);
+    },
+    () => {
+      db.exec('CREATE TABLE IF NOT EXISTS roadtrip_preferences (trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE, key TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY (trip_id, key))');
+      const inherit = db.prepare('INSERT OR IGNORE INTO roadtrip_preferences (trip_id, key, value) SELECT t.id, s.key, s.value FROM trips t JOIN settings s ON s.user_id = t.user_id WHERE s.key = ? AND s.value IS NOT NULL');
+      for (const key of ROADTRIP_PREFERENCE_KEYS) inherit.run(key);
     },
   ];
 

@@ -28,7 +28,8 @@ const settings: TranslationStrings = {
   'settings.routingBase': 'Eigen routeserver',
   'settings.routingBaseHint': 'Een eigen OSRM-server. Leeg gebruikt de publieke servers, die ongeveer één verzoek per seconde toestaan — genoeg voor een dag, krap voor een roadtrip. Werkt na een herstart van de server.',
   'settings.valhallaBase': 'Eigen Valhalla-instantie',
-  'settings.valhallaBaseHint': 'Een eigen Valhalla-instantie. Die wordt geraadpleegd wanneer een traject tol, snelwegen of veerboten moet vermijden — dat kunnen de publieke OSRM-servers niet beantwoorden. Leeg gebruikt de publieke FOSSGIS-Valhalla, tenzij hierboven een eigen routeringsmotor staat; dan wordt er helemaal geen tweede motor geraadpleegd. Werkt pas na een herstart van de server.',
+  'settings.valhallaBaseHint':
+    'TREK gebruikt standaard de publieke Valhalla van FOSSGIS om tolwegen, snelwegen en veerboten te vermijden. Vul hier de URL van je eigen Valhalla in om die te gebruiken. Als alleen een eigen routeringsinstantie is ingesteld, wordt de publieke Valhalla niet gebruikt. Herstart na het invoeren van een eigen URL de server en laad de pagina opnieuw.',
   'settings.mapHint': 'URL-sjabloon voor kaarttegels',
   'settings.mapProvider': 'Kaartprovider',
   'settings.mapProviderHint': 'Geldt voor Trip Planner en Journey kaarten. Atlas gebruikt altijd Leaflet.',

@@ -31,6 +31,9 @@ export interface HookSearchRequest {
   /** The caller's language tag, for providers that return localized names. */
   lang?: string;
   near?: { lat: number; lng: number };
+  /** Category search within a Roadtrip search rectangle. Older hosts omit these fields. */
+  category?: string;
+  bounds?: { south: number; west: number; north: number; east: number };
 }
 
 /** The waypoint request a route provider is asked to solve. */

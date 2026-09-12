@@ -225,6 +225,11 @@ export class AssignmentsService {
     return this.getAssignmentWithPlace(Number(id));
   }
 
+  setEndDay(id: string | number, endDay: boolean) {
+    this.dbs.run('UPDATE day_assignments SET end_day = ? WHERE id = ?', endDay ? 1 : 0, id);
+    return this.getAssignmentWithPlace(Number(id));
+  }
+
   /**
    * Edit the per-assignment note after creation (#2163) — until now the note
    * was write-once via the create paths (REST body, MCP tools, plugin RPC) and

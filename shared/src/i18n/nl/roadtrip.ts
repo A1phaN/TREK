@@ -1,6 +1,61 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': 'Accommodatie zoeken',
+  'roadtrip.stay.portalHint': 'Controleer bestemming, datums en gasten op het portaal. Zoek handmatig op CHECK24.',
+  'roadtrip.charging.available': 'beschikbaar',
+  'roadtrip.charging.unknown': 'Geen betrouwbare gegevens',
+  'roadtrip.charging.stale': 'Status verouderd',
+  'roadtrip.charging.prices': 'Gepubliceerde tarieven',
+  'roadtrip.charging.note':
+    'Gepubliceerd tarief; belastingen, voorwaarden en toeslagen kunnen gelden. Je laadpasprijs kan afwijken.',
+  'roadtrip.charging.coverage': 'Open data; dekking verschilt per regio en aanbieder.',
+  'roadtrip.import.title': 'Google Maps-route importeren',
+  'roadtrip.import.note': 'Stops worden aan de gekozen dag toegevoegd. TREK berekent de route opnieuw.',
+  'roadtrip.import.unresolved': 'Locatie niet gevonden; deze stop wordt overgeslagen.',
+  'roadtrip.import.day': 'Dag',
+  'roadtrip.hazards.show': 'Gevarengebieden tonen',
+  'roadtrip.hazards.current': 'Actuele waarschuwingen',
+  'roadtrip.hazards.note': 'Waarschuwingen zijn geen wegafsluitingen. De route blijft ongewijzigd.',
+  'roadtrip.hazards.point': 'Alleen locatie; getroffen gebied onbekend.',
+  'roadtrip.hazards.loading': 'Waarschuwingen laden…',
+  'roadtrip.hazards.unavailable': 'Niet beschikbaar',
+  'roadtrip.hazards.offline': 'Offline: actuele waarschuwingen niet beschikbaar',
+  'roadtrip.hazards.partial': 'Beperkte dekking',
+  'roadtrip.stops.section': 'Servicestops',
+  'roadtrip.stops.inDays': 'Ook in Dagen tonen',
+  'roadtrip.stops.daysHint':
+    'Geldt voor alle servicestops van deze reis. Uitgeschakeld blijven ze alleen in Roadtrip staan. Schakel dit in om ze weer in Dagen te tonen.',
+  'roadtrip.window.dragHint':
+    'Sleep online het dageinde langs de route of naar een plaats; klik met rechts om het automatische einde te herstellen.',
+  'roadtrip.window.resetBoundaries': 'Automatische dageinden herstellen',
+  'roadtrip.window.endHere': 'Dag hier beëindigen',
+  'roadtrip.window.endHereHint':
+    'Je kunt een stop als dageinde instellen in de plaatsdetails wanneer de Roadtrip-modus en dagelijkse reistijden actief zijn.',
+  'roadtrip.window.endAt': 'Dag afsluiten',
+  'roadtrip.window.onRoute': 'Onderweg',
+  'roadtrip.window.atStop': 'Bij de laatste plek',
+  'roadtrip.window.routeHint': 'Pauzeer onderweg zodra de eindtijd is bereikt.',
+  'roadtrip.window.stopHint': 'Blijf bij de laatste plek als de volgende niet voor het einde van de dag bereikbaar is.',
+  'roadtrip.window.legTooLong':
+    'Een rit duurt langer dan het dagelijkse tijdvenster. Voeg onderweg een plek toe of kies voor een pauze onderweg.',
+  'roadtrip.window.pointLabel': 'Einde van dag {day} om {time}',
+  'roadtrip.window.title': 'Dagelijkse reistijden',
+  'roadtrip.window.start': 'Begin van de dag',
+  'roadtrip.window.end': 'Einde van de dag',
+  'roadtrip.window.hint':
+    'Vul beide tijden in om dagelijkse pauzes te plannen. Maak één veld leeg om dit uit te zetten. Handmatige tijden gaan voor. Dagen worden automatisch verbonden.',
+  'roadtrip.window.invalid': 'De eindtijd moet na de begintijd liggen.',
+  'roadtrip.window.stop': 'Einde van de dag',
+  'roadtrip.window.resume': 'Reis hervatten',
+  'roadtrip.window.pointHint': 'Hier pauzeert je reis naar verwachting voor de nacht.',
+  'roadtrip.window.departure': 'Verder na het resterende bezoek om {time}',
+  'roadtrip.window.showPoint': 'Toon op kaart',
+  'roadtrip.window.incomplete':
+    'Dagelijkse pauzes kunnen pas worden berekend als alle verbindingsroutes beschikbaar zijn.',
+  'roadtrip.window.conflict':
+    'Een vaste tijd past niet bij de rit en pauzes. Handmatige tijden blijven behouden; automatische planning is gepauzeerd.',
+  'roadtrip.window.tooLong': 'Deze tijden vragen meer dan 365 extra dagen. Kies een langer dagelijks tijdvak.',
   'roadtrip.mode.roadtrip': 'Roadtrip',
   'roadtrip.mode.days': 'Dagen',
   'roadtrip.mode.label': 'Planweergave',
@@ -42,7 +97,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.limit.rangeEmpty': 'Geen actieradius',
   'roadtrip.limit.rangeEmptyHint': 'Vul een actieradius in, of vul de velden in en TREK rekent hem uit.',
   'roadtrip.limit.specHint': 'Ingevuld bepalen deze velden de actieradius hierboven.',
-  'roadtrip.limit.vehicleHint': 'Geef aan wat je rijdt, dan kun je de voertuiggegevens invullen in plaats van een actieradius.',
+  'roadtrip.limit.vehicleHint':
+    'Geef aan wat je rijdt, dan kun je de voertuiggegevens invullen in plaats van een actieradius.',
   'roadtrip.limit.minutes': 'min',
   'roadtrip.limit.off': 'uit',
   'roadtrip.limit.blockNote': 'Eén blok = {distance}',
@@ -64,11 +120,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Tolwegen',
   'roadtrip.avoid.motorway': 'Snelwegen',
   'roadtrip.avoid.ferry': 'Veerboten',
-  'roadtrip.avoid.hint': 'Ze krijgen minder gewicht, ze worden niet verboden. Waar een rit er niet omheen kan, gebruikt hij ze toch en de dag meldt dat.',
-  'roadtrip.avoid.unavailable': 'Niet beschikbaar: deze installatie gebruikt haar eigen motor, die geen wegklasse kan weglaten.',
+  'roadtrip.avoid.hint':
+    'Ze krijgen minder gewicht, ze worden niet verboden. Waar een rit er niet omheen kan, gebruikt hij ze toch en de dag meldt dat.',
+  'roadtrip.avoid.unavailable':
+    'Niet beschikbaar: deze installatie gebruikt haar eigen motor, die geen wegklasse kan weglaten.',
   'roadtrip.avoid.badge': '{count} vermeden',
   'roadtrip.avoid.missed': '{classes} onvermijdelijk',
-  'roadtrip.avoid.missedHint': 'Deze dag heeft er geen route omheen, dus de rit gebruikt het. Alle andere dagen vermijden nog steeds wat ze kunnen.',
+  'roadtrip.avoid.missedHint':
+    'Deze dag heeft er geen route omheen, dus de rit gebruikt het. Alle andere dagen vermijden nog steeds wat ze kunnen.',
   'roadtrip.refuel.dry': 'Hier is de tank leeg',
   'roadtrip.refuel.after': 'na {distance}',
   'roadtrip.limit.vehicleLabel': 'Wat je rijdt',
@@ -110,7 +169,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '{distance} lang',
   'roadtrip.track.gap': '{distance} van deze dag',
   'roadtrip.track.onDay': 'langs deze dag',
-  'roadtrip.track.explain': 'De rit wordt met een handvol tussenpunten op de track getrokken. Bestaande tussenpunten op die etappes worden vervangen.',
+  'roadtrip.track.explain':
+    'De rit wordt met een handvol tussenpunten op de track getrokken. Bestaande tussenpunten op die etappes worden vervangen.',
   'roadtrip.track.action': 'Deze track volgen',
   'roadtrip.track.working': 'Rit wordt op de track gepast, ronde {round}',
   'roadtrip.track.done': '{count} tussenpunten geplaatst. De rit blijft binnen {distance} van de track.',
@@ -129,7 +189,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Niets onderweg komt overeen met “{name}”.',
   'roadtrip.poi.noneMatchFilters': 'Niets onderweg voldoet aan deze filters.',
   'roadtrip.poi.foundFiltered': '{count} van {total} onderweg',
-  'roadtrip.poi.truncated': 'Op {count} stukken waren er meer dan in één antwoord passen — maak de corridor smaller om de rest te zien.',
+  'roadtrip.poi.truncated':
+    'Op {count} stukken waren er meer dan in één antwoord passen — maak de corridor smaller om de rest te zien.',
   'roadtrip.poi.search': 'Zoeken',
   'roadtrip.poi.searching': 'Zoeken {done} van {total}',
   'roadtrip.poi.capped': 'De route is lang — alleen het eerste deel is doorzocht.',

@@ -90,13 +90,13 @@ describe('RoadtripStopPopup', () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledWith({ stopType: 'fuel', dwellMinutes: 45 }))
   })
 
-  it('FE-ROADTRIP-STOPPOPUP-007: unpicking the kind leaves an ordinary place', async () => {
+  it('FE-ROADTRIP-STOPPOPUP-007: clicking the selected kind keeps a service stop', async () => {
     const onSave = vi.fn()
     wrap(<RoadtripStopPopup draft={draft()} {...noop} onSave={onSave} />)
 
     fireEvent.click(screen.getByRole('button', { name: /Fuel/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Add' }))
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ stopType: null, dwellMinutes: 10 }))
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ stopType: 'fuel', dwellMinutes: 10 }))
   })
 
   /**
@@ -274,4 +274,31 @@ describe('RoadtripStopPopup', () => {
     expect(screen.queryByRole('button', { name: 'Overnight' })).not.toBeInTheDocument()
     expect(screen.getByText('Kind of stop')).toBeInTheDocument()
   })
+})
+
+
+describe('editing a roadtrip stop', () => {
+  it('loads the saved duration and saves without adding another stop', async () => {
+    const onSave = vi.fn()
+    wrap(<RoadtripStopPopup draft={draft({ editing: { placeId: 7, stopType: 'fuel', dwellMinutes: 45 } })} {...noop} onSave={onSave} />)
+    expect(screen.queryByRole('button', { name: 'Add' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ stopType: 'fuel', dwellMinutes: 45 }))
+  })
+  it('loads and preserves an existing overnight booking', async () => {
+    const onSaveNight = vi.fn()
+    wrap(<RoadtripStopPopup draft={draft({ poi: poi({ category: 'hotel' }), overnight: { days: [{ id: 4, number: 1, date: null }, { id: 5, number: 2, date: null }], defaultEndDayId: 5 }, editing: { placeId: 7, stopType: 'hotel', dwellMinutes: 30, accommodationId: 8, checkIn: '16:00', checkOut: '10:00' } })} {...noop} onSaveNight={onSaveNight} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(onSaveNight).toHaveBeenCalledWith({ endDayId: 5, checkIn: '16:00', checkOut: '10:00' }))
+  })
+})
+
+
+it('prefills check-in from arrival while preserving a saved manual time', () => {
+  const onSaveNight = vi.fn()
+  wrap(<RoadtripStopPopup draft={draft({ poi: poi({ category: 'hotel' }), arrivalTime: '15:45', overnight: { days: [{ id: 4, number: 1, date: null }, { id: 5, number: 2, date: null }], defaultEndDayId: 5 } })} {...noop} onSaveNight={onSaveNight} />)
+  expect(screen.getByRole('textbox', { name: 'Check-in' })).toHaveValue('15:45')
+  fireEvent.change(screen.getByRole('textbox', { name: 'Check-in' }), { target: { value: '16:30' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Add' }))
+  expect(onSaveNight).toHaveBeenCalledWith({ endDayId: 5, checkIn: '16:30', checkOut: '' })
 })

@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react'
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useSettingsStore } from '../../store/settingsStore'
 import type { Settings } from '../../types'
 import { useVehicleRange } from './useVehicleRange'
@@ -197,3 +197,7 @@ describe('useVehicleRange', () => {
     expect(result.current).not.toBe(first)
   })
 })
+
+vi.mock('../../hooks/useRoadtripSettings', () => ({
+  useRoadtripSettings: (select: (preferences: import('@trek/shared').RoadtripPreferences) => unknown) => useSettingsStore(state => select(state.settings as import('@trek/shared').RoadtripPreferences)),
+}))

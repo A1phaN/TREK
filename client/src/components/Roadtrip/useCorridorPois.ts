@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { mapsApi } from '../../api/client'
+import { roadtripSearchRepo } from '../../repo/roadtripSearchRepo'
 import { useTranslation } from '../../i18n'
 import { corridorTiles, projectOntoRoute, simplifyLine, type Bbox, type LatLng } from './corridor'
 import type { Poi } from '../Map/poiCategories'
@@ -18,6 +18,7 @@ export interface CorridorSearch {
   /** True when the route was longer than the request budget and the tail was left out. */
   capped: boolean
   /** Boxes the place search could not answer — a partial result is still shown. */
+  failedSources?: string[]
   failedAreas: number
   /**
    * Boxes where the server hit its own per-request ceiling and dropped the rest.
@@ -71,6 +72,7 @@ export function useCorridorPois(line: LatLng[], categories: string[], widthKm: n
   const [capped, setCapped] = useState(false)
   const [failedAreas, setFailedAreas] = useState(0)
   const [truncatedAreas, setTruncatedAreas] = useState(0)
+  const [failedSources, setFailedSources] = useState<string[]>([])
   const [error, setError] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const runIdRef = useRef(0)
@@ -91,6 +93,7 @@ export function useCorridorPois(line: LatLng[], categories: string[], widthKm: n
     setProgress({ done: 0, total: 0 })
     setLoading(false)
     setCapped(false)
+    setFailedSources([])
     setFailedAreas(0)
     setTruncatedAreas(0)
     setError(false)
@@ -112,6 +115,7 @@ export function useCorridorPois(line: LatLng[], categories: string[], widthKm: n
     const tiles = allTiles.slice(0, MAX_TILES)
 
     setCapped(allTiles.length > tiles.length)
+    setFailedSources([])
     setFailedAreas(0)
     setTruncatedAreas(0)
     setError(false)
@@ -122,11 +126,12 @@ export function useCorridorPois(line: LatLng[], categories: string[], widthKm: n
     // All the wanted kinds in one query per box. Asking per kind was the same answer for
     // four times the requests, and every extra request is another chance for a shared
     // mirror to time out — which is what made a search both slow and patchy.
-    const wanted = categories.join(',')
+
     const jobs = [...tiles]
 
     void (async () => {
       const seen = new Map<string, CorridorPoi>()
+      const unavailable = new Set<string>()
       let failures = 0
       let shortened = 0
       let done = 0
@@ -139,15 +144,26 @@ export function useCorridorPois(line: LatLng[], categories: string[], widthKm: n
       // cheaply; the small gap afterwards keeps one worker from queueing straight up.
       const collect = async (tile: Bbox): Promise<boolean> => {
         try {
-          const data = await mapsApi.pois(wanted, tile, locale, controller.signal)
+          const data = await roadtripSearchRepo.search(categories, tile, locale, controller.signal)
+          if (controller.signal.aborted || runId !== runIdRef.current) return false
+          data.failedSources.forEach(source => unavailable.add(source))
+          setFailedSources([...unavailable])
           // The server answers with at most a few hundred per box and says so. A hit
           // dropped there is invisible here, so the count has to reach the surface.
-          if (data.truncated) setTruncatedAreas(++shortened)
+          if (data.truncated || data.clamped) setTruncatedAreas(++shortened)
           for (const poi of data.pois) {
             if (seen.has(poi.osm_id)) continue
             const hit = projectOntoRoute({ lat: poi.lat, lng: poi.lng }, spine)
             if (!hit || hit.offRouteKm > widthKm) continue
-            seen.set(poi.osm_id, { ...poi, offRouteKm: hit.offRouteKm, alongKm: hit.alongKm })
+            seen.set(poi.osm_id, {
+              ...poi, address: poi.address ?? null, website: poi.website ?? null, phone: poi.phone ?? null,
+              opening_hours: poi.opening_hours ?? null, cuisine: poi.cuisine ?? null,
+              charging: poi.charging ? {
+                capacity: poi.charging.capacity ?? null, fee: poi.charging.fee ?? null,
+                sockets: poi.charging.sockets.map(s => ({ type: s.type, count: s.count ?? null, kw: s.kw ?? null })),
+              } : null,
+              offRouteKm: hit.offRouteKm, alongKm: hit.alongKm,
+            })
           }
           return true
         } catch {
@@ -193,5 +209,5 @@ export function useCorridorPois(line: LatLng[], categories: string[], widthKm: n
 
   useEffect(() => () => abortRef.current?.abort(), [])
 
-  return { results, progress, loading, capped, failedAreas, truncatedAreas, error, spine, search, clear }
+  return { results, progress, loading, capped, failedAreas, failedSources, truncatedAreas, error, spine, search, clear }
 }

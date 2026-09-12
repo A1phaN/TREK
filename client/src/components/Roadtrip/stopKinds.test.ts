@@ -37,13 +37,10 @@ describe('stop kinds', () => {
     expect(CORRIDOR_CATEGORY_KEYS).toEqual(['fuel', 'charging', 'rest_area', 'campsite', 'hotel', 'restaurant', 'sights'])
   })
 
-  it('FE-STOPKIND-008: a hotel is a category without being a stop kind', () => {
-    // The whole reason the two lists are separate. Sleeping somewhere ends the day rather
-    // than interrupting the drive, so a hotel keeps its number in the chain and never
-    // becomes a stop_type.
-    expect(CORRIDOR_CATEGORY_BY_KEY.hotel.stopKind).toBeNull()
-    expect(STOP_KIND_BY_KEY.hotel).toBeUndefined()
-    expect(SERVICE_KIND_KEYS).not.toContain('hotel')
+  it('FE-STOPKIND-008: accommodation is a service stop as well as an overnight category', () => {
+    expect(CORRIDOR_CATEGORY_BY_KEY.hotel.stopKind).toBe('hotel')
+    expect(STOP_KIND_BY_KEY.hotel).toBeDefined()
+    expect(SERVICE_KIND_KEYS).toContain('hotel')
   })
 
   it('FE-STOPKIND-009: a night can be booked at a campsite too, so the popup asks', () => {
@@ -68,7 +65,7 @@ describe('stop kinds', () => {
     expect(STOP_KIND_BY_KEY.rest_area.labelKey).toBe('roadtrip.poi.rest')
     expect(STOP_KIND_BY_KEY.restaurant.labelKey).toBe('roadtrip.poi.food')
     for (const kind of STOP_KINDS) {
-      if (kind.key !== 'rest_area' && kind.key !== 'restaurant') {
+      if (kind.key !== 'rest_area' && kind.key !== 'restaurant' && kind.key !== 'hotel') {
         expect(kind.labelKey).toBe(`roadtrip.poi.${kind.key}`)
       }
     }

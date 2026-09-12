@@ -133,7 +133,7 @@ function fromPath(url: URL): DirWaypoint[] {
  * Empty when the link is not a route, or holds fewer than two stops — one stop is a
  * place, and the place search box already takes those.
  */
-export function parseDirectionsUrl(raw: string): DirWaypoint[] {
+export function parseDirectionsUrl(raw: string, limit = MAX_DIR_WAYPOINTS): DirWaypoint[] {
   let url: URL;
   try {
     url = new URL(raw);
@@ -142,5 +142,5 @@ export function parseDirectionsUrl(raw: string): DirWaypoint[] {
   }
   const fromParams = fromQuery(url);
   const found = fromParams.length ? fromParams : fromPath(url);
-  return found.length >= 2 ? found.slice(0, MAX_DIR_WAYPOINTS) : [];
+  return found.length >= 2 ? found.slice(0, limit) : [];
 }

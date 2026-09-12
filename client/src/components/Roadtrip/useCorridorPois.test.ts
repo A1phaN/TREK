@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { LatLng } from './corridor'
 
 const { pois } = vi.hoisted(() => ({ pois: vi.fn() }))
-vi.mock('../../api/client', () => ({ mapsApi: { pois } }))
+vi.mock('../../repo/roadtripSearchRepo', () => ({ roadtripSearchRepo: { search: pois } }))
 vi.mock('../../i18n', () => ({ useTranslation: () => ({ locale: 'en-US' }) }))
 
 import { useCorridorPois } from './useCorridorPois'
@@ -30,7 +30,7 @@ const hit = (id: string, lat: number, lng: number, category = 'fuel') => ({
   source: 'openstreetmap',
 })
 
-const answer = (...items: ReturnType<typeof hit>[]) => ({ pois: items, source: 'openstreetmap', truncated: false, clamped: false })
+const answer = (...items: ReturnType<typeof hit>[]) => ({ pois: items, sources: ['openstreetmap'], failedSources: [], truncated: false, clamped: false })
 
 beforeEach(() => {
   pois.mockReset()
@@ -38,6 +38,14 @@ beforeEach(() => {
 })
 
 describe('useCorridorPois', () => {
+  it('keeps plugin results and exposes failed sources', async () => {
+    pois.mockResolvedValue({ ...answer(hit('plugin:stations:1', 53.5, 9.81)), failedSources: ['plugin:unavailable'] })
+    const { result } = renderHook(() => useCorridorPois(LINE, ['fuel'], 10))
+    act(() => { result.current.search() })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.results[0].osm_id).toBe('plugin:stations:1')
+    expect(result.current.failedSources).toEqual(['plugin:unavailable'])
+  })
   it('FE-ROADTRIP-CORRIDOR-001: asks each box once for every category together', async () => {
     const { result } = renderHook(() => useCorridorPois(LINE, ['fuel', 'charging', 'rest_area'], 10))
     act(() => { result.current.search() })
@@ -45,7 +53,7 @@ describe('useCorridorPois', () => {
 
     expect(pois).toHaveBeenCalled()
     // The whole point of the batching: the kinds ride along in one query per box.
-    for (const call of pois.mock.calls) expect(call[0]).toBe('fuel,charging,rest_area')
+    for (const call of pois.mock.calls) expect(call[0]).toEqual(['fuel', 'charging', 'rest_area'])
     expect(result.current.progress.total).toBe(pois.mock.calls.length)
   })
 

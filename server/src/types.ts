@@ -114,6 +114,7 @@ export interface DayAssignment {
   reservation_datetime?: string | null;
   assignment_time?: string | null;
   assignment_end_time?: string | null;
+  end_day?: number;
   leg_transport_mode?: string | null;
   incoming_leg_transport_mode?: string | null;
   created_at?: string;

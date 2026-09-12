@@ -1,6 +1,61 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': 'Trova un alloggio',
+  'roadtrip.stay.portalHint': 'Verifica destinazione, date e ospiti sul portale. Su CHECK24 cerca manualmente.',
+  'roadtrip.charging.available': 'disponibili',
+  'roadtrip.charging.unknown': 'Nessun dato affidabile',
+  'roadtrip.charging.stale': 'Stato non aggiornato',
+  'roadtrip.charging.prices': 'Tariffe pubblicate',
+  'roadtrip.charging.note':
+    'Tariffa pubblicata; verificare tasse, condizioni e supplementi. Il prezzo della tua tessera può variare.',
+  'roadtrip.charging.coverage': 'Dati aperti; copertura variabile per regione e gestore.',
+  'roadtrip.import.title': 'Importa percorso Google Maps',
+  'roadtrip.import.note': 'Le tappe vengono aggiunte al giorno scelto. TREK ricalcola il percorso.',
+  'roadtrip.import.unresolved': 'Posizione non trovata; questa tappa verrà saltata.',
+  'roadtrip.import.day': 'Giorno',
+  'roadtrip.hazards.show': 'Mostra zone di pericolo',
+  'roadtrip.hazards.current': 'Avvisi attuali',
+  'roadtrip.hazards.note': 'Gli avvisi non indicano strade chiuse. Il percorso non cambia.',
+  'roadtrip.hazards.point': 'Solo posizione; area interessata sconosciuta.',
+  'roadtrip.hazards.loading': 'Caricamento avvisi…',
+  'roadtrip.hazards.unavailable': 'Non disponibile',
+  'roadtrip.hazards.offline': 'Offline: avvisi non disponibili',
+  'roadtrip.hazards.partial': 'Copertura limitata',
+  'roadtrip.stops.section': 'Soste di servizio',
+  'roadtrip.stops.inDays': 'Mostra anche in Giorni',
+  'roadtrip.stops.daysHint':
+    'Si applica a tutte le soste di servizio del viaggio. Se disattivato, restano solo in Roadtrip. Attivalo per mostrarle di nuovo in Giorni.',
+  'roadtrip.window.dragHint':
+    'Online, trascina la fine della giornata lungo il percorso o su un luogo; fai clic destro per ripristinare la fine automatica.',
+  'roadtrip.window.resetBoundaries': 'Ripristina le fini giornata automatiche',
+  'roadtrip.window.endHere': 'Termina la giornata qui',
+  'roadtrip.window.endHereHint':
+    'Puoi terminare la giornata in una tappa specifica dai suoi dettagli quando la modalità Roadtrip e gli orari giornalieri sono attivi.',
+  'roadtrip.window.endAt': 'Fine giornata',
+  'roadtrip.window.onRoute': 'Lungo il percorso',
+  'roadtrip.window.atStop': 'Nell’ultimo luogo',
+  'roadtrip.window.routeHint': 'Fermarsi lungo il percorso all’ora di fine giornata.',
+  'roadtrip.window.stopHint': 'Restare nell’ultimo luogo se non si può raggiungere il successivo entro fine giornata.',
+  'roadtrip.window.legTooLong':
+    'Un tragitto supera la fascia oraria giornaliera. Aggiungi un luogo lungo il percorso o scegli una pausa lungo il tragitto.',
+  'roadtrip.window.pointLabel': 'Fine del giorno {day} alle {time}',
+  'roadtrip.window.title': 'Orari giornalieri',
+  'roadtrip.window.start': 'Inizio giornata',
+  'roadtrip.window.end': 'Fine giornata',
+  'roadtrip.window.hint':
+    'Imposta entrambi gli orari per pianificare le pause. Svuota un campo per disattivarle. Gli orari manuali hanno priorità. I giorni vengono collegati automaticamente.',
+  'roadtrip.window.invalid': "L'orario finale deve essere successivo a quello iniziale.",
+  'roadtrip.window.stop': 'Fine giornata',
+  'roadtrip.window.resume': 'Riprendi il viaggio',
+  'roadtrip.window.pointHint': 'Questo è il punto previsto per la pausa notturna.',
+  'roadtrip.window.departure': 'Ripartire dopo il resto della visita alle {time}',
+  'roadtrip.window.showPoint': 'Mostra sulla mappa',
+  'roadtrip.window.incomplete': 'Per calcolare le pause giornaliere servono tutti i percorsi di collegamento.',
+  'roadtrip.window.conflict':
+    'Un orario fisso è incompatibile con il tragitto e le pause. Gli orari manuali restano invariati; la pianificazione automatica è sospesa.',
+  'roadtrip.window.tooLong':
+    'Questi orari richiederebbero oltre 365 giorni aggiuntivi. Scegli un intervallo giornaliero più lungo.',
   'roadtrip.mode.roadtrip': 'Viaggio su strada',
   'roadtrip.mode.days': 'Giorni',
   'roadtrip.mode.label': 'Vista del piano',
@@ -64,11 +119,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Strade a pedaggio',
   'roadtrip.avoid.motorway': 'Autostrade',
   'roadtrip.avoid.ferry': 'Traghetti',
-  'roadtrip.avoid.hint': 'Vengono penalizzate, non vietate. Quando un percorso non ha alternative, le usa comunque e la giornata lo segnala.',
-  'roadtrip.avoid.unavailable': 'Non disponibile: questa istanza usa il proprio motore, che non sa escludere una classe di strada.',
+  'roadtrip.avoid.hint':
+    'Vengono penalizzate, non vietate. Quando un percorso non ha alternative, le usa comunque e la giornata lo segnala.',
+  'roadtrip.avoid.unavailable':
+    'Non disponibile: questa istanza usa il proprio motore, che non sa escludere una classe di strada.',
   'roadtrip.avoid.badge': '{count} evitati',
   'roadtrip.avoid.missed': '{classes} inevitabili',
-  'roadtrip.avoid.missedHint': 'Questa giornata non ha percorsi alternativi, quindi il viaggio li usa. Le altre giornate continuano a evitare quel che possono.',
+  'roadtrip.avoid.missedHint':
+    'Questa giornata non ha percorsi alternativi, quindi il viaggio li usa. Le altre giornate continuano a evitare quel che possono.',
   'roadtrip.refuel.dry': 'Qui il serbatoio si esaurisce',
   'roadtrip.refuel.after': 'dopo {distance}',
   'roadtrip.limit.vehicleLabel': 'Cosa guidi',
@@ -110,11 +168,13 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '{distance} di lunghezza',
   'roadtrip.track.gap': 'a {distance} da questo giorno',
   'roadtrip.track.onDay': 'lungo questo giorno',
-  'roadtrip.track.explain': 'Il percorso viene portato sulla traccia con alcuni punti di passaggio. Quelli già presenti su quelle tratte vengono sostituiti.',
+  'roadtrip.track.explain':
+    'Il percorso viene portato sulla traccia con alcuni punti di passaggio. Quelli già presenti su quelle tratte vengono sostituiti.',
   'roadtrip.track.action': 'Segui questa traccia',
   'roadtrip.track.working': 'Adatto il percorso alla traccia, giro {round}',
   'roadtrip.track.done': '{count} punti di passaggio posati. Il percorso resta entro {distance} dalla traccia.',
-  'roadtrip.track.capped': '{count} punti di passaggio posati. Nel punto peggiore il percorso resta a {distance} dalla traccia.',
+  'roadtrip.track.capped':
+    '{count} punti di passaggio posati. Nel punto peggiore il percorso resta a {distance} dalla traccia.',
   'roadtrip.track.already': 'Il percorso seguiva già questa traccia.',
   'roadtrip.track.errorRoute': 'Il servizio di calcolo percorso non ha risposto.',
   'roadtrip.track.errorSave': 'Non è stato possibile salvare i punti di passaggio.',
@@ -129,7 +189,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Lungo il percorso non c’è nulla che corrisponda a “{name}”.',
   'roadtrip.poi.noneMatchFilters': 'Niente lungo il percorso corrisponde a questi filtri.',
   'roadtrip.poi.foundFiltered': '{count} di {total} lungo il percorso',
-  'roadtrip.poi.truncated': 'Su {count} tratti ce n’erano più di quanti ne stiano in una risposta: restringi il corridoio per vedere il resto.',
+  'roadtrip.poi.truncated':
+    'Su {count} tratti ce n’erano più di quanti ne stiano in una risposta: restringi il corridoio per vedere il resto.',
   'roadtrip.poi.search': 'Cerca',
   'roadtrip.poi.searching': 'Ricerca {done} di {total}',
   'roadtrip.poi.capped': 'Il percorso è lungo: è stato cercato solo il primo tratto.',

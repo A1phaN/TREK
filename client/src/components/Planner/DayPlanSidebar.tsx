@@ -1,3 +1,5 @@
+import { useRoadtripSettings } from '../../hooks/useRoadtripSettings'
+import { isServiceStopType } from '../Roadtrip/roadtripModel'
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 interface DragDataPayload { placeId?: string; assignmentId?: string; noteId?: string; reservationId?: string; fromDayId?: string; phase?: 'single' | 'start' | 'middle' | 'end'; /** A corridor hit on its way onto the drive (#1797) — not a place yet. */ poiOsmId?: string }
 declare global { interface Window { __dragData: DragDataPayload | null } }
@@ -180,6 +182,7 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
   const { t, language, locale } = useTranslation()
   const ctxMenu = useContextMenu()
   const timeFormat = useSettingsStore(s => s.settings.time_format) || '24h'
+  const mirrorServiceStops = useRoadtripSettings(s => s.roadtrip_service_stops_in_days !== false)
   const tripActions = useRef(useTripStore.getState()).current
   const can = useCanDo()
   const canEditDays = can('day_edit', trip)
@@ -409,7 +412,7 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
   }
 
   const getDayAssignments = (dayId) =>
-    (assignments[String(dayId)] || []).slice().sort((a, b) => a.order_index - b.order_index)
+    (assignments[String(dayId)] || []).filter(a => mirrorServiceStops || !isServiceStopType(a.place?.stop_type)).slice().sort((a, b) => a.order_index - b.order_index)
 
   // Compute initial day_plan_position for a transport based on time
   const computeTransportPosition = (r, da) => {
@@ -485,7 +488,7 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
     return map
   // getMergedItems is redefined each render but captures assignments/dayNotes/reservations/days via closure
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days, assignments, dayNotes, reservations, transportPosVersion])
+  }, [days, assignments, dayNotes, reservations, transportPosVersion, mirrorServiceStops])
 
   // Days whose inline route legs should be computed & shown. Desktop: the selected
   // day while the Route toggle is on. Mobile: each expanded day the user tapped
@@ -710,7 +713,7 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
   // Unified reorder: assigns positions to ALL item types based on new visual order
   const applyMergedOrder = async (dayId: number, newOrder: { type: string; data: any }[]) => {
     // Capture previous place order for undo
-    const prevAssignmentIds = getDayAssignments(dayId).map(a => a.id)
+    const prevAssignmentIds = (assignments[String(dayId)] || []).slice().sort((a, b) => a.order_index - b.order_index).map(a => a.id)
     // …and, per booking, the fields this call is about to overwrite, so a failed write
     // can put the visible order back instead of leaving a phantom one behind the error
     // toast. Restoring the whole array instead would also drop what a collaborator's
@@ -957,7 +960,7 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
     const da = getDayAssignments(dayId)
     if (da.length < 3) return
 
-    const prevIds = da.map(a => a.id)
+    const prevIds = (assignments[String(dayId)] || []).slice().sort((a, b) => a.order_index - b.order_index).map(a => a.id)
 
     // Separate fixed (stay at their index) and movable assignments. A place is
     // fixed if it's locked OR has a set time — timed places are anchored by their

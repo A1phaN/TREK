@@ -27,7 +27,8 @@ const settings: TranslationStrings = {
   'settings.routingBase': 'Máy chủ định tuyến riêng',
   'settings.routingBaseHint': 'Máy chủ OSRM của riêng bạn. Để trống sẽ dùng máy chủ công cộng, cho phép khoảng một yêu cầu mỗi giây — đủ cho một ngày, chật cho chuyến đi dài. Có hiệu lực sau khi khởi động lại máy chủ.',
   'settings.valhallaBase': 'Máy chủ Valhalla riêng',
-  'settings.valhallaBaseHint': 'Máy chủ Valhalla riêng. Nó được hỏi khi một chặng cần tránh trạm thu phí, đường cao tốc hoặc phà — các máy chủ OSRM công cộng không trả lời được việc đó. Để trống sẽ dùng Valhalla công cộng của FOSSGIS, trừ khi ở trên đã ghi một máy chủ định tuyến riêng; khi đó không hỏi máy chủ thứ hai nào cả. Có hiệu lực sau khi khởi động lại máy chủ.',
+  'settings.valhallaBaseHint':
+    'Theo mặc định, TREK dùng Valhalla công cộng của FOSSGIS để tránh đường thu phí, đường cao tốc và phà. Nhập URL Valhalla riêng tại đây để dùng thay thế. Nếu chỉ cấu hình máy chủ định tuyến riêng, Valhalla công cộng sẽ không được dùng. Sau khi nhập URL riêng, hãy khởi động lại máy chủ và tải lại trang.',
   'settings.mapHint': 'Mẫu URL cho ô bản đồ',
   'settings.mapProvider': 'Nhà cung cấp bản đồ',
   'settings.mapProviderHint':

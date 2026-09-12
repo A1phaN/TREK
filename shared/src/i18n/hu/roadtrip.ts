@@ -1,6 +1,61 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': 'Szállás keresése',
+  'roadtrip.stay.portalHint':
+    'Ellenőrizd az úti célt, dátumokat és vendégeket a portálon. A CHECK24 oldalon keress kézzel.',
+  'roadtrip.charging.available': 'szabad',
+  'roadtrip.charging.unknown': 'Nincs megbízható adat',
+  'roadtrip.charging.stale': 'Elavult állapot',
+  'roadtrip.charging.prices': 'Közzétett díjak',
+  'roadtrip.charging.note': 'Közzétett díj; adók, feltételek és felárak lehetnek. A töltőkártya ára eltérhet.',
+  'roadtrip.charging.coverage': 'Nyílt adatok; a lefedettség régiónként és szolgáltatónként változik.',
+  'roadtrip.import.title': 'Google Maps-útvonal importálása',
+  'roadtrip.import.note': 'A megállók a kiválasztott naphoz kerülnek. A TREK újratervezi az útvonalat.',
+  'roadtrip.import.unresolved': 'A hely nem található; ez a megálló kimarad.',
+  'roadtrip.import.day': 'Nap',
+  'roadtrip.hazards.show': 'Veszélyes területek megjelenítése',
+  'roadtrip.hazards.current': 'Aktuális figyelmeztetések',
+  'roadtrip.hazards.note': 'A figyelmeztetések nem útlezárások. Az útvonal változatlan marad.',
+  'roadtrip.hazards.point': 'Csak helyszín; az érintett terület ismeretlen.',
+  'roadtrip.hazards.loading': 'Figyelmeztetések betöltése…',
+  'roadtrip.hazards.unavailable': 'Nem érhető el',
+  'roadtrip.hazards.offline': 'Offline: aktuális figyelmeztetések nem érhetők el',
+  'roadtrip.hazards.partial': 'Korlátozott lefedettség',
+  'roadtrip.stops.section': 'Szervizmegállók',
+  'roadtrip.stops.inDays': 'Megjelenítés a Napok nézetben is',
+  'roadtrip.stops.daysHint':
+    'Az utazás minden szervizmegállójára érvényes. Kikapcsolva csak a Roadtrip tervben maradnak. Bekapcsolva ismét megjelennek a Napok nézetben.',
+  'roadtrip.window.dragHint':
+    'Online húzza a nap végét az útvonalon vagy egy helyre; jobb kattintással visszaállíthatja az automatikus befejezést.',
+  'roadtrip.window.resetBoundaries': 'Automatikus napvégek visszaállítása',
+  'roadtrip.window.endHere': 'Nap befejezése itt',
+  'roadtrip.window.endHereHint':
+    'A hely részleteinél jelölhetsz ki megállót a nap végének, ha a Roadtrip mód és a napi utazási idők aktívak.',
+  'roadtrip.window.endAt': 'Nap lezárása',
+  'roadtrip.window.onRoute': 'Az útvonalon',
+  'roadtrip.window.atStop': 'Az utolsó helyen',
+  'roadtrip.window.routeHint': 'Megállás az útvonalon a befejezési idő elérésekor.',
+  'roadtrip.window.stopHint': 'Maradjon az utolsó helyen, ha a következő nem érhető el a nap vége előtt.',
+  'roadtrip.window.legTooLong':
+    'Egy útszakasz hosszabb a napi időkeretnél. Adjon hozzá egy helyet útközben, vagy válasszon megállást az útvonalon.',
+  'roadtrip.window.pointLabel': 'A(z) {day}. nap vége {time}-kor',
+  'roadtrip.window.title': 'Napi utazási időszak',
+  'roadtrip.window.start': 'Nap kezdete',
+  'roadtrip.window.end': 'Nap vége',
+  'roadtrip.window.hint':
+    'A napi szünetekhez add meg mindkét időpontot. Egy mező törlése kikapcsolja az automatikát. A kézi időpontok elsőbbséget élveznek. A napok automatikusan összekapcsolódnak.',
+  'roadtrip.window.invalid': 'A befejezésnek a kezdés után kell lennie.',
+  'roadtrip.window.stop': 'Nap vége',
+  'roadtrip.window.resume': 'Utazás folytatása',
+  'roadtrip.window.pointHint': 'Ez az éjszakai pihenő becsült helye.',
+  'roadtrip.window.departure': 'Továbbindulás a látogatás hátralévő része után: {time}',
+  'roadtrip.window.showPoint': 'Megjelenítés a térképen',
+  'roadtrip.window.incomplete': 'A napi szünetek kiszámításához minden összekötő útvonal szükséges.',
+  'roadtrip.window.conflict':
+    'Egy rögzített időpont ütközik az utazással és a szünetekkel. A kézi időpontok megmaradnak; az automatikus tervezés szünetel.',
+  'roadtrip.window.tooLong':
+    'Ezek az időpontok több mint 365 további napot igényelnének. Válassz hosszabb napi időszakot.',
   'roadtrip.mode.roadtrip': 'Autós út',
   'roadtrip.mode.days': 'Napok',
   'roadtrip.mode.label': 'Terv nézet',
@@ -68,7 +123,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.unavailable': 'Nem érhető el: ez a példány saját motort használ, amely nem tud kihagyni útosztályt.',
   'roadtrip.avoid.badge': '{count} kerülve',
   'roadtrip.avoid.missed': '{classes} nem kerülhető',
-  'roadtrip.avoid.missedHint': 'Ezen a napon nincs kerülőút, így az útvonal ezt használja. A többi nap továbbra is kerüli, amit tud.',
+  'roadtrip.avoid.missedHint':
+    'Ezen a napon nincs kerülőút, így az útvonal ezt használja. A többi nap továbbra is kerüli, amit tud.',
   'roadtrip.refuel.dry': 'Itt fogy ki a tank',
   'roadtrip.refuel.after': '{distance} után',
   'roadtrip.limit.vehicleLabel': 'Mivel utazol',
@@ -110,11 +166,13 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '{distance} hosszú',
   'roadtrip.track.gap': '{distance} távolságra ettől a naptól',
   'roadtrip.track.onDay': 'e nap mentén',
-  'roadtrip.track.explain': 'Az útvonalat néhány köztes pont húzza rá a nyomvonalra. Az érintett szakaszok meglévő köztes pontjai lecserélődnek.',
+  'roadtrip.track.explain':
+    'Az útvonalat néhány köztes pont húzza rá a nyomvonalra. Az érintett szakaszok meglévő köztes pontjai lecserélődnek.',
   'roadtrip.track.action': 'Kövesse ezt a nyomvonalat',
   'roadtrip.track.working': 'Az útvonal igazítása a nyomvonalhoz, {round}. kör',
   'roadtrip.track.done': '{count} köztes pont elhelyezve. Az útvonal {distance} távolságon belül marad a nyomvonaltól.',
-  'roadtrip.track.capped': '{count} köztes pont elhelyezve. A legtávolabbi ponton az útvonal {distance} távolságra van a nyomvonaltól.',
+  'roadtrip.track.capped':
+    '{count} köztes pont elhelyezve. A legtávolabbi ponton az útvonal {distance} távolságra van a nyomvonaltól.',
   'roadtrip.track.already': 'Az útvonal már ezt a nyomvonalat követte.',
   'roadtrip.track.errorRoute': 'Az útvonaltervező szolgáltatás nem válaszolt.',
   'roadtrip.track.errorSave': 'A köztes pontokat nem sikerült menteni.',
@@ -129,7 +187,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Az útvonalon semmi sem egyezik ezzel: „{name}”.',
   'roadtrip.poi.noneMatchFilters': 'Az útvonalon semmi sem felel meg ezeknek a szűrőknek.',
   'roadtrip.poi.foundFiltered': '{count} / {total} az útvonalon',
-  'roadtrip.poi.truncated': '{count} szakaszon több volt, mint amennyi egy válaszba fér — szűkítse a folyosót a többi megtekintéséhez.',
+  'roadtrip.poi.truncated':
+    '{count} szakaszon több volt, mint amennyi egy válaszba fér — szűkítse a folyosót a többi megtekintéséhez.',
   'roadtrip.poi.search': 'Keresés',
   'roadtrip.poi.searching': 'Keresés {done}/{total}',
   'roadtrip.poi.capped': 'Az útvonal hosszú – csak az első szakaszon kerestünk.',

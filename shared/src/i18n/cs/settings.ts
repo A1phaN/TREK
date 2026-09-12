@@ -27,7 +27,8 @@ const settings: TranslationStrings = {
   'settings.routingBase': 'Vlastní směrovací server',
   'settings.routingBaseHint': 'Vlastní instance OSRM. Prázdné použije veřejné servery s limitem asi jednoho požadavku za sekundu — na den to stačí, na road trip je to málo. Projeví se po restartu serveru.',
   'settings.valhallaBase': 'Vlastní instance Valhalla',
-  'settings.valhallaBaseHint': 'Vlastní instance Valhalla. Ptáme se jí, když má úsek objet mýtné, dálnice nebo trajekty — veřejné servery OSRM to neumí zodpovědět. Prázdné použije veřejnou Valhallu od FOSSGIS, ledaže je výše uveden vlastní směrovací engine; pak se žádný druhý engine neptá. Projeví se po restartu serveru.',
+  'settings.valhallaBaseHint':
+    'TREK ve výchozím nastavení používá veřejnou Valhallu FOSSGIS k vyhýbání se mýtnému, dálnicím a trajektům. Zde můžete zadat URL vlastní Valhally a používat ji místo veřejné. Pokud je nastavena pouze vlastní směrovací instance, veřejná Valhalla se nepoužije. Po zadání vlastní URL restartujte server a znovu načtěte stránku.',
   'settings.mapHint': 'URL šablony pro mapové dlaždice',
   'settings.mapProvider': 'Poskytovatel mapy',
   'settings.mapProviderHint': 'Ovlivňuje mapy v Trip Planneru a Journey. Atlas vždy používá Leaflet.',

@@ -1,3 +1,4 @@
+import { useRoadtripSettings } from '../../hooks/useRoadtripSettings'
 import React from 'react'
 import { RotateCcw } from 'lucide-react'
 import { useTranslation } from '../../i18n/TranslationContext'
@@ -40,7 +41,7 @@ export default function StopFillPicker({ anchor, current, onPick, onClose }: {
 }): React.ReactElement | null {
   const { t } = useTranslation()
   const unit: DistanceUnit = useSettingsStore(s => s.settings.distance_unit) === 'imperial' ? 'imperial' : 'metric'
-  const fallback = useSettingsStore(s => s.settings.roadtrip_fill_percent)
+  const fallback = useRoadtripSettings(s => s.roadtrip_fill_percent)
   const { rangeKm } = useVehicleRange()
 
   // Zero, absent and 100 all mean the same thing in the settings, so they read as full

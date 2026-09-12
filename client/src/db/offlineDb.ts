@@ -1,3 +1,4 @@
+import type { RoadtripPreferences } from '@trek/shared';
 import Dexie, { type Table } from 'dexie';
 import type { Trip, Day, Place, PackingItem, TodoItem, BudgetItem, Reservation, TripFile, Accommodation, TripMember, Tag, Category } from '../types';
 
@@ -160,6 +161,7 @@ function initialDbName(): string {
 }
 
 class TrekOfflineDb extends Dexie {
+  roadtripPreferences!: Table<{ tripId: number; preferences: RoadtripPreferences }, number>;
   trips!: Table<Trip, number>;
   days!: Table<Day, number>;
   places!: Table<Place, number>;
@@ -221,6 +223,7 @@ class TrekOfflineDb extends Dexie {
     // v5: places from the TREK Places index for the trip's area, so search
     // answers offline. `searchName` is indexed because that is what an offline
     // query filters on; `tripId` so the set drops with its trip.
+    this.version(6).stores({ roadtripPreferences: 'tripId' });
     this.version(5).stores({
       areaPlaces: 'gers, tripId, searchName',
     });
@@ -448,8 +451,10 @@ export async function clearTripData(tripId: number): Promise<void> {
       offlineDb.syncMeta,
       offlineDb.blobCache,
       offlineDb.areaPlaces,
+      offlineDb.roadtripPreferences,
     ],
     async () => {
+      await offlineDb.roadtripPreferences.delete(tripId);
       await offlineDb.days.where('trip_id').equals(tripId).delete();
       await offlineDb.places.where('trip_id').equals(tripId).delete();
       await offlineDb.packingItems.where('trip_id').equals(tripId).delete();

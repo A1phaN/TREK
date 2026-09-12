@@ -407,3 +407,7 @@ It is already silent in CI (any `CI` env var), under `NODE_ENV=test`, and whenev
 stdout isn't a terminal (i.e. when piped or redirected).
 
 The SDK tooling in this repo is MIT. Your plugin is your own code under your own license.
+
+### Roadtrip category searches
+
+The `searchProvider.search` request can include `category` and `bounds` (south, west, north, east). Search within that rectangle for the category; `query` remains a readable category query and `near` its centre, so existing providers continue to work. These optional fields are absent on older hosts and ordinary name searches. The host validates and filters coordinates, namespaces IDs, and applies the exact route corridor after combining sources. The existing permission and two-second hook timeout still apply.

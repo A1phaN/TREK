@@ -1,6 +1,63 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': 'Βρείτε κατάλυμα',
+  'roadtrip.stay.portalHint':
+    'Ελέγξτε προορισμό, ημερομηνίες και επισκέπτες στην πύλη. Στο CHECK24 αναζητήστε χειροκίνητα.',
+  'roadtrip.charging.available': 'διαθέσιμα',
+  'roadtrip.charging.unknown': 'Δεν υπάρχουν αξιόπιστα δεδομένα',
+  'roadtrip.charging.stale': 'Παρωχημένη κατάσταση',
+  'roadtrip.charging.prices': 'Δημοσιευμένες χρεώσεις',
+  'roadtrip.charging.note':
+    'Δημοσιευμένη χρέωση· ενδέχεται να ισχύουν φόροι, όροι και πρόσθετα τέλη. Η τιμή της κάρτας σας μπορεί να διαφέρει.',
+  'roadtrip.charging.coverage': 'Ανοικτά δεδομένα· η κάλυψη εξαρτάται από την περιοχή και τον πάροχο.',
+  'roadtrip.import.title': 'Εισαγωγή διαδρομής Google Maps',
+  'roadtrip.import.note': 'Οι στάσεις προστίθενται στην επιλεγμένη ημέρα. Το TREK υπολογίζει ξανά τη διαδρομή.',
+  'roadtrip.import.unresolved': 'Η τοποθεσία δεν βρέθηκε· αυτή η στάση θα παραλειφθεί.',
+  'roadtrip.import.day': 'Ημέρα',
+  'roadtrip.hazards.show': 'Εμφάνιση επικίνδυνων περιοχών',
+  'roadtrip.hazards.current': 'Τρέχουσες προειδοποιήσεις',
+  'roadtrip.hazards.note': 'Οι προειδοποιήσεις δεν σημαίνουν κλειστούς δρόμους. Η διαδρομή δεν αλλάζει.',
+  'roadtrip.hazards.point': 'Μόνο τοποθεσία· άγνωστη πληγείσα περιοχή.',
+  'roadtrip.hazards.loading': 'Φόρτωση προειδοποιήσεων…',
+  'roadtrip.hazards.unavailable': 'Μη διαθέσιμο',
+  'roadtrip.hazards.offline': 'Εκτός σύνδεσης: μη διαθέσιμες προειδοποιήσεις',
+  'roadtrip.hazards.partial': 'Περιορισμένη κάλυψη',
+  'roadtrip.stops.section': 'Στάσεις εξυπηρέτησης',
+  'roadtrip.stops.inDays': 'Εμφάνιση και στις Ημέρες',
+  'roadtrip.stops.daysHint':
+    'Ισχύει για όλες τις στάσεις εξυπηρέτησης του ταξιδιού. Αν απενεργοποιηθεί, εμφανίζονται μόνο στο Roadtrip. Ενεργοποιήστε το για να εμφανιστούν ξανά στις Ημέρες.',
+  'roadtrip.window.dragHint':
+    'Με σύνδεση, σύρετε το τέλος της ημέρας στη διαδρομή ή σε ένα μέρος· με δεξί κλικ επαναφέρετε το αυτόματο τέλος.',
+  'roadtrip.window.resetBoundaries': 'Επαναφορά αυτόματων ορίων ημέρας',
+  'roadtrip.window.endHere': 'Τέλος ημέρας εδώ',
+  'roadtrip.window.endHereHint':
+    'Μπορείτε να ορίσετε μια στάση ως τέλος ημέρας στις λεπτομέρειες του μέρους, όταν είναι ενεργά το Roadtrip και τα ημερήσια ωράρια ταξιδιού.',
+  'roadtrip.window.endAt': 'Τέλος ημέρας',
+  'roadtrip.window.onRoute': 'Στη διαδρομή',
+  'roadtrip.window.atStop': 'Στο τελευταίο μέρος',
+  'roadtrip.window.routeHint': 'Παύση στη διαδρομή όταν φτάσει η ώρα λήξης.',
+  'roadtrip.window.stopHint':
+    'Παραμονή στο τελευταίο μέρος αν το επόμενο δεν είναι προσβάσιμο πριν το τέλος της ημέρας.',
+  'roadtrip.window.legTooLong':
+    'Μια διαδρομή υπερβαίνει το ημερήσιο ωράριο. Προσθέστε ένα μέρος καθ’ οδόν ή επιλέξτε παύση στη διαδρομή.',
+  'roadtrip.window.pointLabel': 'Τέλος ημέρας {day} στις {time}',
+  'roadtrip.window.title': 'Καθημερινές ώρες ταξιδιού',
+  'roadtrip.window.start': 'Έναρξη ημέρας',
+  'roadtrip.window.end': 'Λήξη ημέρας',
+  'roadtrip.window.hint':
+    'Ορίστε και τις δύο ώρες για καθημερινές παύσεις. Αφήστε μία κενή για απενεργοποίηση. Οι χειροκίνητες ώρες έχουν προτεραιότητα. Οι ημέρες συνδέονται αυτόματα.',
+  'roadtrip.window.invalid': 'Η ώρα λήξης πρέπει να είναι μετά την ώρα έναρξης.',
+  'roadtrip.window.stop': 'Τέλος ημέρας',
+  'roadtrip.window.resume': 'Συνέχεια ταξιδιού',
+  'roadtrip.window.pointHint': 'Αυτό είναι το εκτιμώμενο σημείο της νυχτερινής σας στάσης.',
+  'roadtrip.window.departure': 'Συνέχεια μετά την υπόλοιπη επίσκεψη στις {time}',
+  'roadtrip.window.showPoint': 'Προβολή στον χάρτη',
+  'roadtrip.window.incomplete': 'Απαιτούνται όλες οι συνδετικές διαδρομές για τον υπολογισμό των καθημερινών παύσεων.',
+  'roadtrip.window.conflict':
+    'Μια σταθερή ώρα συγκρούεται με την οδήγηση και τις παύσεις. Οι χειροκίνητες ώρες διατηρούνται· ο αυτόματος σχεδιασμός έχει παύσει.',
+  'roadtrip.window.tooLong':
+    'Αυτές οι ώρες απαιτούν πάνω από 365 επιπλέον ημέρες. Επιλέξτε μεγαλύτερο ημερήσιο διάστημα.',
   'roadtrip.mode.roadtrip': 'Οδικό ταξίδι',
   'roadtrip.mode.days': 'Ημέρες',
   'roadtrip.mode.label': 'Προβολή σχεδίου',
@@ -64,11 +121,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Δρόμοι με διόδια',
   'roadtrip.avoid.motorway': 'Αυτοκινητόδρομοι',
   'roadtrip.avoid.ferry': 'Φέρι μποτ',
-  'roadtrip.avoid.hint': 'Πρόκειται για στάθμιση, όχι απαγόρευση. Όταν μια διαδρομή δεν έχει τρόπο να τα αποφύγει, τα χρησιμοποιεί και η ημέρα το δηλώνει.',
-  'roadtrip.avoid.unavailable': 'Μη διαθέσιμο: αυτή η εγκατάσταση χρησιμοποιεί δική της μηχανή, που δεν μπορεί να παραλείψει κατηγορία δρόμου.',
+  'roadtrip.avoid.hint':
+    'Πρόκειται για στάθμιση, όχι απαγόρευση. Όταν μια διαδρομή δεν έχει τρόπο να τα αποφύγει, τα χρησιμοποιεί και η ημέρα το δηλώνει.',
+  'roadtrip.avoid.unavailable':
+    'Μη διαθέσιμο: αυτή η εγκατάσταση χρησιμοποιεί δική της μηχανή, που δεν μπορεί να παραλείψει κατηγορία δρόμου.',
   'roadtrip.avoid.badge': '{count} αποφεύγονται',
   'roadtrip.avoid.missed': '{classes} αναπόφευκτα',
-  'roadtrip.avoid.missedHint': 'Αυτή η ημέρα δεν έχει διαδρομή που να τα παρακάμπτει, οπότε η οδήγηση τα χρησιμοποιεί. Οι άλλες ημέρες εξακολουθούν να αποφεύγουν ό,τι μπορούν.',
+  'roadtrip.avoid.missedHint':
+    'Αυτή η ημέρα δεν έχει διαδρομή που να τα παρακάμπτει, οπότε η οδήγηση τα χρησιμοποιεί. Οι άλλες ημέρες εξακολουθούν να αποφεύγουν ό,τι μπορούν.',
   'roadtrip.refuel.dry': 'Εδώ αδειάζει το ρεζερβουάρ',
   'roadtrip.refuel.after': 'μετά από {distance}',
   'roadtrip.limit.vehicleLabel': 'Τι οδηγείς',
@@ -110,11 +170,13 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': 'μήκος {distance}',
   'roadtrip.track.gap': '{distance} από αυτή την ημέρα',
   'roadtrip.track.onDay': 'κατά μήκος αυτής της ημέρας',
-  'roadtrip.track.explain': 'Η διαδρομή τραβιέται πάνω στο ίχνος με μερικά ενδιάμεσα σημεία. Τα υπάρχοντα σημεία σε αυτά τα σκέλη αντικαθίστανται.',
+  'roadtrip.track.explain':
+    'Η διαδρομή τραβιέται πάνω στο ίχνος με μερικά ενδιάμεσα σημεία. Τα υπάρχοντα σημεία σε αυτά τα σκέλη αντικαθίστανται.',
   'roadtrip.track.action': 'Ακολούθησε αυτό το ίχνος',
   'roadtrip.track.working': 'Προσαρμογή διαδρομής στο ίχνος, γύρος {round}',
   'roadtrip.track.done': 'Τοποθετήθηκαν {count} ενδιάμεσα σημεία. Η διαδρομή μένει εντός {distance} από το ίχνος.',
-  'roadtrip.track.capped': 'Τοποθετήθηκαν {count} ενδιάμεσα σημεία. Στο πιο πλατύ σημείο η διαδρομή απέχει {distance} από το ίχνος.',
+  'roadtrip.track.capped':
+    'Τοποθετήθηκαν {count} ενδιάμεσα σημεία. Στο πιο πλατύ σημείο η διαδρομή απέχει {distance} από το ίχνος.',
   'roadtrip.track.already': 'Η διαδρομή ακολουθούσε ήδη αυτό το ίχνος.',
   'roadtrip.track.errorRoute': 'Η υπηρεσία δρομολόγησης δεν απάντησε.',
   'roadtrip.track.errorSave': 'Δεν ήταν δυνατή η αποθήκευση των ενδιάμεσων σημείων.',
@@ -129,7 +191,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'Τίποτα στη διαδρομή δεν ταιριάζει με «{name}».',
   'roadtrip.poi.noneMatchFilters': 'Τίποτα στη διαδρομή δεν ταιριάζει με αυτά τα φίλτρα.',
   'roadtrip.poi.foundFiltered': '{count} από {total} στη διαδρομή',
-  'roadtrip.poi.truncated': 'Σε {count} τμήματα υπήρχαν περισσότερα από όσα χωρούν σε μία απάντηση — στενέψτε τον διάδρομο για να δείτε τα υπόλοιπα.',
+  'roadtrip.poi.truncated':
+    'Σε {count} τμήματα υπήρχαν περισσότερα από όσα χωρούν σε μία απάντηση — στενέψτε τον διάδρομο για να δείτε τα υπόλοιπα.',
   'roadtrip.poi.search': 'Αναζήτηση',
   'roadtrip.poi.searching': 'Αναζήτηση {done} από {total}',
   'roadtrip.poi.capped': 'Η διαδρομή είναι μεγάλη — αναζητήθηκε μόνο το πρώτο τμήμα.',

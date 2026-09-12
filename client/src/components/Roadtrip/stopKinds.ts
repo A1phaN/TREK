@@ -19,10 +19,6 @@ import type { RoadtripStopType } from '@trek/shared'
  * and `roadtripModel.ts` is deliberately free of React so it can be unit tested on its
  * own. The colours and the service list stay there and are read from here.
  *
- * `isService` and `isCorridorCategory` are not the same question, and a coming lodging
- * kind is why they are separate: the corridor can find a hotel, but sleeping somewhere
- * ends the day rather than interrupting the drive, so it would be a category without
- * being a service stop.
  */
 export interface StopKind {
   key: RoadtripStopType
@@ -39,6 +35,7 @@ export interface StopKind {
 }
 
 export const STOP_KINDS: StopKind[] = [
+  { key: 'hotel', labelKey: 'poi.cat.hotels', Icon: BedDouble, color: SERVICE_COLORS.hotel, defaultMinutes: 30, isService: true, isCorridorCategory: true },
   { key: 'fuel', labelKey: 'roadtrip.poi.fuel', Icon: Fuel, color: SERVICE_COLORS.fuel, defaultMinutes: 10, isService: true, isCorridorCategory: true },
   { key: 'charging', labelKey: 'roadtrip.poi.charging', Icon: Zap, color: SERVICE_COLORS.charging, defaultMinutes: 30, isService: true, isCorridorCategory: true },
   { key: 'rest_area', labelKey: 'roadtrip.poi.rest', Icon: ParkingSquare, color: SERVICE_COLORS.rest_area, defaultMinutes: 20, isService: true, isCorridorCategory: true },
@@ -52,14 +49,6 @@ export const STOP_KIND_BY_KEY: Record<string, StopKind> = Object.fromEntries(
   STOP_KINDS.map(k => [k.key, k]),
 )
 
-/**
- * A category the corridor search offers, which is not the same question as a stop kind.
- *
- * Every stop kind is a category, but not every category is a stop kind: somewhere to
- * sleep is something the search can find, and staying there ends the day rather than
- * interrupting the drive. A hotel therefore keeps its number in the chain and gets a row
- * in `day_accommodations`; it never becomes a `stop_type`.
- */
 export interface CorridorCategory {
   key: string
   labelKey: string
@@ -83,9 +72,9 @@ export const HOTEL_COLOR = '#2563EB'
  * table happens to end.
  */
 export const CORRIDOR_CATEGORIES: CorridorCategory[] = [
-  ...STOP_KINDS.filter(k => k.isCorridorCategory && k.key !== 'restaurant' && k.key !== 'sights')
+  ...STOP_KINDS.filter(k => k.isCorridorCategory && k.key !== 'restaurant' && k.key !== 'sights' && k.key !== 'hotel')
     .map(k => ({ key: k.key as string, labelKey: k.labelKey, Icon: k.Icon, color: k.color, stopKind: k.key })),
-  { key: 'hotel', labelKey: 'poi.cat.hotels', Icon: BedDouble, color: HOTEL_COLOR, stopKind: null },
+  { key: 'hotel', labelKey: 'poi.cat.hotels', Icon: BedDouble, color: HOTEL_COLOR, stopKind: 'hotel' },
   ...STOP_KINDS.filter(k => k.key === 'restaurant' || k.key === 'sights')
     .map(k => ({ key: k.key as string, labelKey: k.labelKey, Icon: k.Icon, color: k.color, stopKind: k.key })),
 ]

@@ -1,6 +1,61 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': 'Найти жильё',
+  'roadtrip.stay.portalHint': 'Проверьте место, даты и гостей на портале. В CHECK24 ищите вручную.',
+  'roadtrip.charging.available': 'свободно',
+  'roadtrip.charging.unknown': 'Нет надёжных данных',
+  'roadtrip.charging.stale': 'Статус устарел',
+  'roadtrip.charging.prices': 'Опубликованные тарифы',
+  'roadtrip.charging.note':
+    'Опубликованный тариф; возможны налоги, условия и доплаты. Цена по вашей карте может отличаться.',
+  'roadtrip.charging.coverage': 'Открытые данные; охват зависит от региона и оператора.',
+  'roadtrip.import.title': 'Импорт маршрута Google Maps',
+  'roadtrip.import.note': 'Остановки добавляются в выбранный день. TREK пересчитает маршрут.',
+  'roadtrip.import.unresolved': 'Место не найдено; эта остановка будет пропущена.',
+  'roadtrip.import.day': 'День',
+  'roadtrip.hazards.show': 'Показывать опасные зоны',
+  'roadtrip.hazards.current': 'Текущие предупреждения',
+  'roadtrip.hazards.note': 'Предупреждения не означают закрытие дорог. Маршрут не меняется.',
+  'roadtrip.hazards.point': 'Только место события; затронутая зона неизвестна.',
+  'roadtrip.hazards.loading': 'Загрузка предупреждений…',
+  'roadtrip.hazards.unavailable': 'Недоступно',
+  'roadtrip.hazards.offline': 'Нет сети: текущие предупреждения недоступны',
+  'roadtrip.hazards.partial': 'Ограниченный охват',
+  'roadtrip.stops.section': 'Сервисные остановки',
+  'roadtrip.stops.inDays': 'Показывать также в разделе «Дни»',
+  'roadtrip.stops.daysHint':
+    'Применяется ко всем сервисным остановкам поездки. Если выключено, они остаются только в Roadtrip. Включите, чтобы снова показывать их в разделе «Дни».',
+  'roadtrip.window.dragHint':
+    'В сети перетащите конец дня по маршруту или на место; щёлкните правой кнопкой для возврата к автоматическому завершению.',
+  'roadtrip.window.resetBoundaries': 'Восстановить автоматические окончания дней',
+  'roadtrip.window.endHere': 'Завершить день здесь',
+  'roadtrip.window.endHereHint':
+    'В сведениях о месте можно завершить день на выбранной остановке, когда активны режим Roadtrip и ежедневное время поездки.',
+  'roadtrip.window.endAt': 'Завершение дня',
+  'roadtrip.window.onRoute': 'На маршруте',
+  'roadtrip.window.atStop': 'В последнем месте',
+  'roadtrip.window.routeHint': 'Остановиться на маршруте при наступлении времени окончания дня.',
+  'roadtrip.window.stopHint': 'Остаться в последнем месте, если до следующего нельзя доехать до конца дня.',
+  'roadtrip.window.legTooLong':
+    'Один переезд превышает дневной интервал. Добавьте место по пути или выберите остановку на маршруте.',
+  'roadtrip.window.pointLabel': 'Конец дня {day} в {time}',
+  'roadtrip.window.title': 'Ежедневное время в пути',
+  'roadtrip.window.start': 'Начало дня',
+  'roadtrip.window.end': 'Конец дня',
+  'roadtrip.window.hint':
+    'Задайте оба времени для ежедневных перерывов. Очистите одно поле, чтобы отключить расчёт. Ручные значения имеют приоритет. Дни соединяются автоматически.',
+  'roadtrip.window.invalid': 'Конец дня должен быть позже начала.',
+  'roadtrip.window.stop': 'Конец дня',
+  'roadtrip.window.resume': 'Продолжить поездку',
+  'roadtrip.window.pointHint': 'Здесь предполагается ночная остановка в пути.',
+  'roadtrip.window.departure': 'Продолжить после оставшейся части посещения в {time}',
+  'roadtrip.window.showPoint': 'Показать на карте',
+  'roadtrip.window.incomplete': 'Для расчёта ежедневных перерывов нужны все соединяющие маршруты.',
+  'roadtrip.window.conflict':
+    'Фиксированное время противоречит поездке и перерывам. Ручные значения сохранены; автоматическое планирование приостановлено.',
+  'roadtrip.window.tooLong':
+    'При этих настройках потребуется более 365 дополнительных дней. Увеличьте ежедневный интервал.',
   'roadtrip.mode.roadtrip': 'Автопутешествие',
   'roadtrip.mode.days': 'Дни',
   'roadtrip.mode.label': 'Вид плана',
@@ -64,11 +119,14 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.toll': 'Платные дороги',
   'roadtrip.avoid.motorway': 'Автомагистрали',
   'roadtrip.avoid.ferry': 'Паромы',
-  'roadtrip.avoid.hint': 'Это понижение веса, а не запрет. Если у поездки нет обхода, она всё равно пройдёт там, и день это покажет.',
-  'roadtrip.avoid.unavailable': 'Недоступно: этот экземпляр использует собственный движок, который не умеет исключать класс дорог.',
+  'roadtrip.avoid.hint':
+    'Это понижение веса, а не запрет. Если у поездки нет обхода, она всё равно пройдёт там, и день это покажет.',
+  'roadtrip.avoid.unavailable':
+    'Недоступно: этот экземпляр использует собственный движок, который не умеет исключать класс дорог.',
   'roadtrip.avoid.badge': '{count} в обход',
   'roadtrip.avoid.missed': '{classes} не обойти',
-  'roadtrip.avoid.missedHint': 'В этот день объезда нет, поэтому поездка идёт через это. Остальные дни по-прежнему обходят, что могут.',
+  'roadtrip.avoid.missedHint':
+    'В этот день объезда нет, поэтому поездка идёт через это. Остальные дни по-прежнему обходят, что могут.',
   'roadtrip.refuel.dry': 'Здесь кончится топливо',
   'roadtrip.refuel.after': 'через {distance}',
   'roadtrip.limit.vehicleLabel': 'На чём вы едете',
@@ -110,11 +168,13 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': 'длина {distance}',
   'roadtrip.track.gap': 'в {distance} от этого дня',
   'roadtrip.track.onDay': 'вдоль этого дня',
-  'roadtrip.track.explain': 'Маршрут притягивается к треку несколькими промежуточными точками. Существующие точки на этих участках заменяются.',
+  'roadtrip.track.explain':
+    'Маршрут притягивается к треку несколькими промежуточными точками. Существующие точки на этих участках заменяются.',
   'roadtrip.track.action': 'Идти по этому треку',
   'roadtrip.track.working': 'Подгоняем маршрут к треку, круг {round}',
   'roadtrip.track.done': 'Поставлено промежуточных точек: {count}. Маршрут держится в пределах {distance} от трека.',
-  'roadtrip.track.capped': 'Поставлено промежуточных точек: {count}. В худшем месте маршрут отходит от трека на {distance}.',
+  'roadtrip.track.capped':
+    'Поставлено промежуточных точек: {count}. В худшем месте маршрут отходит от трека на {distance}.',
   'roadtrip.track.already': 'Маршрут уже шёл по этому треку.',
   'roadtrip.track.errorRoute': 'Сервис маршрутов не ответил.',
   'roadtrip.track.errorSave': 'Не удалось сохранить промежуточные точки.',
@@ -129,7 +189,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.poi.noMatch': 'По пути ничего не соответствует «{name}».',
   'roadtrip.poi.noneMatchFilters': 'На маршруте нет ничего, что подходит под эти фильтры.',
   'roadtrip.poi.foundFiltered': '{count} из {total} по пути',
-  'roadtrip.poi.truncated': 'На {count} участках нашлось больше, чем помещается в один ответ — сузьте коридор, чтобы увидеть остальное.',
+  'roadtrip.poi.truncated':
+    'На {count} участках нашлось больше, чем помещается в один ответ — сузьте коридор, чтобы увидеть остальное.',
   'roadtrip.poi.search': 'Искать',
   'roadtrip.poi.searching': 'Поиск {done} из {total}',
   'roadtrip.poi.capped': 'Маршрут длинный — просмотрен только первый участок.',

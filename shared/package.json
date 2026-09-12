@@ -37,6 +37,16 @@
         "types": "./dist/i18n/*/index.d.cts",
         "default": "./dist/i18n/*/index.cjs"
       }
+    },
+    "./roadtrip": {
+      "import": {
+        "types": "./dist/roadtrip/planning.d.mts",
+        "default": "./dist/roadtrip/planning.mjs"
+      },
+      "require": {
+        "types": "./dist/roadtrip/planning.d.cts",
+        "default": "./dist/roadtrip/planning.cjs"
+      }
     }
   },
   "typesVersions": {

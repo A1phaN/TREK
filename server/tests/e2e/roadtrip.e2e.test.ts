@@ -1,3 +1,6 @@
+import { RoadtripSearchService } from '../../src/nest/roadtrip/roadtrip-search.service';
+import { GoogleRouteService } from '../../src/nest/roadtrip/google-route.service';
+import { ChargingService } from '../../src/nest/roadtrip/charging.service';
 /**
  * Road trip module e2e — the real guard chain against a temp SQLite db.
  *
@@ -11,14 +14,20 @@
  * The addon ships disabled, so "off" is the state an existing install upgrades
  * into. That is what makes it worth a test rather than a comment.
  */
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, type MockInstance } from 'vitest';
-import request from 'supertest';
+import { TrekExceptionFilter } from '../../src/nest/common/trek-exception.filter';
+import { ZodValidationPipe } from '../../src/nest/common/zod-validation.pipe';
+import { DatabaseModule } from '../../src/nest/database/database.module';
+import { PermissionsService } from '../../src/nest/permissions/permissions.service';
+import { RealtimeModule } from '../../src/nest/realtime/realtime.module';
+import { RoadtripModule } from '../../src/nest/roadtrip/roadtrip.module';
+import { RoadtripHazardsService } from '../../src/nest/roadtrip/roadtrip-hazards.service';
+import { seedUser, sessionCookie } from './harness';
+import { Test } from '@nestjs/testing';
+
 import cookieParser from 'cookie-parser';
 import type { Server } from 'http';
-import { Test } from '@nestjs/testing';
-import { DatabaseModule } from '../../src/nest/database/database.module';
-import { RealtimeModule } from '../../src/nest/realtime/realtime.module';
-import { seedUser, sessionCookie } from './harness';
+import request from 'supertest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, type MockInstance } from 'vitest';
 
 const { db } = vi.hoisted(() => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -30,6 +39,9 @@ const { db } = vi.hoisted(() => {
     email TEXT NOT NULL UNIQUE, role TEXT NOT NULL DEFAULT 'user', password_version INTEGER NOT NULL DEFAULT 0,
     avatar TEXT);`);
   tmp.exec('CREATE TABLE trips (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, end_date TEXT);');
+  tmp.exec(
+    'CREATE TABLE roadtrip_preferences (trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE, key TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY(trip_id, key));',
+  );
   tmp.exec('CREATE TABLE trip_members (trip_id INTEGER NOT NULL, user_id INTEGER NOT NULL);');
   tmp.exec(`CREATE TABLE days (id INTEGER PRIMARY KEY AUTOINCREMENT, trip_id INTEGER NOT NULL,
     day_number INTEGER, date TEXT, title TEXT, notes TEXT);`);
@@ -52,11 +64,15 @@ const { db } = vi.hoisted(() => {
 vi.mock('../../src/db/database', () => ({
   db,
   canAccessTrip: (tripId: number | string, userId: number) =>
-    db.prepare(`
+    db
+      .prepare(
+        `
       SELECT t.id, t.user_id FROM trips t
       LEFT JOIN trip_members m ON m.trip_id = t.id AND m.user_id = ?
       WHERE t.id = ? AND (t.user_id = ? OR m.user_id IS NOT NULL)
-    `).get(userId, tripId, userId),
+    `,
+      )
+      .get(userId, tripId, userId),
   isOwner: () => false,
   getPlaceWithTags: () => null,
   closeDb: () => {},
@@ -64,16 +80,12 @@ vi.mock('../../src/db/database', () => ({
 }));
 vi.mock('../../src/websocket', () => ({ broadcast: vi.fn() }));
 
-import { PermissionsService } from '../../src/nest/permissions/permissions.service';
-import { RoadtripModule } from '../../src/nest/roadtrip/roadtrip.module';
-import { TrekExceptionFilter } from '../../src/nest/common/trek-exception.filter';
-import { ZodValidationPipe } from '../../src/nest/common/zod-validation.pipe';
-
 const ADDON_ID = 'roadtrip';
 
 function setAddon(enabled: boolean): void {
-  db.prepare('INSERT INTO addons (id, enabled) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET enabled = excluded.enabled')
-    .run(ADDON_ID, enabled ? 1 : 0);
+  db.prepare(
+    'INSERT INTO addons (id, enabled) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET enabled = excluded.enabled',
+  ).run(ADDON_ID, enabled ? 1 : 0);
 }
 
 describe('Roadtrip e2e (real guard chain + temp SQLite)', () => {
@@ -117,15 +129,127 @@ describe('Roadtrip e2e (real guard chain + temp SQLite)', () => {
     setAddon(true);
   });
 
-  afterAll(async () => { await app?.close(); });
+  afterAll(async () => {
+    await app?.close();
+  });
 
   const cookie = () => sessionCookie(1);
+  it('gates charging data by addon and trip membership', async () => {
+    const read = vi.spyOn(app.get(ChargingService), 'read').mockResolvedValue({} as never);
+    try {
+      await request(server).get('/api/trips/5/roadtrip/charging/10').expect(401);
+      await request(server).get('/api/trips/6/roadtrip/charging/10').set('Cookie', cookie()).expect(404);
+      await request(server).get('/api/trips/5/roadtrip/charging/10').set('Cookie', cookie()).expect(200);
+      expect(read).toHaveBeenCalledWith(5, 10);
+      setAddon(false);
+      await request(server).get('/api/trips/5/roadtrip/charging/10').set('Cookie', cookie()).expect(404);
+      expect(read).toHaveBeenCalledTimes(1);
+    } finally { read.mockRestore(); }
+  });
+  it('validates Google route preview and import before executing either service', async () => {
+    const routes = app.get(GoogleRouteService);
+    const preview = vi.spyOn(routes, 'preview').mockResolvedValue({ stops: [] });
+    const save = vi.spyOn(routes, 'import').mockReturnValue({ imported: 2 });
+    const input = { dayId: 3, stops: [{ name: 'A', lat: 48, lng: 11 }, { name: 'B', lat: 41, lng: 12 }] };
+    try {
+      await request(server).post('/api/roadtrip/google-maps-preview').send({ url: 'https://google.com/maps/dir/A/B' }).expect(401);
+      await request(server).post('/api/roadtrip/google-maps-preview').set('Cookie', cookie()).send({ url: 'bad' }).expect(400);
+      await request(server).post('/api/roadtrip/google-maps-preview').set('Cookie', cookie()).send({ url: 'https://google.com/maps/dir/A/B' }).expect(200);
+      await request(server).post('/api/trips/6/roadtrip/google-maps-import').set('Cookie', cookie()).send(input).expect(404);
+      await request(server).post('/api/trips/5/roadtrip/google-maps-import').set('Cookie', cookie()).send({ ...input, stops: [{ name: 'A', lat: 999, lng: 0 }] }).expect(400);
+      await request(server).post('/api/trips/5/roadtrip/google-maps-import').set('Cookie', cookie()).send(input).expect(200);
+      expect(save).toHaveBeenCalledWith(5, 1, input, undefined);
+      setAddon(false);
+      await request(server).post('/api/trips/5/roadtrip/google-maps-import').set('Cookie', cookie()).send(input).expect(404);
+      await request(server).post('/api/roadtrip/google-maps-preview').set('Cookie', cookie()).send({ url: 'https://google.com/maps/dir/A/B' }).expect(404);
+      expect(save).toHaveBeenCalledTimes(1);
+      expect(preview).toHaveBeenCalledTimes(1);
+    } finally { preview.mockRestore(); save.mockRestore(); }
+  });
+  it('validates and gates area search before calling plugins', async () => {
+    const search = vi.spyOn(app.get(RoadtripSearchService), 'search').mockResolvedValue({ pois: [], sources: [], failedSources: [], truncated: false, clamped: false });
+    const input = { categories: ['fuel'], bbox: { south: 48, north: 49, west: 10, east: 11 } };
+    try {
+      await request(server).post('/api/roadtrip/search-area').send(input).expect(401);
+      await request(server).post('/api/roadtrip/search-area').set('Cookie', cookie()).send({ ...input, categories: ['invalid'] }).expect(400);
+      await request(server).post('/api/roadtrip/search-area').set('Cookie', cookie()).send(input).expect(200);
+      expect(search).toHaveBeenCalledWith(input, 1);
+      setAddon(false);
+      await request(server).post('/api/roadtrip/search-area').set('Cookie', cookie()).send(input).expect(404);
+      expect(search).toHaveBeenCalledTimes(1);
+    } finally { search.mockRestore(); }
+  });
+  it('gates live hazards by addon, authentication and trip access', async () => {
+    const read = vi.spyOn(app.get(RoadtripHazardsService), 'read').mockResolvedValue({ fetchedAt: new Date().toISOString(), hazards: [], sources: [] });
+    try {
+      await request(server).get('/api/trips/5/roadtrip/hazards').expect(401);
+      await request(server).get('/api/trips/6/roadtrip/hazards').set('Cookie', cookie()).expect(404);
+      await request(server).get('/api/trips/5/roadtrip/hazards').set('Cookie', cookie()).expect(200);
+      setAddon(false);
+      await request(server).get('/api/trips/5/roadtrip/hazards').set('Cookie', cookie()).expect(404);
+      expect(read).toHaveBeenCalledTimes(1);
+    } finally { read.mockRestore(); }
+  });
+
+  describe('shared trip driving preferences', () => {
+    it('shares values with members and isolates other trips', async () => {
+      db.prepare('INSERT INTO trip_members (trip_id, user_id) VALUES (5, 2)').run();
+      try {
+        await request(server)
+          .put('/api/trips/5/roadtrip/preferences')
+          .set('Cookie', cookie())
+          .send({ roadtrip_range_km: 120, roadtrip_day_start: '08:00', roadtrip_day_end: '18:00' })
+          .expect(200);
+        const member = await request(server)
+          .get('/api/trips/5/roadtrip/preferences')
+          .set('Cookie', sessionCookie(2))
+          .expect(200);
+        expect(member.body.preferences.roadtrip_range_km).toBe(120);
+        await request(server)
+          .put('/api/trips/5/roadtrip/preferences')
+          .set('Cookie', sessionCookie(2))
+          .send({ roadtrip_range_km: 160 })
+          .expect(200);
+        const owner = await request(server)
+          .get('/api/trips/5/roadtrip/preferences')
+          .set('Cookie', cookie())
+          .expect(200);
+        expect(owner.body.preferences.roadtrip_range_km).toBe(160);
+        const other = await request(server)
+          .get('/api/trips/6/roadtrip/preferences')
+          .set('Cookie', sessionCookie(2))
+          .expect(200);
+        expect(other.body.preferences).toEqual({});
+        checkPermission.mockReturnValue(false);
+        await request(server)
+          .put('/api/trips/5/roadtrip/preferences')
+          .set('Cookie', sessionCookie(2))
+          .send({ roadtrip_range_km: 999 })
+          .expect(403);
+        expect(
+          db.prepare("SELECT value FROM roadtrip_preferences WHERE trip_id = 5 AND key = 'roadtrip_range_km'").get(),
+        ).toEqual({ value: '160' });
+      } finally {
+        db.prepare('DELETE FROM trip_members WHERE trip_id = 5 AND user_id = 2').run();
+      }
+    });
+    it('refuses strangers and invalid daily windows', async () => {
+      await request(server).get('/api/trips/5/roadtrip/preferences').set('Cookie', sessionCookie(2)).expect(404);
+      await request(server)
+        .put('/api/trips/5/roadtrip/preferences')
+        .set('Cookie', cookie())
+        .send({ roadtrip_day_start: '18:00', roadtrip_day_end: '08:00' })
+        .expect(400);
+    });
+  });
 
   describe('the addon gate', () => {
     // Six routes, all of them. `@RequireAddon` is metadata and inert without the
     // guard, and the guard is not global — so this block is the only thing that
     // fails if somebody drops AddonGuard from the chain again.
     const routes: [string, string, unknown?][] = [
+      ['get', '/api/trips/5/roadtrip/preferences'],
+      ['put', '/api/trips/5/roadtrip/preferences', { roadtrip_range_km: 120 }],
       ['get', '/api/trips/5/roadtrip/vias'],
       ['get', '/api/trips/5/roadtrip/days/3/vias'],
       ['post', '/api/trips/5/roadtrip/days/3/vias', { after_order_index: 0, lat: 53, lng: 10 }],
@@ -137,7 +261,8 @@ describe('Roadtrip e2e (real guard chain + temp SQLite)', () => {
     it('ROADTRIP-E2E-001: answers 404 on every route while the addon is off', async () => {
       setAddon(false);
       for (const [method, url, body] of routes) {
-        const req = (request(server) as never as Record<string, (u: string) => request.Test>)[method](url)
+        const req = (request(server) as never as Record<string, (u: string) => request.Test>)
+          [method](url)
           .set('Cookie', cookie());
         const res = await (body ? req.send(body as object) : req);
         expect(res.status, `${method.toUpperCase()} ${url}`).toBe(404);
@@ -224,8 +349,9 @@ describe('Roadtrip e2e (real guard chain + temp SQLite)', () => {
       expect(moved.status).toBe(200);
       expect(moved.body.via).toMatchObject({ lat: 54, lng: 11 });
 
-      expect((await request(server).delete(`/api/trips/5/roadtrip/days/3/vias/${id}`).set('Cookie', cookie())).status)
-        .toBe(200);
+      expect(
+        (await request(server).delete(`/api/trips/5/roadtrip/days/3/vias/${id}`).set('Cookie', cookie())).status,
+      ).toBe(200);
       const after = await request(server).get('/api/trips/5/roadtrip/days/3/vias').set('Cookie', cookie());
       expect(after.body.vias).toEqual([]);
     });
@@ -235,7 +361,10 @@ describe('Roadtrip e2e (real guard chain + temp SQLite)', () => {
         .post('/api/trips/5/roadtrip/days/3/vias/batch')
         .set('Cookie', cookie())
         .send({
-          vias: [{ after_order_index: 0, lat: 53, lng: 10 }, { after_order_index: 0, lat: 53.5, lng: 10.5 }],
+          vias: [
+            { after_order_index: 0, lat: 53, lng: 10 },
+            { after_order_index: 0, lat: 53.5, lng: 10.5 },
+          ],
           track: { place_id: 10, stray_km: 1.5 },
         });
       expect(res.status).toBe(200);

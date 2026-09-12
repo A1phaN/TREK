@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Polyline, CircleMarker, Circle, useMap
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { makeMarkerDraggable, makePoiDraggable, draggedPoiId } from './markerDrag'
 import RoadtripViaMarkers from './RoadtripViaMarkers'
+import HazardLayers from './HazardLayers'
 import { ALT_CASING, ALT_LABEL_TEXT } from '../Roadtrip/alternativeColors'
 import { serviceMarkerHtml, serviceMarkerOuter } from '../Roadtrip/serviceMarker'
 import type { AlternativeOverlay } from '../Roadtrip/alternativeOverlays'
@@ -44,6 +45,12 @@ import { visibleRouteReservations } from '../../utils/reservationRoutes'
 import { safeHexColor } from '../../utils/safeColor'
 import { escapeHtml } from '@trek/shared'
 import type { Day, Reservation, RouteVia } from '../../types'
+import type { MapHoverInfo } from './mapHover'
+import { nightPauseMarker, NIGHT_PAUSE_MIN_ZOOM } from './nightPauseMarker'
+import NightPauseTooltip from './NightPauseTooltip'
+import ClusteredPois from './ClusteredPois'
+import { NightPauseDrag } from './NightPauseDrag'
+import type { DayBoundaryControls } from './dayBoundaryDrag'
 import { POI_CATEGORY_BY_KEY, type Poi } from './poiCategories'
 import { resolveTrackColor, hasManualTrackColor } from './trackColors'
 import { OFM_POSITRON, DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, MAP_MAX_ZOOM, SATELLITE_TILE_URL, SATELLITE_TILE_ATTRIBUTION, SATELLITE_TILE_MAXZOOM, attributionForTile } from '../../constants/mapDefaults'
@@ -96,6 +103,26 @@ function formatViaDwell(seconds: number): string {
   const h = Math.floor(seconds / 3600)
   const m = Math.round((seconds % 3600) / 60)
   return h > 0 ? `${h} h ${m} min` : `${m} min`
+}
+
+function nightPauseIcon(via: RouteVia): L.DivIcon {
+  const key = `night:${via.nightPause!.day}:${via.nightPause!.atPlace}`
+  const cached = viaIconCache.get(key)
+  if (cached) return cached
+  const icon = L.divIcon({ className: 'night-pause-marker', html: nightPauseMarker(via), iconSize: [0, 0], iconAnchor: [0, 0] })
+  viaIconCache.set(key, icon)
+  return icon
+}
+
+function RouteViaMarker({ via, controls, eventHandlers, children }: {
+  via: RouteVia; controls?: DayBoundaryControls; eventHandlers?: L.LeafletEventHandlerFnMap; children?: React.ReactNode
+}) {
+  const [marker, setMarker] = useState<L.Marker | null>(null)
+  return <Marker ref={setMarker} position={[via.lat, via.lng]} icon={via.nightPause ? nightPauseIcon(via) : routeViaIcon(via.tone)}
+    alt={via.nightPause ? via.label : undefined} zIndexOffset={800} eventHandlers={eventHandlers}>
+    {children}
+    {via.nightPause && <NightPauseDrag marker={marker} via={via} controls={controls} />}
+  </Marker>
 }
 
 /**
@@ -226,15 +253,16 @@ function createPoiIcon(category: string, brandWikidata?: string | null) {
 // away under a stationary cursor, so the browser never fires mouseout — and
 // mouseover/mousemove during the pan animation would immediately re-set the
 // tooltip we just cleared (#1404).
-function CameraHoverGuard({ movingRef, onMoveStart }: { movingRef: { current: boolean }; onMoveStart: () => void }) {
+function CameraHoverGuard({ movingRef, onMoveStart, onZoom }: { movingRef: { current: boolean }; onMoveStart: () => void; onZoom: (zoom: number) => void }) {
   const map = useMap()
   useEffect(() => {
     const start = () => { movingRef.current = true; onMoveStart() }
-    const end = () => { movingRef.current = false }
+    const end = () => { movingRef.current = false; onZoom(map.getZoom()) }
+    onZoom(map.getZoom())
     map.on('movestart zoomstart', start)
     map.on('moveend zoomend', end)
     return () => { map.off('movestart zoomstart', start); map.off('moveend zoomend', end) }
-  }, [map, movingRef, onMoveStart])
+  }, [map, movingRef, onMoveStart, onZoom])
   return null
 }
 
@@ -638,6 +666,8 @@ export const MapView = memo(function MapView({
   onViewportChange,
   tripId,
   routeVias = [],
+  dayBoundaryControls,
+  hazards,
   accessLines = [],
   onPoiDropOnRoute,
   onRouteClick,
@@ -655,9 +685,12 @@ export const MapView = memo(function MapView({
   // that is decides which layer draws it. A saved raster template still wins,
   // the default is a vector style.
   const basemap = useMemo(() => resolveBasemap(tileUrl, OFM_POSITRON), [tileUrl])
+  const poiClickRef = useRef(onPoiClick)
+  poiClickRef.current = onPoiClick
   const poiMarkers = useMemo(() => (pois as Poi[]).map((poi: Poi) => (
     <Marker
       key={`poi-${poi.osm_id}`}
+      alt={poi.name}
       position={[poi.lat, poi.lng]}
       icon={createPoiIcon(poi.category, poi.brand_wikidata)}
       zIndexOffset={500}
@@ -667,7 +700,11 @@ export const MapView = memo(function MapView({
         // itself, and this is the first moment there is one to attach to.
         add: (e: { target: { getElement: () => HTMLElement | undefined } }) => {
           const el = e.target.getElement()
-          if (el && onPoiDropOnRoute) makePoiDraggable(el, poi.osm_id)
+          if (!el) return
+          // Native clicks avoid Leaflet suppressing a click after an earlier map drag.
+          el.setAttribute('aria-label', poi.name)
+          el.onclick = event => { event.stopPropagation(); poiClickRef.current?.(poi) }
+          if (onPoiDropOnRoute) makePoiDraggable(el, poi.osm_id)
         },
       }}
     >
@@ -712,11 +749,12 @@ export const MapView = memo(function MapView({
   })
 
   // Hover state for the single tooltip overlay (replaces per-marker <Tooltip>)
-  const [hoveredPlace, setHoveredPlace] = useState<any>(null)
+  const [hoveredPlace, setHoveredPlace] = useState<MapHoverInfo | null>(null)
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null)
+  const [mapZoom, setMapZoom] = useState(0)
   const mapMovingRef = useRef(false)
 
-  const handleMarkerHover = useCallback((place: any, x: number, y: number) => {
+  const handleMarkerHover = useCallback((place: MapHoverInfo, x: number, y: number) => {
     if (hoverDisabled || mapMovingRef.current) return
     setHoveredPlace(place)
     setTooltipPos({ x, y })
@@ -920,6 +958,7 @@ export const MapView = memo(function MapView({
   ), [gpxTracks, hasCasingPane])
 
   const TooltipOverlay = !hoverDisabled && hoveredPlace && tooltipPos && !isTouchDevice
+    && (!hoveredPlace.routeVia || routeVias.includes(hoveredPlace.routeVia))
   const CatIcon = TooltipOverlay ? getCategoryIcon(hoveredPlace.category_icon) : null
 
   const { position: userPosition, mode: trackingMode, error: trackingError, errorCode: trackingErrorCode, cycleMode: cycleTrackingMode } = useGeolocation()
@@ -1001,32 +1040,25 @@ export const MapView = memo(function MapView({
       <SelectionController places={places} selectedPlaceId={selectedPlaceId} dayPlaces={dayPlaces} paddingOpts={paddingOpts} />
       <MapClickHandler onClick={onMapClick} />
       <MapContextMenuHandler onContextMenu={onMapContextMenu} />
-      <CameraHoverGuard movingRef={mapMovingRef} onMoveStart={clearHover} />
+      <CameraHoverGuard movingRef={mapMovingRef} onMoveStart={clearHover} onZoom={setMapZoom} />
       <ViewportController onViewportChange={onViewportChange} />
       <PoiDropTarget onPoiDropOnRoute={onPoiDropOnRoute} />
       <LeafletLocationLayer position={userPosition} mode={trackingMode} />
 
-      {/* Road trip mode does not cluster at all: the whole drive has to stay readable
-          zoomed right out, and a day's stops merging into one dot is exactly the shape
-          it is being looked at for. Rendered outside the group rather than with the
-          clustering disabled by option, so nothing is left to a plugin's own idea of
-          what "disabled" means. */}
-      {clusterLoosely ? markers : (
-        <MarkerClusterGroup
-          chunkedLoading
-          chunkInterval={30}
-          chunkDelay={0}
-          maxClusterRadius={30}
-          disableClusteringAtZoom={11}
-          spiderfyOnMaxZoom
-          showCoverageOnHover={false}
-          zoomToBoundsOnClick
-          animate={false}
-          iconCreateFunction={clusterIconCreateFunction}
-        >
-          {markers}
-        </MarkerClusterGroup>
-      )}
+      <MarkerClusterGroup
+        chunkedLoading
+        chunkInterval={30}
+        chunkDelay={0}
+        maxClusterRadius={30}
+        disableClusteringAtZoom={11}
+        spiderfyOnMaxZoom
+        showCoverageOnHover={false}
+        zoomToBoundsOnClick
+        animate={false}
+        iconCreateFunction={clusterIconCreateFunction}
+      >
+        {markers}
+      </MarkerClusterGroup>
 
       {/* Apple-Maps style: darker-blue casing under a bright-blue core, rounded.
           The casing carries the click when the route can be reshaped: it is the wider of
@@ -1130,19 +1162,26 @@ export const MapView = memo(function MapView({
         roadRoutes={transportRoutes}
       />
 
-      {poiMarkers}
+      {hazards?.length > 0 && <HazardLayers hazards={hazards} />}
+      <ClusteredPois pois={pois} enabled={clusterLoosely} onPoiClick={onPoiClick}>{poiMarkers}</ClusteredPois>
       {/* Charging stops / rest areas a plugin route places on the drawn day route.
           Host-vetted data (server-normalized), rendered as plain tone dots. */}
-      {(routeVias as RouteVia[]).map((v, i) => (
-        <Marker key={`route-via-${i}`} position={[v.lat, v.lng]} icon={routeViaIcon(v.tone)} zIndexOffset={800}>
-          {(v.label || v.dwellSeconds != null) && (
-            <Tooltip direction="top" offset={[0, -8]}>
+      {(routeVias as RouteVia[]).filter(v => !v.nightPause || mapZoom >= NIGHT_PAUSE_MIN_ZOOM).map((v, i) => (
+        <RouteViaMarker key={v.nightPause ? `night-${v.nightPause.day}` : `route-via-${i}`} via={v} controls={dayBoundaryControls}
+          eventHandlers={v.hoverCard ? {
+            mouseover: e => handleMarkerHover({ name: v.label, routeVia: v }, e.originalEvent.clientX, e.originalEvent.clientY),
+            mousemove: e => handleMarkerHover({ name: v.label, routeVia: v }, e.originalEvent.clientX, e.originalEvent.clientY),
+            mouseout: handleMarkerHoverOut,
+          } : undefined}
+        >
+          {(!v.hoverCard || isTouchDevice) && (v.label || v.dwellSeconds != null) && (
+            <Tooltip direction="top" offset={[0, -8]} opacity={1} className="map-tooltip">
               {v.label}
               {v.label && v.dwellSeconds != null ? ' · ' : ''}
               {v.dwellSeconds != null ? formatViaDwell(v.dwellSeconds) : ''}
             </Tooltip>
           )}
-        </Marker>
+        </RouteViaMarker>
       ))}
       <PluginMapMarkers tripId={tripId} />
       <PluginMapLayers tripId={tripId} />
@@ -1157,12 +1196,15 @@ export const MapView = memo(function MapView({
     {/* 20px off the sidebar, not 12: the pill is round and frosted, so at the
         smaller gap its shadow ran into the sidebar edge and the two read as one
         surface. */}
-    <div style={{ position: 'absolute', left: leftWidth + 20, bottom: switcherBottom, zIndex: 1000, pointerEvents: 'none' }}>
+    <div style={{ position: 'absolute', left: leftWidth + 20, top: hasInspector ? 80 : undefined, bottom: hasInspector ? undefined : switcherBottom, zIndex: 1000, pointerEvents: 'none' }}>
       <MapLayerSwitcher active={baseLayer} onToggle={toggleBaseLayer} />
     </div>
     </div>
 
-    {TooltipOverlay && (
+    {TooltipOverlay && hoveredPlace.routeVia?.nightPause && (
+      <NightPauseTooltip label={hoveredPlace.name ?? ''} x={tooltipPos.x} y={tooltipPos.y} />
+    )}
+    {TooltipOverlay && !hoveredPlace.routeVia?.nightPause && (
       <div data-testid="tooltip" style={{
         position: 'fixed',
         left: tooltipPos.x + 14,

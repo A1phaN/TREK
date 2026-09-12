@@ -74,10 +74,14 @@ export type RoadtripViaUpdateRequest = z.infer<typeof roadtripViaUpdateRequestSc
  * the leg into it is gone, and a via pinned to it has nowhere left to sit.
  */
 export const roadtripViaReanchorRequestSchema = z.object({
-  vias: z.array(z.object({
-    id: z.number().int().positive(),
-    after_order_index: z.number().int().min(0),
-  })).max(500),
+  vias: z
+    .array(
+      z.object({
+        id: z.number().int().positive(),
+        after_order_index: z.number().int().min(0),
+      }),
+    )
+    .max(500),
   remove: z.array(z.number().int().positive()).max(500).optional(),
 });
 export type RoadtripViaReanchorRequest = z.infer<typeof roadtripViaReanchorRequestSchema>;
@@ -95,11 +99,15 @@ export type RoadtripViaReanchorRequest = z.infer<typeof roadtripViaReanchorReque
  * then adopts a scenic road for a third has not asked to lose the two.
  */
 export const roadtripViaBatchRequestSchema = z.object({
-  vias: z.array(z.object({
-    after_order_index: z.number().int().min(0),
-    lat: latSchema,
-    lng: lngSchema,
-  })).max(100),
+  vias: z
+    .array(
+      z.object({
+        after_order_index: z.number().int().min(0),
+        lat: latSchema,
+        lng: lngSchema,
+      }),
+    )
+    .max(100),
   /** Legs to clear first, by `after_order_index`. Absent means add to what is there. */
   replace_legs: z.array(z.number().int().min(0)).max(100).optional(),
   /**
@@ -110,11 +118,14 @@ export const roadtripViaBatchRequestSchema = z.object({
    * any more, and an object records the road it now takes. A bare nullable id could not
    * tell "do not touch this" apart from "forget it".
    */
-  track: z.object({
-    place_id: z.number().int().positive(),
-    /** How far the fitted route still ran from the track at its worst point. */
-    stray_km: z.number().min(0).max(40_000).nullable().optional(),
-  }).nullable().optional(),
+  track: z
+    .object({
+      place_id: z.number().int().positive(),
+      /** How far the fitted route still ran from the track at its worst point. */
+      stray_km: z.number().min(0).max(40_000).nullable().optional(),
+    })
+    .nullable()
+    .optional(),
 });
 export type RoadtripViaBatchRequest = z.infer<typeof roadtripViaBatchRequestSchema>;
 

@@ -8,6 +8,7 @@ import { AuthService } from '../auth/auth.service';
 import { ADDON_IDS } from '../../addons';
 import { addonGate } from '../addons/addon-gate';
 import { AddonsService } from '../addons/addons.service';
+import { roadtripViaUpdateRequestSchema, type RoadtripViaUpdateRequest } from '@trek/shared';
 
 /**
  * The whole surface rides the road trip addon, the same way the controller does
@@ -182,6 +183,23 @@ export class RoadtripMcp {
     if (!this.roadtrip.remove(viaId, dayId)) return noAccess();
     this.announce(tripId, dayId);
     return ok({ success: true });
+  }
+
+  @Tool({
+    name: 'update_route_via',
+    description: 'Move an existing via point and optionally attach it to another outgoing leg of the same day. This is the same change as dragging a route handle. A via bends the route and does not add a stop or stay.',
+    inputSchema: { tripId: z.number().int().positive(), dayId: z.number().int().positive(), viaId: z.number().int().positive(), ...roadtripViaUpdateRequestSchema.shape },
+    annotations: TOOL_ANNOTATIONS_NON_IDEMPOTENT, access: { group: 'trips', mode: 'write' }, when: roadtripAddonOn,
+  })
+  async updateVia(input: RoadtripViaUpdateRequest & { tripId: number; dayId: number; viaId: number }, ctx: McpContext) {
+    if (this.auth.isDemoUser(ctx.userId)) return demoDenied();
+    if (!this.db.canAccessTrip(input.tripId, ctx.userId)) return noAccess();
+    if (!this.guards.hasTripPermission('day_edit', input.tripId, ctx.userId)) return permissionDenied();
+    if (!this.roadtrip.dayExists(input.dayId, input.tripId)) return noAccess();
+    const via = this.roadtrip.move(input.viaId, input.dayId, input.lat, input.lng, input.after_order_index);
+    if (!via) return noAccess();
+    this.announce(input.tripId, input.dayId);
+    return ok({ via });
   }
 
   /**

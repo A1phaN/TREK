@@ -1,6 +1,61 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.stay.portals': '宿泊施設を探す',
+  'roadtrip.stay.portalHint':
+    '予約サイトで目的地、日付、宿泊人数を確認してください。CHECK24では手動で検索してください。',
+  'roadtrip.charging.available': '空き',
+  'roadtrip.charging.unknown': '信頼できるデータがありません',
+  'roadtrip.charging.stale': '古い状態情報',
+  'roadtrip.charging.prices': '公開料金',
+  'roadtrip.charging.note':
+    '公開料金です。税金、条件、追加料金をご確認ください。充電カードの料金は異なる場合があります。',
+  'roadtrip.charging.coverage': 'オープンデータ。地域や事業者によって対応範囲が異なります。',
+  'roadtrip.import.title': 'Google Mapsのルートをインポート',
+  'roadtrip.import.note': '立ち寄り先を選択した日に追加し、TREKでルートを再計算します。',
+  'roadtrip.import.unresolved': '場所が見つからないため、この立ち寄り先はスキップされます。',
+  'roadtrip.import.day': '日',
+  'roadtrip.hazards.show': '危険地域を表示',
+  'roadtrip.hazards.current': '現在の警報',
+  'roadtrip.hazards.note': '警報は通行止めを意味しません。ルートは変更されません。',
+  'roadtrip.hazards.point': '発生地点のみ。影響範囲は不明です。',
+  'roadtrip.hazards.loading': '警報を読み込み中…',
+  'roadtrip.hazards.unavailable': '利用できません',
+  'roadtrip.hazards.offline': 'オフライン：最新の警報は利用できません',
+  'roadtrip.hazards.partial': '対象範囲は限定的',
+  'roadtrip.stops.section': 'サービス施設での停車',
+  'roadtrip.stops.inDays': '日別にも表示',
+  'roadtrip.stops.daysHint':
+    'この旅行のすべてのサービス施設での停車に適用されます。オフにするとRoadtripの計画にのみ表示されます。オンにすると日別にも再表示されます。',
+  'roadtrip.window.dragHint':
+    'オンライン時は一日の終了地点をルート上や場所へドラッグできます。右クリックで自動の終了地点に戻せます。',
+  'roadtrip.window.resetBoundaries': '一日の終了地点を自動に戻す',
+  'roadtrip.window.endHere': 'ここで一日を終了',
+  'roadtrip.window.endHereHint':
+    'Roadtripモードと毎日の移動時間が有効な場合、場所の詳細から特定の立ち寄り先を一日の終点に設定できます。',
+  'roadtrip.window.endAt': '1日の終了地点',
+  'roadtrip.window.onRoute': 'ルートの途中',
+  'roadtrip.window.atStop': '最後の場所',
+  'roadtrip.window.routeHint': '終了時刻になったら、ルート上の到達地点で休止します。',
+  'roadtrip.window.stopHint': '終了時刻までに次の場所へ到着できない場合は、最後の場所に留まります。',
+  'roadtrip.window.legTooLong':
+    '1区間の移動時間が1日の時間枠を超えています。途中に場所を追加するか、ルートの途中で休止する設定を選んでください。',
+  'roadtrip.window.pointLabel': '{day}日目の終了時刻は{time}',
+  'roadtrip.window.title': '毎日の移動時間',
+  'roadtrip.window.start': '一日の開始時刻',
+  'roadtrip.window.end': '一日の終了時刻',
+  'roadtrip.window.hint':
+    '両方の時刻を設定すると毎日の休憩を計画します。どちらかを空欄にすると無効になります。手動の時刻が優先され、各日のルートは自動で接続されます。',
+  'roadtrip.window.invalid': '終了時刻は開始時刻より後にしてください。',
+  'roadtrip.window.stop': '一日の終了',
+  'roadtrip.window.resume': '移動を再開',
+  'roadtrip.window.pointHint': 'ここが夜間の休止地点になる見込みです。',
+  'roadtrip.window.departure': '残りの滞在後、{time}に出発',
+  'roadtrip.window.showPoint': '地図で表示',
+  'roadtrip.window.incomplete': '毎日の休憩を計算するには、すべての接続ルートが必要です。',
+  'roadtrip.window.conflict':
+    '固定時刻が移動や休憩と両立しません。手動の時刻は保持され、自動計画は一時停止しています。',
+  'roadtrip.window.tooLong': 'この設定では365日を超える追加日数が必要です。一日の移動時間を長くしてください。',
   'roadtrip.mode.roadtrip': 'ロードトリップ',
   'roadtrip.mode.days': '日ごと',
   'roadtrip.mode.label': 'プラン表示',
@@ -65,10 +120,12 @@ const roadtrip: TranslationStrings = {
   'roadtrip.avoid.motorway': '高速道路',
   'roadtrip.avoid.ferry': 'フェリー',
   'roadtrip.avoid.hint': '禁止ではなく、優先度を下げるだけです。迂回できない場合はそのまま通り、その日に表示されます。',
-  'roadtrip.avoid.unavailable': '利用できません。このインスタンスは自前のエンジンを使っており、道路種別を除外できません。',
+  'roadtrip.avoid.unavailable':
+    '利用できません。このインスタンスは自前のエンジンを使っており、道路種別を除外できません。',
   'roadtrip.avoid.badge': '{count} 件を回避',
   'roadtrip.avoid.missed': '{classes} は回避できず',
-  'roadtrip.avoid.missedHint': 'この日は迂回路がないため、そのまま通ります。ほかの日は引き続き避けられるものを避けます。',
+  'roadtrip.avoid.missedHint':
+    'この日は迂回路がないため、そのまま通ります。ほかの日は引き続き避けられるものを避けます。',
   'roadtrip.refuel.dry': 'ここで燃料切れ',
   'roadtrip.refuel.after': '{distance} 後',
   'roadtrip.limit.vehicleLabel': '何で走るか',
@@ -110,7 +167,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.track.length': '全長 {distance}',
   'roadtrip.track.gap': 'この日から {distance}',
   'roadtrip.track.onDay': 'この日に沿って',
-  'roadtrip.track.explain': 'いくつかの経由地で走行をトラックに引き寄せます。その区間にある既存の経由地は置き換えられます。',
+  'roadtrip.track.explain':
+    'いくつかの経由地で走行をトラックに引き寄せます。その区間にある既存の経由地は置き換えられます。',
   'roadtrip.track.action': 'このトラックをたどる',
   'roadtrip.track.working': '走行をトラックに合わせています（{round} 回目）',
   'roadtrip.track.done': '経由地を {count} か所置きました。走行はトラックから {distance} 以内に収まります。',

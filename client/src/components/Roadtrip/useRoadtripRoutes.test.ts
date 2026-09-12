@@ -79,6 +79,61 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
+describe('automatic daily travel times', () => {
+  beforeEach(() => {
+    useSettingsStore.setState({ settings: { ...DEFAULT_SETTINGS, roadtrip_day_start: '08:00', roadtrip_day_end: '18:00' } })
+    calculateRouteWithLegs.mockResolvedValue({ ...routed(1), duration: 43200, legs: [{ ...routed(1).legs[0], duration: 43200 }] })
+  })
+  afterEach(() => act(() => useSettingsStore.setState({ settings: { ...DEFAULT_SETTINGS } })))
+
+  it('splits existing routes, keeps manual starts and recalculates without routing the pause', async () => {
+    const days = [day(1, 1), day(2, 2)]
+    const original = [{ id: 1, at: HAMBURG, time: '07:00' }, { id: 2, at: BERLIN }]
+    const { result, rerender } = renderHook(({ stops }) => useRoadtripRoutes(7, days, map(1, stops)), {
+      initialProps: { stops: original as StopSpec[] },
+    })
+    await waitFor(() => expect(result.current.dayWindowIssue).toBeNull())
+    expect(result.current.days).toHaveLength(2)
+    expect(result.current.totalStops).toBe(2)
+    expect(result.current.totalDuration).toBe(43200)
+    expect(result.current.days[0].schedule.entries.map(e => e.arrival)).toEqual(['07:00', '18:00'])
+    expect(result.current.days[1].schedule.entries.map(e => e.arrival)).toEqual(['08:00', '09:00'])
+    expect(result.current.days[1].stops[1]).toMatchObject({ assignmentId: 2, ownerDayId: 1, ownerIndex: 1 })
+    const end = result.current.days[0].stops[1]
+    rerender({ stops: [{ ...original[0], dwell: 120 }, original[1]] })
+    await waitFor(() => expect(result.current.days[1].schedule.entries[1].arrival).toBe('11:00'))
+    expect(result.current.days[0].stops[1].lng).not.toBe(end.lng)
+    expect(calculateRouteWithLegs).toHaveBeenCalledTimes(1)
+    act(() => useSettingsStore.setState({ settings: { ...DEFAULT_SETTINGS } }))
+    await waitFor(() => expect(result.current.days).toHaveLength(1))
+    expect(result.current.days[0].schedule.entries[1].arrival).toBe('21:00')
+    expect(result.current.days[0].stops.some(s => s.automaticNight)).toBe(false)
+  })
+
+  it('routes the join between stored days and includes it exactly once', async () => {
+    const days = [day(1, 1), day(2, 2)]
+    const assignments = { ...map(1, [{ id: 1, at: HAMBURG }]), ...map(2, [{ id: 2, at: BERLIN }]) }
+    const { result } = renderHook(() => useRoadtripRoutes(7, days, assignments))
+    await waitFor(() => expect(result.current.dayWindowIssue).toBeNull())
+    expect(calculateRouteWithLegs).toHaveBeenCalledTimes(1)
+    expect(calculateRouteWithLegs.mock.calls[0][0]).toEqual([{ lat: HAMBURG[0], lng: HAMBURG[1] }, { lat: BERLIN[0], lng: BERLIN[1] }])
+    expect(result.current.days.map(d => d.dayNumber)).toEqual([1, 2, 3])
+    expect(result.current.totalDuration).toBe(43200)
+    expect(result.current.totalDistance).toBe(100000)
+    expect(result.current.totalStops).toBe(2)
+  })
+
+  it('exposes a fixed appointment conflict and keeps stored dates and times', async () => {
+    const days = [day(1, 1), day(2, 2)]
+    const assignments = map(1, [{ id: 1, at: HAMBURG, time: '07:00' }, { id: 2, at: BERLIN, time: '10:00' }])
+    const { result } = renderHook(() => useRoadtripRoutes(7, days, assignments))
+    await waitFor(() => expect(result.current.dayWindowIssue).toBe('conflict'))
+    expect(result.current.days).toHaveLength(1)
+    expect(result.current.days[0].stops.map(s => s.time)).toEqual(['07:00', '10:00'])
+    expect(result.current.days[0].stops.some(s => s.automaticNight)).toBe(false)
+  })
+})
+
 describe('useRoadtripRoutes', () => {
   it('FE-ROADTRIP-ROUTES-001: routes a whole day in one request, not one per leg', async () => {
     const days = [day(1, 1)]
@@ -663,6 +718,16 @@ describe('useRoadtripRoutes', () => {
       // Walked along the roads this day drives, not along the drawn line: 50 km down that
       // one is still on the join, north of Berlin, a whole leg from where the tank empties.
       expect(dry.lat).toBeLessThan(BERLIN[0])
+      setting({ roadtrip_range_km: 150 })
+      await waitFor(() => expect(result.current.days[1].dryPoints![0].legIndex).toBe(-1))
+      const inboundDry = result.current.days[1].dryPoints![0]
+      expect(inboundDry).toMatchObject({ intoLegKm: 50, drivenMeters: 50000, inboundLine: [LUENEBURG, BERLIN] })
+      expect(inboundDry.lat).toBeGreaterThan(BERLIN[0])
+      expect(inboundDry.lat).toBeLessThan(LUENEBURG[0])
     })
   })
 })
+
+vi.mock('../../hooks/useRoadtripSettings', () => ({
+  useRoadtripSettings: (select: (preferences: import('@trek/shared').RoadtripPreferences) => unknown) => useSettingsStore(state => select(state.settings as import('@trek/shared').RoadtripPreferences)),
+}))

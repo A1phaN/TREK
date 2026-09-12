@@ -82,6 +82,22 @@ beforeEach(() => {
 })
 
 describe('useFollowTrack', () => {
+  it('clears the original leg when an automatic pause splits its displayed days', async () => {
+    const [a, b] = day().stops
+    const end = { ...a, assignmentId: -10, automaticNight: { phase: 'end' as const, fromDayNumber: 1 } }
+    const start = { ...end, assignmentId: -11, automaticNight: { phase: 'start' as const, fromDayNumber: 1 } }
+    const split = routes([
+      day({ dayId: 1, automaticSchedule: true, stops: [a, end] }),
+      day({ dayId: 2, dayNumber: 2, automaticSchedule: true, stops: [start, b] }),
+    ])
+    const vias = viasStub()
+    const { result } = renderHook(() => useFollowTrack(1, [TRACK], split, vias))
+    act(() => result.current.open(1))
+    await act(async () => result.current.clear())
+    expect(vias.addMany).toHaveBeenCalledWith(1, [], [0], null)
+    expect(calculateRouteWithLegs).not.toHaveBeenCalled()
+  })
+
   it('FE-FOLLOWHOOK-001: nothing is parsed while the dialog is closed', () => {
     const { result } = renderHook(() => useFollowTrack(1, [TRACK, PLAIN], routes([day()]), viasStub()))
     expect(result.current.dayId).toBeNull()

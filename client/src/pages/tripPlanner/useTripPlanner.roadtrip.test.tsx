@@ -1,3 +1,4 @@
+import { roadtripPreferencesRepo } from '../../repo/roadtripPreferencesRepo'
 // FE-TP-ROAD-001 to FE-TP-ROAD-074
 import React from 'react'
 import { renderHook, act, waitFor } from '@testing-library/react'
@@ -170,6 +171,7 @@ function makeActions() {
     moveAssignment: vi.fn(async () => undefined),
     removeAssignment: vi.fn(async () => undefined),
     reorderAssignments: vi.fn(async () => undefined),
+    setAssignmentEndDay: vi.fn(async () => undefined),
     reorderDays: vi.fn(async () => undefined),
     insertDay: vi.fn(async () => undefined),
     updateDayTitle: vi.fn(async () => undefined),
@@ -187,6 +189,23 @@ function wrapper({ children }: { children: React.ReactNode }) {
 
 /** Mount with the addon on and the mode on, and wait until both have landed. */
 async function renderRoadtrip() {
+  if (!rt.routes.days.length && rt.corridor.day) {
+    const dayId = Number(rt.corridor.day.dayId)
+    const assigned = useTripStore.getState().assignments[String(dayId)] ?? []
+    const stops = assigned.length
+      ? assigned.filter(a => typeof a.place.lat === 'number' && typeof a.place.lng === 'number').map(a => ({
+        assignmentId: a.id, placeId: a.place_id, lat: a.place.lat, lng: a.place.lng,
+      }))
+      : [0, 1, 2].map(i => ({ assignmentId: i + 1, placeId: i + 1, lat: 53 - i, lng: 10 + i }))
+    rt.routes.days = [{ ...rt.corridor.day, stops }]
+  }
+  rt.routes.days = rt.routes.days.map(day => ({
+    ...day,
+    stops: (day.stops as Array<Record<string, unknown>>).map((stop, i) => ({
+      ownerDayId: day.dayId, ownerIndex: i, ...stop,
+    })),
+  }))
+  if (rt.corridor.day) rt.corridor.day = rt.routes.days.find(d => d.dayId === rt.corridor.day?.dayId) ?? rt.corridor.day
   const rendered = renderHook(() => useTripPlanner(), { wrapper })
   await act(async () => { await Promise.resolve() })
   await waitFor(() => expect(rendered.result.current.roadtripActive).toBe(true))
@@ -309,6 +328,51 @@ afterEach(() => {
   delete window.__addToast
   sessionStorage.clear()
   vi.restoreAllMocks()
+})
+
+describe('visit day-end controls', () => {
+  const setup = async () => {
+    const place = buildPlace({ id: 101 })
+    seedTrip({ places: [place], days: [buildDay({ id: 5 })] })
+    rt.routes.days = [{ dayId: 5, stops: [{ assignmentId: 11, placeId: 101, endDay: true }] }]
+    useSettingsStore.setState(s => ({ settings: { ...s.settings, roadtrip_day_start: '08:00', roadtrip_day_end: '18:00' } }))
+    const rendered = await renderRoadtrip()
+    act(() => rendered.result.current.selectAssignment(11, 101))
+    return rendered
+  }
+
+  it('offers the selected visit and saves to its stored day', async () => {
+    const { result } = await setup()
+    expect(result.current.roadtripEndDay?.active).toBe(true)
+    await act(async () => result.current.roadtripEndDay?.onToggle())
+    expect(actions.setAssignmentEndDay).toHaveBeenCalledWith(42, 5, 11, false)
+  })
+
+  it('hides the control when daily times are off and restores the stored choice when enabled', async () => {
+    const { result } = await setup()
+    act(() => useSettingsStore.setState(s => ({ settings: { ...s.settings, roadtrip_day_end: '' } })))
+    expect(result.current.roadtripEndDay).toBeUndefined()
+    act(() => useSettingsStore.setState(s => ({ settings: { ...s.settings, roadtrip_day_end: '18:00' } })))
+    expect(result.current.roadtripEndDay?.active).toBe(true)
+  })
+
+  it('hides the control in Days mode and from a reader', async () => {
+    const { result } = await setup()
+    act(() => result.current.toggleRoadtripMode())
+    expect(result.current.roadtripEndDay).toBeUndefined()
+    act(() => {
+      result.current.toggleRoadtripMode()
+      asReader('day_edit')
+    })
+    expect(result.current.roadtripEndDay).toBeUndefined()
+  })
+
+  it('reports a rejected change', async () => {
+    const { result } = await setup()
+    actions.setAssignmentEndDay.mockRejectedValueOnce(new Error('Save failed'))
+    await act(async () => result.current.roadtripEndDay?.onToggle())
+    expect(toasts.some(t => t.type === 'error')).toBe(true)
+  })
 })
 
 describe('useTripPlanner road trip: a hit on the drive', () => {
@@ -796,15 +860,15 @@ describe('useTripPlanner road trip: one stop at a time', () => {
 
   it('FE-TP-ROAD-033: a driving limit goes straight to the settings, and a failure is said', async () => {
     oneStop()
-    const updateSettings = vi.fn(async () => {})
-    useSettingsStore.setState({ updateSettings } as never)
+    const updateSettings = vi.mocked(roadtripPreferencesRepo.update)
+    updateSettings.mockResolvedValue({})
     const { result } = await renderRoadtrip()
 
-    await act(async () => { await result.current.saveRoadtripLimit('roadtrip_max_leg_minutes', 180) })
-    expect(updateSettings).toHaveBeenCalledWith({ roadtrip_max_leg_minutes: 180 })
+    await act(async () => { await result.current.saveRoadtripLimit?.('roadtrip_leg_minutes', 180) })
+    expect(updateSettings).toHaveBeenCalledWith(42, { roadtrip_leg_minutes: 180 })
 
     updateSettings.mockRejectedValue(new Error('nope'))
-    await act(async () => { await result.current.saveRoadtripLimit('roadtrip_max_leg_minutes', 90) })
+    await act(async () => { await result.current.saveRoadtripLimit?.('roadtrip_leg_minutes', 90) })
     expect(toasts.some(t => t.type === 'error')).toBe(true)
   })
 })
@@ -1429,6 +1493,7 @@ describe('useTripPlanner road trip: somewhere to fill up', () => {
       stops: [drawn(1201, 53, 10, 5, 1), drawn(1202, 52, 10, 5, 2), drawn(1203, 51, 10, 6, 0)],
       geometry: [[53, 10], [52, 10], [51, 10]],
       drivingGeometry: [[53, 10], [52, 10], [51, 10]],
+      legs: [{ mode: 'driving', distance: 111000 }, { mode: 'driving', distance: 111000 }],
     }]
   }
 
@@ -1535,4 +1600,37 @@ describe('useTripPlanner road trip: somewhere to fill up', () => {
 
     expect(result.current.stopDraft).toBeNull()
   })
+})
+
+vi.mock('../../hooks/useRoadtripSettings', () => ({
+  useRoadtripSettings: (select: (preferences: import('@trek/shared').RoadtripPreferences) => unknown) => useSettingsStore(state => select(state.settings as import('@trek/shared').RoadtripPreferences)),
+  useLoadRoadtripSettings: () => ({ ready: true, failed: false }),
+}))
+vi.mock('../../repo/roadtripPreferencesRepo', () => ({ roadtripPreferencesRepo: { update: vi.fn(async () => ({})) } }))
+
+it('keeps exclusive service stops in Roadtrip, hides them in Days and restores them without duplicates', async () => {
+  const normal = buildPlace({ id: 101, name: 'Berlin' })
+  const charging = buildPlace({ id: 102, name: 'Charger', stop_type: 'charging' })
+  const visits = [buildAssignment({ id: 11, day_id: 5, place: normal }), buildAssignment({ id: 12, day_id: 5, place: charging })]
+  seedTrip({ places: [normal, charging], days: [buildDay({ id: 5 })], assignments: { '5': visits } })
+  useSettingsStore.setState(s => ({ settings: { ...s.settings, roadtrip_service_stops_in_days: false } }))
+  const { result } = await renderRoadtrip()
+  expect(result.current.assignments['5']).toHaveLength(2)
+  act(() => result.current.toggleRoadtripMode())
+  expect(result.current.assignments['5'].map(a => a.id)).toEqual([11])
+  expect(result.current.places.map(p => p.id)).toEqual([101])
+  expect(useTripStore.getState().assignments['5']).toHaveLength(2)
+  act(() => useSettingsStore.setState(s => ({ settings: { ...s.settings, roadtrip_service_stops_in_days: true } })))
+  expect(result.current.assignments['5']).toHaveLength(2)
+  expect(result.current.places).toHaveLength(2)
+})
+
+it('preserves exclusive service stops when reordering the visible Days stops', async () => {
+  const visits = [stopAt(11, 5, 0), stopAt(12, 5, 1, { place: buildPlace({ stop_type: 'charging' }) }), stopAt(13, 5, 2)]
+  seedTrip({ days: [buildDay({ id: 5 })], assignments: { '5': visits } })
+  useSettingsStore.setState(s => ({ settings: { ...s.settings, roadtrip_service_stops_in_days: false } }))
+  const { result } = await renderRoadtrip()
+  act(() => result.current.toggleRoadtripMode())
+  await act(async () => result.current.handleReorder(5, [13, 11]))
+  expect(actions.reorderAssignments).toHaveBeenCalledWith(42, 5, [13, 12, 11])
 })

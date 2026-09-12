@@ -45,6 +45,21 @@ beforeEach(() => {
 })
 
 describe('RoadtripLimitsCard', () => {
+  it.each(['electric', 'petrol'])('saves manual range before fill changes for %s', kind => {
+    useSettingsStore.setState({ settings: { roadtrip_vehicle: kind, roadtrip_range_km: 0, distance_unit: 'metric' } as never })
+    const onSave = vi.fn()
+    open(onSave)
+    const range = screen.getByTestId('limit-range')
+    fireEvent.change(range, { target: { value: '100' } })
+    expect(onSave).not.toHaveBeenCalled()
+    fireEvent.blur(range)
+    expect(onSave).toHaveBeenCalledWith('roadtrip_range_km', 100)
+    const fill = screen.getByTestId('limit-fill')
+    fireEvent.change(fill, { target: { value: '80' } })
+    fireEvent.blur(fill)
+    expect(onSave).toHaveBeenCalledWith('roadtrip_fill_percent', 80)
+  })
+
   it('FE-ROADTRIP-LIMITS-001: typing a number writes nothing until the field is left', () => {
     const onSave = vi.fn()
     open(onSave)
@@ -260,4 +275,17 @@ describe('RoadtripLimitsCard', () => {
       expect(onSave).toHaveBeenCalledWith('roadtrip_connect_days', false)
     })
   })
+})
+
+vi.mock('../../hooks/useRoadtripSettings', () => ({
+  useRoadtripSettings: (select: (preferences: import('@trek/shared').RoadtripPreferences) => unknown) => useSettingsStore(state => select(state.settings as import('@trek/shared').RoadtripPreferences)),
+}))
+
+it('shares service stops with Days by default and lets the trip turn it off', () => {
+  const onSave = vi.fn()
+  open(onSave)
+  const toggle = screen.getByRole('button', { name: 'Show in Days too' })
+  expect(toggle).toHaveAttribute('aria-pressed', 'true')
+  fireEvent.click(toggle)
+  expect(onSave).toHaveBeenCalledWith('roadtrip_service_stops_in_days', false)
 })

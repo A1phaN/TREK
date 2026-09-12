@@ -28,7 +28,8 @@ const settings: TranslationStrings = {
   'settings.routingBase': 'Eigene Routing-Instanz',
   'settings.routingBaseHint': 'Eine eigene OSRM-Instanz. Leer nutzt die öffentlichen Server, die etwa eine Anfrage pro Sekunde erlauben — für einen Tag genug, für einen Roadtrip knapp. Wirkt erst nach einem Serverneustart.',
   'settings.valhallaBase': 'Eigene Valhalla-Instanz',
-  'settings.valhallaBaseHint': 'Eine eigene Valhalla-Instanz. Sie wird gefragt, wenn eine Etappe Maut, Autobahn oder Fähre meiden soll — die öffentlichen OSRM-Server können das nicht. Leer nutzt die öffentliche FOSSGIS-Valhalla, außer oben steht schon eine eigene Routing-Instanz; dann wird gar keine zweite Maschine gefragt. Wirkt erst nach einem Serverneustart.',
+  'settings.valhallaBaseHint':
+    'Zum Meiden von Mautstraßen, Autobahnen und Fähren nutzt TREK standardmäßig die öffentliche FOSSGIS-Valhalla. Hier kannst du stattdessen eine eigene Valhalla-URL eintragen. Ist nur eine eigene Routing-Instanz konfiguriert, wird die öffentliche Valhalla nicht verwendet. Nach dem Eintragen einer eigenen URL den Server neu starten und die Seite neu laden.',
   'settings.mapHint': 'URL-Template für die Kartenkacheln',
   'settings.mapProvider': 'Kartenanbieter',
   'settings.mapProviderHint': 'Gilt für Trip Planner und Journey. Atlas nutzt immer Leaflet.',

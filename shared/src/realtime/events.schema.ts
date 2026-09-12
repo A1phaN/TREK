@@ -1,3 +1,6 @@
+import { roadtripDayBoundaryListSchema } from '../roadtrip/day-boundary.schema';
+import { roadtripPreferencesSchema } from '../roadtrip/preferences.schema';
+
 import { z } from 'zod';
 
 /**
@@ -110,6 +113,7 @@ export const TREK_WS_EVENTS = {
     scope: 'trip',
     payload: z.object({ dayId: id, track: entity.nullable() }),
   },
+  'roadtripBoundary:changed': { scope: 'trip', payload: roadtripDayBoundaryListSchema },
 
   // ── Day notes ────────────────────────────────────────────────────────────
   'dayNote:created': { scope: 'trip', payload: z.object({ dayId: id, note: entity }) },
@@ -254,6 +258,8 @@ export const TREK_WS_EVENTS = {
   // ── Memories ─────────────────────────────────────────────────────────────
   'memories:updated': { scope: 'trip', payload: z.object({ userId: id }) },
 
+  'roadtripPreferences:changed': { scope: 'trip', payload: z.object({ preferences: roadtripPreferencesSchema }) },
+
   // ── Notifications (user-scoped) ──────────────────────────────────────────
   'notification:new': { scope: 'user', payload: z.object({ notification: entity }) },
   'notification:updated': { scope: 'user', payload: z.object({ notification: entity }) },
@@ -331,12 +337,14 @@ export const TREK_WS_EVENTS = {
     scope: 'user',
     payload: z.object({
       journeyId: id,
-      peers: z.array(z.object({
-        socketId: z.number(),
-        userId: id,
-        username: z.string(),
-        avatar: z.string().nullable().optional(),
-      })),
+      peers: z.array(
+        z.object({
+          socketId: z.number(),
+          userId: id,
+          username: z.string(),
+          avatar: z.string().nullable().optional(),
+        }),
+      ),
     }),
   },
 

@@ -62,6 +62,7 @@ export * from './admin/admin.schema';
 
 // Realtime WS event contract registry (event names + payload schemas)
 export * from './realtime/events.schema';
+export * from './roadtrip/day-boundary.schema';
 
 // Sanitisation helpers — used by the client today, scoped here so the server
 // has them ready if rich-text input ever ships.
@@ -75,5 +76,11 @@ export * from './i18n/languages';
 export * from './plugin-permissions';
 // Plugin settings contracts: the settings-field descriptor + admin instance-config wire shapes.
 export * from './plugins/plugins.schema';
+export * from './roadtrip/preferences.schema';
+export * from './roadtrip/hazards.schema';
+export * from './roadtrip/planning.schema';
+export * from './roadtrip/search.schema';
+export * from './roadtrip/google-import.schema';
+export * from './roadtrip/charging.schema';
 
 export * from './vacay/school-holiday-catalog.schema';

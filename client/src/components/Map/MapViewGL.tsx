@@ -8,6 +8,7 @@ import { serviceMarkerHtml, serviceMarkerOuter } from '../Roadtrip/serviceMarker
 import { renderIconMarkup } from '../../utils/iconMarkup'
 import type mapboxgl from 'mapbox-gl'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useTranslation } from '../../i18n/TranslationContext'
 import { MapLayerSwitcher, type BaseLayer } from './MapLayerSwitcher'
 import { useAuthStore } from '../../store/authStore'
 import { getCached, isLoading, fetchPhoto, onThumbReady, getAllThumbs } from '../../services/photoService'
@@ -24,6 +25,13 @@ import { MAPBOX_DEFAULT_STYLE, styleForActiveProvider, basemapLanguage, type GlM
 import LocationButton from './LocationButton'
 import { useGeolocation } from '../../hooks/useGeolocation'
 import type { Day, Place, Reservation, RouteVia } from '../../types'
+import type { MapHoverInfo } from './mapHover'
+import { nightPauseMarker, NIGHT_PAUSE_MIN_ZOOM } from './nightPauseMarker'
+import { clusterPois, poiClusterMarkup, poiClusterList, POI_CLUSTER_DETAIL_ZOOM } from './poiClusters'
+import type { RoadtripHazard } from '@trek/shared'
+import { useHazardLayerGL } from './useHazardLayerGL'
+import { bindDayBoundaryDrag, type DayBoundaryControls } from './dayBoundaryDrag'
+import NightPauseTooltip from './NightPauseTooltip'
 import { POI_CATEGORY_BY_KEY, type Poi } from './poiCategories'
 import { resolveTrackColor, hasManualTrackColor } from './trackColors'
 import { buildPoiPopupHtml } from './placePopup'
@@ -120,6 +128,7 @@ interface Props {
   tripId?: number | string
   // Charging stops / rest areas a plugin route places on the drawn day route.
   routeVias?: RouteVia[]
+  dayBoundaryControls?: DayBoundaryControls
   /** The dashed last bit to a place the road network does not reach. */
   accessLines?: { line: [[number, number], [number, number]]; meters: number }[]
   route?: [number, number][][] | null
@@ -180,6 +189,7 @@ interface Props {
    * motorway are the shape of the day, and merging them into one dot hides it.
    */
   clusterLoosely?: boolean
+  hazards?: RoadtripHazard[]
   /** Via points to draw as draggable handles, keyed by day (#1797). */
   roadtripVias?: Record<number, RoadtripVia[]>
   onMoveVia?: (dayId: number, id: number, lat: number, lng: number) => void
@@ -197,7 +207,7 @@ interface Props {
   onMapReady?: (map: any | null) => void
 }
 
-/** How eagerly place markers merge into a cluster, outside road trip mode. */
+/** How eagerly place markers merge into a cluster. */
 const CLUSTER_RADIUS = 30
 const CLUSTER_MAX_ZOOM = 10
 
@@ -609,6 +619,7 @@ export function MapViewGL({
   dayPlaces = NO_PLACES,
   tripId,
   routeVias = NO_ROUTE_VIAS,
+  dayBoundaryControls,
   accessLines = NO_ACCESS_LINES,
   route = null,
   routeColors = null,
@@ -623,6 +634,7 @@ export function MapViewGL({
   fitKey = 0,
   focusPoints,
   clusterLoosely = false,
+  hazards,
   dayOrderMap = NO_DAY_ORDER,
   leftWidth = 0,
   rightWidth = 0,
@@ -651,6 +663,7 @@ export function MapViewGL({
   gl,
   onMapReady,
 }: Props) {
+  const { t } = useTranslation()
   const rawMapboxStyle = useSettingsStore(s => s.settings.mapbox_style || MAPBOX_DEFAULT_STYLE)
   const rawMaplibreStyle = useSettingsStore(s => s.settings.maplibre_style || '')
   const mapboxToken = useSettingsStore(s => s.settings.mapbox_access_token || '')
@@ -675,7 +688,7 @@ export function MapViewGL({
   const [mapReady, setMapReady] = useState(false)
   // Hover tooltip — a cursor-following name/category/address card, matching the
   // Leaflet map's overlay exactly (no anchored popup, no photo thumbnail).
-  const [hoverPlace, setHoverPlace] = useState<(Place & { category_color?: string | null; category_icon?: string | null; category_name?: string | null }) | null>(null)
+  const [hoverPlace, setHoverPlace] = useState<MapHoverInfo | null>(null)
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null)
   const hoverIdRef = useRef<number | null>(null)
   // True while the camera is moving (flyTo after a click, pan, zoom). Marker
@@ -697,6 +710,8 @@ export function MapViewGL({
   const containerRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any | null>(null)
+  const hazardPopupFactory = useCallback(() => new gl.Popup({ className: 'map-tooltip trek-hazard-popup', maxWidth: '320px' }), [gl])
+  useHazardLayerGL(mapRef.current, mapReady, hazards, hazardPopupFactory)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const markersRef = useRef<Map<number, PlacePin>>(new Map())
   // Own layer for the hand-positioned place pins (MapLibre path, see makePlacePin).
@@ -1781,18 +1796,6 @@ export function MapViewGL({
       return
     }
 
-    // Road trip mode does not cluster at all: the whole drive has to stay readable
-    // zoomed right out, and a day's stops merging into one dot is exactly the shape it
-    // is being looked at for. The source is emptied rather than reconfigured — the
-    // cluster options can only be set when a GeoJSON source is created, and dropping and
-    // re-adding a source under three layers to change a radius is not worth it when the
-    // markers are drawn from `places` anyway.
-    if (clusterLoosely) {
-      source.setData({ type: 'FeatureCollection', features: [] })
-      reconcileMarkers(validPlaces)
-      return
-    }
-
     source.setData(buildPlaceClusterData(places) as any)
     const placesById = new Map<number, PlaceWithCoords>(validPlaces.map(place => [place.id, place]))
     let raf: number | null = null
@@ -1833,29 +1836,63 @@ export function MapViewGL({
     }
   }, [places, selectedPlaceId, dayOrderMap, photoUrls, mapReady, glProvider, clusterLoosely])
 
-  // Reconcile OSM "explore" POI markers (imperative, kept separate from the
-  // planned-place markers so they don't cluster or get confused with them).
+  // Search results stay separate from the planned itinerary.
   useEffect(() => {
     const map = mapRef.current
     if (!map || !mapReady) return
-    popupRef.current?.remove() // same orphan-popup guard as the place markers
-    poiMarkersRef.current.forEach(m => m.remove())
-    poiMarkersRef.current = []
-    poiCleanupRef.current.forEach(off => off())
-    poiCleanupRef.current = []
-    for (const poi of (pois as Poi[])) {
-      const el = createPoiMarkerElement(poi.category, poi.brand_wikidata)
-      el.addEventListener('mouseenter', () => {
-        popupRef.current?.setLngLat([poi.lng, poi.lat]).setHTML(buildPoiPopupHtml(poi)).addTo(map)
-      })
-      el.addEventListener('mouseleave', () => { popupRef.current?.remove() })
-      el.addEventListener('click', (ev) => { ev.stopPropagation(); onPoiClickRef.current?.(poi) })
-      // Dragging a hit onto the drive puts it where it is passed, rather than where the
-      // corridor happened to project it. Only wired when someone is listening for it.
-      if (onPoiDropRef.current) poiCleanupRef.current.push(makePoiDraggable(el, poi.osm_id))
-      poiMarkersRef.current.push(attachPin(map, gl, pinLayerRef.current, el, poi.lng, poi.lat))
+    const redraw = () => {
+      popupRef.current?.remove()
+      poiMarkersRef.current.forEach(m => m.remove())
+      poiMarkersRef.current = []
+      poiCleanupRef.current.forEach(off => off())
+      poiCleanupRef.current = []
+      const groups = clusterLoosely ? clusterPois(pois, poi => map.project([poi.lng, poi.lat]), map.getZoom()) : pois.map(poi => ({ pois: [poi], lat: poi.lat, lng: poi.lng }))
+      for (const group of groups) {
+        if (group.pois.length > 1) {
+          const el = document.createElement('button')
+          el.type = 'button'
+          el.style.cssText = 'width:38px;height:38px;border:0;padding:0;background:transparent;'
+          el.setAttribute('aria-label', t('roadtrip.poi.found', { count: group.pois.length }))
+          el.innerHTML = poiClusterMarkup(group.pois.length)
+          el.addEventListener('click', event => {
+            event.stopPropagation()
+            if (map.getZoom() >= POI_CLUSTER_DETAIL_ZOOM) {
+              popupRef.current?.setLngLat([group.lng, group.lat]).setDOMContent(poiClusterList(group.pois, poi => {
+                popupRef.current?.remove(); onPoiClickRef.current?.(poi)
+              })).addTo(map)
+            } else {
+              const bounds = new gl.LngLatBounds()
+              group.pois.forEach(poi => bounds.extend([poi.lng, poi.lat]))
+              map.fitBounds(bounds, { padding: 70, maxZoom: POI_CLUSTER_DETAIL_ZOOM })
+            }
+          })
+          poiMarkersRef.current.push(attachPin(map, gl, pinLayerRef.current, el, group.lng, group.lat))
+          continue
+        }
+        const poi = group.pois[0]
+        const el = createPoiMarkerElement(poi.category, poi.brand_wikidata)
+        el.addEventListener('mouseenter', () => {
+          popupRef.current?.setLngLat([poi.lng, poi.lat]).setHTML(buildPoiPopupHtml(poi)).addTo(map)
+        })
+        el.addEventListener('mouseleave', () => { popupRef.current?.remove() })
+        el.addEventListener('click', (ev) => { ev.stopPropagation(); onPoiClickRef.current?.(poi) })
+        // Dragging a hit onto the drive puts it where it is passed, rather than where the
+        // corridor happened to project it. Only wired when someone is listening for it.
+        if (onPoiDropRef.current) poiCleanupRef.current.push(makePoiDraggable(el, poi.osm_id))
+        poiMarkersRef.current.push(attachPin(map, gl, pinLayerRef.current, el, poi.lng, poi.lat))
+      }
     }
-  }, [pois, mapReady, glProvider])
+    redraw()
+    if (clusterLoosely) map.on('moveend', redraw)
+    return () => {
+      map.off('moveend', redraw)
+      poiCleanupRef.current.forEach(off => off())
+      poiCleanupRef.current = []
+      poiMarkersRef.current.forEach(pin => pin.remove())
+      poiMarkersRef.current = []
+      popupRef.current?.remove()
+    }
+  }, [pois, mapReady, glProvider, clusterLoosely, t])
 
   // Fetch plugin map contributions (markers + layers) per trip. Fail-safe: an
   // error or missing tripId just means no plugin overlays, the core map is fine.
@@ -1887,11 +1924,30 @@ export function MapViewGL({
     if (!map || !mapReady) return
     routeViaMarkersRef.current.forEach(m => m.remove())
     routeViaMarkersRef.current = []
+    const pauses: HTMLElement[] = []
+    const unbind: (() => void)[] = []
     for (const v of routeVias) {
       const el = document.createElement('div')
       el.style.cssText = 'width:13px;height:13px;cursor:pointer;'
       const color = PLUGIN_TONE_COLORS[v.tone] ?? PLUGIN_TONE_COLORS.default
       el.innerHTML = `<span style="display:block;width:13px;height:13px;border-radius:50%;background:#fff;border:3.5px solid ${color};box-shadow:0 1px 4px rgba(0,0,0,0.35);box-sizing:border-box"></span>`
+      if (v.nightPause) {
+        el.style.cssText = 'width:0;height:0;overflow:visible;cursor:pointer;'
+        el.innerHTML = nightPauseMarker(v)
+        el.setAttribute('aria-label', v.label ?? '')
+        pauses.push(el)
+      }
+      if (v.hoverCard) {
+        const show = (ev: MouseEvent) => {
+          if (hoverDisabledRef.current || camMovingRef.current) return
+          hoverIdRef.current = null
+          setHoverPlace({ name: v.label, routeVia: v })
+          setHoverPos({ x: ev.clientX, y: ev.clientY })
+        }
+        el.addEventListener('mouseenter', show)
+        el.addEventListener('mousemove', show)
+        el.addEventListener('mouseleave', () => { setHoverPlace(null); setHoverPos(null) })
+      }
       if (v.label || v.dwellSeconds != null) {
         const text = [v.label, v.dwellSeconds != null ? formatViaDwellGl(v.dwellSeconds) : null].filter(Boolean).join(' · ')
         el.addEventListener('click', (ev) => {
@@ -1899,9 +1955,30 @@ export function MapViewGL({
           popupRef.current?.setLngLat([v.lng, v.lat]).setText(text).addTo(map)
         })
       }
-      routeViaMarkersRef.current.push(attachPin(map, gl, pinLayerRef.current, el, v.lng, v.lat))
+      const pin = attachPin(map, gl, pinLayerRef.current, el, v.lng, v.lat)
+      routeViaMarkersRef.current.push(pin)
+      if (v.nightPause && dayBoundaryControls) unbind.push(bindDayBoundaryDrag(el, v, dayBoundaryControls, {
+        project: (lat, lng) => {
+          const point = map.project([lng, lat])
+          const rect = map.getContainer().getBoundingClientRect()
+          return { x: point.x + rect.left, y: point.y + rect.top }
+        },
+        setPosition: (lat, lng) => { pin.setLngLat([lng, lat]) },
+        lock: () => {
+          const enabled = map.dragPan.isEnabled()
+          map.dragPan.disable()
+          return () => { if (enabled) map.dragPan.enable() }
+        },
+      }))
     }
-  }, [routeVias, mapReady, glProvider])
+    const updateZoom = () => {
+      const visible = map.getZoom() >= NIGHT_PAUSE_MIN_ZOOM
+      for (const el of pauses) el.style.display = visible ? '' : 'none'
+    }
+    updateZoom()
+    map.on('zoomend', updateZoom)
+    return () => { map.off('zoomend', updateZoom); unbind.forEach(dispose => dispose()) }
+  }, [routeVias, mapReady, glProvider, dayBoundaryControls])
 
   // Reconcile plugin markers (imperative, same lifecycle as the POI markers).
   useEffect(() => {
@@ -2222,7 +2299,8 @@ export function MapViewGL({
           does, which is why the lift is only there. */}
       <div style={{
         position: 'absolute', left: leftWidth + 20, zIndex: 1000, pointerEvents: 'none',
-        bottom: isMobile && hasDayDetail
+        top: hasInspector ? 80 : undefined,
+        bottom: hasInspector ? undefined : isMobile && hasDayDetail
           ? 'calc(var(--bottom-nav-h, 0px) + 20px + var(--day-panel-h, 0px) + 12px)'
           : 'calc(var(--bottom-nav-h, 0px) + 12px)',
       }}>
@@ -2230,7 +2308,10 @@ export function MapViewGL({
       </div>
       {/* Hover tooltip — cursor-following name/category/address card, identical to
           the Leaflet map's overlay (no anchored popup, no photo). */}
-      {!hoverDisabled && hoverPlace && hoverPos && !isMobile && (
+      {!hoverDisabled && hoverPlace?.routeVia?.nightPause && hoverPos && !isMobile && routeVias.includes(hoverPlace.routeVia) && (
+        <NightPauseTooltip label={hoverPlace.name ?? ''} x={hoverPos.x} y={hoverPos.y} />
+      )}
+      {!hoverDisabled && hoverPlace && !hoverPlace.routeVia?.nightPause && hoverPos && !isMobile && (!hoverPlace.routeVia || routeVias.includes(hoverPlace.routeVia)) && (
         <div data-testid="tooltip" style={{
           position: 'fixed',
           left: hoverPos.x + 14,

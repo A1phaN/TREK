@@ -11,6 +11,8 @@ import {
   placeImportListRequestSchema,
   placeWebsiteSchema,
   roadtripStopTypeSchema,
+  roadtripGpxImportSchema,
+  type RoadtripGpxImport,
   type RoadtripStopType,
 } from '@trek/shared';
 import { z } from 'zod';
@@ -77,7 +79,7 @@ export class PlacesMcp {
       image_url: placeImageUrlSchema.optional().describe('Thumbnail for the place: an /uploads/ path, an /api/maps/place-photo/ path, an inline data: image, or an https URL'),
       price: z.number().nonnegative().optional().describe('Cost of this place/activity (e.g. ticket price, entry fee)'),
       currency: z.string().length(3).optional().describe('ISO 4217 currency code (e.g. "EUR", "USD")'),
-      stop_type: roadtripStopTypeSchema.optional().describe('Marks the place as a stop on a drive rather than a destination: fuel, charging, rest_area, campsite, restaurant or sights. A service stop is left out of the stop count for the day, so a day with a charger between four places still reads as four stops. Leave unset for an ordinary place.'),
+      stop_type: roadtripStopTypeSchema.optional().describe('Marks the place as a stop on a drive rather than a destination: fuel, charging, rest_area, campsite, restaurant, sights or hotel. A service stop is left out of the stop count for the day, so a day with a charger between four places still reads as four stops. Leave unset for an ordinary place.'),
     },
     annotations: TOOL_ANNOTATIONS_NON_IDEMPOTENT,
     access: { group: 'places', mode: 'write' },
@@ -121,7 +123,7 @@ export class PlacesMcp {
       assignment_notes: z.string().max(500).optional().describe('Notes for this day assignment'),
       price: z.number().nonnegative().optional().describe('Cost of this place/activity (e.g. ticket price, entry fee)'),
       currency: z.string().length(3).optional().describe('ISO 4217 currency code (e.g. "EUR", "USD")'),
-      stop_type: roadtripStopTypeSchema.optional().describe('Marks the place as a stop on a drive rather than a destination: fuel, charging, rest_area, campsite, restaurant or sights. A service stop is left out of the stop count for the day, so a day with a charger between four places still reads as four stops. Leave unset for an ordinary place.'),
+      stop_type: roadtripStopTypeSchema.optional().describe('Marks the place as a stop on a drive rather than a destination: fuel, charging, rest_area, campsite, restaurant, sights or hotel. A service stop is left out of the stop count for the day, so a day with a charger between four places still reads as four stops. Leave unset for an ordinary place.'),
     },
     annotations: TOOL_ANNOTATIONS_NON_IDEMPOTENT,
     access: { group: 'places', mode: 'write' },
@@ -168,9 +170,9 @@ export class PlacesMcp {
       category_id: z.number().int().positive().optional().describe('Category ID — use list_categories'),
       price: z.number().optional(),
       currency: z.string().length(3).optional(),
-      place_time: z.string().max(50).optional().describe('Scheduled time (e.g. "09:00")'),
-      end_time: z.string().max(50).optional().describe('End time (e.g. "11:00")'),
-      duration_minutes: z.number().int().positive().optional(),
+      place_time: z.string().max(50).nullable().optional().describe('Scheduled time (e.g. "09:00"); null clears it'),
+      end_time: z.string().max(50).nullable().optional().describe('End time (e.g. "11:00"); null clears it'),
+      duration_minutes: z.number().int().nonnegative().nullable().optional().describe('Stay duration in minutes; null clears it'),
       notes: z.string().max(2000).optional(),
       website: placeWebsiteSchema.optional(),
       phone: z.string().max(50).optional(),
@@ -179,7 +181,7 @@ export class PlacesMcp {
       osm_id: z.string().optional().describe('OpenStreetMap ID (e.g. "way:12345")'),
       google_place_id: z.string().optional().describe('Google Place ID (e.g. "ChIJd8BlQ2BZwokRAFUEcm_qrcA")'),
       google_ftid: z.string().optional().describe('Google Maps feature ID (e.g. "0x89c259b7abdd4769:0x103aaf1c8bf8a050")'),
-      stop_type: roadtripStopTypeSchema.nullable().optional().describe('What kind of stop on a drive this is: fuel, charging, rest_area, campsite, restaurant or sights. Pass null to turn a service stop back into an ordinary place.'),
+      stop_type: roadtripStopTypeSchema.nullable().optional().describe('What kind of stop on a drive this is: fuel, charging, rest_area, campsite, restaurant, sights or hotel. Pass null to turn a service stop back into an ordinary place.'),
       fill_percent: z.number().int().min(1).max(100).nullable().optional().describe('How full THIS stop fills the tank, 1-100. A motorway rapid charger is worth about 80 %, the one at the hotel 100 %. Pass null to follow whatever the traveller set as their default fill.'),
     },
     annotations: TOOL_ANNOTATIONS_WRITE,
@@ -188,8 +190,8 @@ export class PlacesMcp {
   async updatePlace(
     { tripId, placeId, name, description, lat, lng, address, category_id, price, currency, place_time, end_time, duration_minutes, notes, website, phone, image_url, transport_mode, osm_id, google_place_id, google_ftid, stop_type, fill_percent }: {
       tripId: number; placeId: number; name?: string; description?: string; lat?: number; lng?: number;
-      address?: string; category_id?: number; price?: number; currency?: string; place_time?: string;
-      end_time?: string; duration_minutes?: number; notes?: string; website?: string; phone?: string;
+      address?: string; category_id?: number; price?: number; currency?: string; place_time?: string | null;
+      end_time?: string | null; duration_minutes?: number | null; notes?: string; website?: string; phone?: string;
       image_url?: string | null;
       transport_mode?: 'walking' | 'driving' | 'cycling' | 'transit' | 'flight'; osm_id?: string;
       google_place_id?: string; google_ftid?: string; stop_type?: RoadtripStopType | null;
@@ -355,6 +357,28 @@ export class PlacesMcp {
   }
 
   @Tool({
+    name: 'import_trip_gpx',
+    description: 'Import GPX waypoints, routes and tracks as places in a trip. Uses the same importer as the file upload. Imported tracks retain their geometry and can be followed with add_route_vias. Does not assign places to days. Use list_places for their ids and geometry, then assign_place_to_day and the Roadtrip tools to plan visits. Existing importer deduplication also applies.',
+    inputSchema: roadtripGpxImportSchema.shape,
+    annotations: TOOL_ANNOTATIONS_NON_IDEMPOTENT,
+    access: { group: 'places', mode: 'write' },
+  })
+  async importGpx(input: RoadtripGpxImport, ctx: McpContext) {
+    if (this.auth.isDemoUser(ctx.userId)) return demoDenied();
+    if (!this.db.canAccessTrip(input.tripId, ctx.userId)) return noAccess();
+    if (!this.guards.hasTripPermission('place_edit', input.tripId, ctx.userId)) return permissionDenied();
+    if (!input.importWaypoints && !input.importRoutes && !input.importTracks) return errorResult('No import types selected.');
+    try {
+      const imported = this.places.importGpx(String(input.tripId), Buffer.from(input.gpx, 'utf8'), { importWaypoints: input.importWaypoints, importRoutes: input.importRoutes, importTracks: input.importTracks, defaultName: input.name });
+      if (!imported) return errorResult('No matching places found in GPX.');
+      for (const place of imported.places) this.guards.safeBroadcast(input.tripId, 'place:created', { place });
+      return ok(imported);
+    } catch {
+      return errorResult('Could not import GPX. Check the XML and coordinates.');
+    }
+  }
+
+  @Tool({
     name: 'export_trip_gpx',
     description: 'Export a trip as GPX text: its places as waypoints, any imported routes as tracks, and each planned day as a route in visiting order. This is the format handhelds and offline map apps (Organic Maps, OsmAnd, Garmin) read. Prefer export_trip_ics when the user wants the itinerary in a calendar instead.',
     inputSchema: {
@@ -428,7 +452,7 @@ export class PlacesMcp {
       phone: z.string().max(50).optional(),
       image_url: placeImageUrlSchema.nullable().optional().describe('Thumbnail for every listed place: an /uploads/ path, an /api/maps/place-photo/ path, an inline data: image, or an https URL. Pass null to strip the pictures off a batch at once'),
       description: z.string().max(2000).optional(),
-      stop_type: roadtripStopTypeSchema.nullable().optional().describe('What kind of stop on a drive this is: fuel, charging, rest_area, campsite, restaurant or sights. Pass null to turn a service stop back into an ordinary place.'),
+      stop_type: roadtripStopTypeSchema.nullable().optional().describe('What kind of stop on a drive this is: fuel, charging, rest_area, campsite, restaurant, sights or hotel. Pass null to turn a service stop back into an ordinary place.'),
       fill_percent: z.number().int().min(1).max(100).nullable().optional().describe('How full THIS stop fills the tank, 1-100. A motorway rapid charger is worth about 80 %, the one at the hotel 100 %. Pass null to follow whatever the traveller set as their default fill.'),
     },
     annotations: TOOL_ANNOTATIONS_WRITE,
