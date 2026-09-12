@@ -32,7 +32,7 @@ export class RoadtripHazardsService {
 
   async read(): Promise<RoadtripHazards> {
     if (this.cached && Date.now() - Date.parse(this.cached.fetchedAt) < 600000) return this.cached;
-    if (this.pending) return this.pending;
+    if (this.pending !== undefined) return this.pending;
     this.pending = this.load();
     try { this.cached = await this.pending; return this.cached; }
     finally { this.pending = undefined; }

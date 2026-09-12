@@ -332,7 +332,7 @@ export default function RoadtripCorridorPanel({ corridor, routes, onAddPoi, trip
             />
           </div>
         ) : null}
-        {tripId && canImport && <GoogleRouteImport tripId={tripId} dayId={corridor.day?.dayId} />}
+        {tripId !== undefined && tripId > 0 && canImport && <GoogleRouteImport tripId={tripId} dayId={corridor.day?.dayId} />}
       </div>
 
       {/* What to look for. */}
