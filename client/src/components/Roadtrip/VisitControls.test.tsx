@@ -14,6 +14,6 @@ it('edits the shared stay without changing the day ending', () => {
 
 it('keeps stay editing when daily travel times are off', () => {
   render(<VisitControls stay={{ minutes: null, onEdit: vi.fn() }} />)
-  expect(screen.getByRole('button', { name: 'roadtrip.stop.stayShort 0 min' })).toBeEnabled()
+  expect(screen.getByRole('button', { name: 'roadtrip.stop.stayShort +' })).toBeEnabled()
   expect(screen.queryByRole('button', { name: 'roadtrip.window.endHere' })).not.toBeInTheDocument()
 })

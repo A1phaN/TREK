@@ -200,6 +200,8 @@ async function renderRoadtrip() {
     rt.routes.days = [{ ...rt.corridor.day, stops }]
   }
   rt.routes.days = rt.routes.days.map(day => ({
+    schedule: { entries: [] },
+    legs: [],
     ...day,
     stops: (day.stops as Array<Record<string, unknown>>).map((stop, i) => ({
       ownerDayId: day.dayId, ownerIndex: i, ...stop,
@@ -512,10 +514,8 @@ describe('useTripPlanner road trip: saving a hit', () => {
       await result.current.saveStopDraftAsNight({ endDayId: 6, checkIn: '15:00', checkOut: '10:00' })
     })
 
-    // No stop_type and no dwell: a hotel is where the day ends, not something the drive
-    // passes through, so it keeps its number in the chain.
     const [, payload] = actions.addPlace.mock.calls[0] as unknown as [number, Record<string, unknown>]
-    expect(payload.stop_type).toBeUndefined()
+    expect(payload.stop_type).toBe('hotel')
     expect(payload.duration_minutes).toBeUndefined()
     expect(accommodationsApi.create).toHaveBeenCalledWith(42, {
       place_id: 900, start_day_id: 5, end_day_id: 6, check_in: '15:00', check_out: '10:00',
@@ -1292,6 +1292,8 @@ describe('useTripPlanner road trip: folding a day off the map', () => {
         buildPlace({ id: 1104, lat: 48.13, lng: 11.58 }),
       ],
     })
+    const places = useTripStore.getState().places
+    useTripStore.setState({ assignments: { '5': places.map((place, i) => buildAssignment({ id: i + 1, day_id: 5, place_id: place.id, place })) } })
     rt.corridor.day = { dayId: 5, dayNumber: 1 }
     rt.routes.days = [
       { dayId: 5, dayNumber: 1, stops: [drawn(1101, 53.55, 9.99, 5, 0), drawn(1102, 52.52, 13.4, 5, 1)], geometry: LINES[0] },

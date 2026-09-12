@@ -36,6 +36,8 @@ export const HANDLED_OUTSIDE_TRIP_STORE = [
   'roadtripVia:changed',
   'roadtripTrack:changed',
   'roadtripPreferences:changed',
+  // components/Roadtrip/useDayBoundaries reloads the shared boundaries.
+  'roadtripBoundary:changed',
   // In-app notifications — hooks/useInAppNotificationListener
   'notification:new',
   'notification:updated',

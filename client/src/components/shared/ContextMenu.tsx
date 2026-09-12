@@ -23,7 +23,7 @@ export function useContextMenu() {
   const open = (e: React.MouseEvent, items: MenuItem[], alignEnd = false) => {
     e.preventDefault()
     e.stopPropagation()
-    const anchor = e.currentTarget.getBoundingClientRect()
+    const anchor = alignEnd ? e.currentTarget.getBoundingClientRect() : { right: e.clientX, bottom: e.clientY }
     setMenu({ x: alignEnd ? anchor.right : e.clientX, y: alignEnd ? anchor.bottom + 6 : e.clientY, items, alignEnd })
   }
 

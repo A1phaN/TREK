@@ -74,7 +74,7 @@ export function spillChains(plan: PlanDay[], quietDays: QuietDay[], legFor: LegL
     const legs = routed.map((l) => l?.seg);
     const schedule = computeSchedule(
       d.stops.map((s) => ({
-        anchor: s.time,
+        anchor: s.time ?? s.checkInTime ?? null,
         dwellMinutes: s.dwellMinutes,
         departureAt: s.checkoutAt === undefined ? undefined : s.checkoutAt - d.dayNumber * 1440,
       })),

@@ -88,7 +88,7 @@ export function assembleRoadtrip({
             spills: [],
             schedule: computeSchedule(
               d.stops.map((s) => ({
-                anchor: s.time,
+                anchor: s.time ?? s.checkInTime ?? null,
                 dwellMinutes: s.dwellMinutes,
                 departureAt: s.checkoutAt === undefined ? undefined : s.checkoutAt - d.dayNumber * 1440,
               })),

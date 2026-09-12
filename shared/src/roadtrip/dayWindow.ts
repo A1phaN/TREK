@@ -182,6 +182,7 @@ export function planDayWindow(
       time: null,
       dwellMinutes: 0,
       checkoutAt: undefined,
+      checkInTime: undefined,
       stopType: null,
       fillPercent: null,
       automaticNight: { phase: 'end', fromDayNumber: number, position, manual: targets.has(number) },
@@ -273,6 +274,7 @@ export function planDayWindow(
     const target = targets.get(number);
     if (target !== undefined && target < position) return failed('conflict');
     if (pin !== null) clock = pin;
+    if (pin === null && number === day.dayNumber) clock = Math.max(clock, parseClock(stop.checkInTime) ?? 0);
     append(stop, clock);
     previous = stop;
 

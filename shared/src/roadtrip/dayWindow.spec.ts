@@ -390,3 +390,23 @@ describe('booked checkout', () => {
     expect(plan.chains[0]!.schedule.entries[1]!.arrival).toBe('14:00');
   });
 });
+
+it('keeps checkout when the drive arrives after suggested check-in', () => {
+  const stops = [
+    stop(1, { time: '07:00', dwellMinutes: 60 }),
+    stop(2, { checkInTime: '09:11', checkoutAt: 2 * 1440 + 600 }),
+    stop(3),
+  ];
+  const plan = calculate(stops, [72.5, 29]);
+  expect(plan.issue).toBeNull();
+  expect(plan.chains[0]!.schedule.entries[1]!.arrival).toBe('09:13');
+  expect(plan.chains[1]!.stops.at(-1)!.placeId).toBe(3);
+  expect(plan.chains[1]!.schedule.entries.at(-1)!.arrival).toBe('10:29');
+});
+
+it('waits for check-in without treating it as a fixed appointment', () => {
+  const plan = calculate([stop(1), stop(2, { checkInTime: '15:00', checkoutAt: 2 * 1440 + 600 }), stop(3)], [60, 29]);
+  expect(plan.issue).toBeNull();
+  expect(plan.chains[0]!.schedule.entries[1]!.arrival).toBe('15:00');
+  expect(plan.chains[1]!.schedule.entries.at(-1)!.arrival).toBe('10:29');
+});
