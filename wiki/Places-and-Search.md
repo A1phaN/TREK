@@ -25,38 +25,44 @@ When a key is present, the autocomplete uses the Google Places API, which can re
 
 ### Without a Google Maps API key
 
-TREK falls back to OpenStreetMap (Nominatim) automatically — no API key needed. A notice appears above the search box — *Using OpenStreetMap…* — and what it suggests follows the **Place search provider** setting: a Google key when the provider is Google, an Amap key when it is Amap, either one when the choice is Automatic and neither key is set. When the provider choice is OpenStreetMap the notice stays quiet: that is a decision, not a gap. Results include name, address, and coordinates.
+Search still works, and it needs no key. Two sources answer every search together: the TREK Places index, a dataset of businesses and sights that TREK maintains itself, and OpenStreetMap, which is where the temples, bridges and viewpoints are. Each row in the result list carries a small mark naming where it came from (TREK, OpenStreetMap, Google or Amap), so a list that mixes sources stays readable. Results include name, address and coordinates.
+
+A key does not buy a different search. It fills the slot that answers once the index and OpenStreetMap have nothing, and it adds what only a commercial provider has: ratings, opening hours and, with Google, photos.
 
 ### With an Amap (高德地图) API key
 
-> **Admin:** Set the key in **Admin → Settings → API Keys → 高德地图 API Key**, then pick **Amap** under **Place search
+> **Admin:** Set the key in **Admin → Settings → API Keys → Amap (高德地图) API Key**, then pick **Amap** under **Place search
 > provider** in the same card. It needs a **Web 服务** (web service) key from
-> [console.amap.com](https://console.amap.com/dev/key/app) — a JS API key is a different credential and is rejected.
+> [console.amap.com](https://console.amap.com/dev/key/app); a JS API key is a different credential and is rejected.
 
 Google Places is unreachable from most networks inside mainland China, and OpenStreetMap knows very little about
-Chinese restaurants, shops and shopping centres. With Amap selected, search, autocomplete, place details and the
-reverse geocoding behind right-click-to-add-a-place all go through Amap instead, in Chinese, with ratings, phone
-numbers and opening hours where Amap has them.
+Chinese restaurants, shops and shopping centres. With Amap selected it takes the slot Google otherwise holds: the index
+and OpenStreetMap are still asked first, and Amap answers when they have nothing, in Chinese, with ratings, phone
+numbers and opening hours where Amap has them. Autocomplete, place details and the reverse geocoding behind
+right-click-to-add-a-place go through Amap as well. Rows that came from Amap carry an Amap mark like every other
+source.
 
 Amap does not supply place photos here. Its images come with no licence statement TREK could show next to them, so an
-Amap place gets its picture from Wikimedia Commons like any other — with the credit and licence attached.
+Amap place gets its picture from Wikimedia Commons like any other, with the credit and licence attached.
 
-Places remember which provider found them, so switching provider later does not break anything you already saved: an
-existing Google place still opens against Google, and vice versa.
+A place remembers where it came from. One picked from Amap keeps its Amap id, one picked from Google keeps its Google
+id, and each keeps opening against the provider that knows it, whichever provider the admin selects later.
 
-You can also paste an Amap share link — `uri.amap.com/marker?…`, `amap.com/place/…`, or a `surl.amap.com` short link —
-into the search box, the same way a Google Maps URL works below.
+You can also paste an Amap share link into the search box: `uri.amap.com/marker?…`, `amap.com/place/…` or a
+`surl.amap.com` short link, the same way a Google Maps URL works below.
 
 ### Which provider answers
 
-**Admin → Settings → API Keys → Place search provider**:
+**Admin → Settings → API Keys → Place search provider** decides only who fills the keyed slot beside the index and
+OpenStreetMap. Those two are asked either way. The choice is available on managed instances too, where the keys
+themselves come from the operator.
 
-| Setting          | What answers place search                                                     |
+| Setting          | Who fills the keyed slot                                                      |
 |------------------|-------------------------------------------------------------------------------|
-| `Automatic`      | Google when a Google key is set, otherwise Amap when an Amap key is, otherwise OpenStreetMap. This is the default and preserves what an existing install already did. |
-| `Google Places`  | Google. With no Google key, search falls back to OpenStreetMap rather than to Amap. |
-| `Amap (高德地图)` | Amap. With no Amap key, search falls back to OpenStreetMap.                   |
-| `OpenStreetMap`  | Always OpenStreetMap, ignoring both keys.                                     |
+| `Automatic`      | Google when a Google key is set, otherwise Amap when an Amap key is, otherwise nobody. The default, and what every install had before Amap existed: adding an Amap key never moves an install off Google on its own. |
+| `Google Places`  | Google. With no Google key the slot stays empty rather than falling to Amap.  |
+| `Amap (高德地图)` | Amap. With no Amap key the slot stays empty.                                  |
+| `OpenStreetMap`  | Nobody, whatever keys are configured. Search runs on the index and OpenStreetMap alone. |
 
 ## Place details while searching
 

@@ -66,18 +66,19 @@ never stored inside the tile URL itself, so switching keys later does not break 
 Other providers are unaffected, and a keyless CARTO template is treated as "not configured" so the map falls back to
 OpenFreeMap instead of drawing watermarked tiles. Save a key and your template is kept as you entered it.
 
-Offline pre-download works on OpenFreeMap and on CARTO. It does not work on the OpenStreetMap presets, whose tile
-servers do not permit bulk downloading.
+Offline pre-download works on OpenFreeMap, on CARTO and on the Amap presets. It does not work on the OpenStreetMap
+presets, whose tile servers do not permit bulk downloading.
 
 ## Amap (高德地图) basemap
 
-Two presets — **高德地图 (Amap)** for the road map and **高德卫星 (Amap Satellite)** for imagery. They need no key and
+Two presets: **高德地图 (Amap)** for the road map and **高德卫星 (Amap Satellite)** for imagery. They need no key and
 no account, and inside mainland China they are far better than anything else in the list: OpenStreetMap and
 OpenFreeMap are sparse there, and the foreign tile CDNs are slow or unreachable.
 
 These tiles are drawn in **GCJ-02**, an offset datum, while every coordinate in TREK is WGS-84. TREK handles that for
 you: a map on an Amap basemap switches to a shifted projection, so markers, routes, clusters and the coordinates you
-get from clicking the map all stay where they belong. Nothing is stored differently — only the drawing changes.
+get from clicking the map all stay where they belong, on the planner map and on the journey map alike. Nothing is
+stored differently, only the drawing changes.
 
 Two consequences worth knowing:
 
@@ -86,7 +87,7 @@ Two consequences worth knowing:
 - Amap has **no coverage outside China**. A trip to Lisbon on an Amap basemap gets a nearly empty map, so this is a
   choice for instances whose trips are mostly domestic.
 
-For place *search* via Amap — a separate setting from the basemap — see
+Place *search* via Amap is a separate setting from the basemap, see
 [[Places and Search|Places-and-Search]] and [[Environment Variables|Environment-Variables]].
 
 ## Mapbox GL — access token and style
