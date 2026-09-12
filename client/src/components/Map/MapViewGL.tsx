@@ -28,6 +28,8 @@ import type { Day, Place, Reservation, RouteVia } from '../../types'
 import type { MapHoverInfo } from './mapHover'
 import { nightPauseMarker, NIGHT_PAUSE_MIN_ZOOM } from './nightPauseMarker'
 import { clusterPois, poiClusterMarkup, poiClusterList, POI_CLUSTER_DETAIL_ZOOM } from './poiClusters'
+import type { RoadtripHazard } from '@trek/shared'
+import { useHazardLayerGL } from './useHazardLayerGL'
 import { bindDayBoundaryDrag, type DayBoundaryControls } from './dayBoundaryDrag'
 import NightPauseTooltip from './NightPauseTooltip'
 import { POI_CATEGORY_BY_KEY, type Poi } from './poiCategories'
@@ -187,6 +189,7 @@ interface Props {
    * motorway are the shape of the day, and merging them into one dot hides it.
    */
   clusterLoosely?: boolean
+  hazards?: RoadtripHazard[]
   /** Via points to draw as draggable handles, keyed by day (#1797). */
   roadtripVias?: Record<number, RoadtripVia[]>
   onMoveVia?: (dayId: number, id: number, lat: number, lng: number) => void
@@ -631,6 +634,7 @@ export function MapViewGL({
   fitKey = 0,
   focusPoints,
   clusterLoosely = false,
+  hazards,
   dayOrderMap = NO_DAY_ORDER,
   leftWidth = 0,
   rightWidth = 0,
@@ -706,6 +710,8 @@ export function MapViewGL({
   const containerRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any | null>(null)
+  const hazardPopupFactory = useCallback(() => new gl.Popup({ className: 'map-tooltip', maxWidth: '320px' }), [gl])
+  useHazardLayerGL(mapRef.current, mapReady, hazards, hazardPopupFactory)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const markersRef = useRef<Map<number, PlacePin>>(new Map())
   // Own layer for the hand-positioned place pins (MapLibre path, see makePlacePin).

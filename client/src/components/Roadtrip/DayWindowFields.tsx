@@ -3,6 +3,7 @@ import { Sunrise, Sunset } from 'lucide-react'
 import { useTranslation } from '../../i18n/TranslationContext'
 import { dayWindow } from './dayWindow'
 import CustomTimePicker from '../shared/CustomTimePicker'
+import SettingsHint from './SettingsHint'
 
 export default function DayWindowFields({ start, end, endMode = 'route', onSave }: {
   start?: string
@@ -25,7 +26,7 @@ export default function DayWindowFields({ start, end, endMode = 'route', onSave 
     }
   }
   return (
-    <fieldset className="flex flex-col gap-3">
+    <fieldset className="flex min-w-0 flex-col gap-3">
       <legend className="sr-only">{t('roadtrip.window.title')}</legend>
       {(['start', 'end'] as const).map(field => {
         const Icon = field === 'start' ? Sunrise : Sunset
@@ -45,10 +46,10 @@ export default function DayWindowFields({ start, end, endMode = 'route', onSave 
           </div>
         )
       })}
-      <p id="roadtrip-window-hint" role={invalid ? 'alert' : undefined} className={`text-caption ${invalid ? 'text-danger' : 'text-content-faint'}`}>
-        {t(invalid ? 'roadtrip.window.invalid' : 'roadtrip.window.hint')}
-      </p>
-      <fieldset className="flex flex-col gap-2 border-t border-edge-faint pt-3">
+      {invalid
+        ? <p id="roadtrip-window-hint" role="alert" className="text-caption text-danger">{t('roadtrip.window.invalid')}</p>
+        : <SettingsHint id="roadtrip-window-hint">{t('roadtrip.window.hint')}</SettingsHint>}
+      <fieldset className="flex min-w-0 flex-col gap-2 border-t border-edge-faint pt-3">
         <legend className="sr-only">{t('roadtrip.window.endAt')}</legend>
         <span className="text-body text-content-secondary">{t('roadtrip.window.endAt')}</span>
         <div className="flex flex-wrap gap-2">
@@ -61,7 +62,7 @@ export default function DayWindowFields({ start, end, endMode = 'route', onSave 
             </label>
           ))}
         </div>
-        <p id="roadtrip-end-mode-hint" className="text-caption text-content-faint">{t(`roadtrip.window.${endMode === 'stop' ? 'stopHint' : 'routeHint'}`)}</p>
+        <SettingsHint id="roadtrip-end-mode-hint">{t(`roadtrip.window.${endMode === 'stop' ? 'stopHint' : 'routeHint'}`)}</SettingsHint>
       </fieldset>
     </fieldset>
   )

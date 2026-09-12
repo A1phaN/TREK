@@ -1,6 +1,14 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.hazards.show': 'Εμφάνιση επικίνδυνων περιοχών',
+  'roadtrip.hazards.current': 'Τρέχουσες προειδοποιήσεις',
+  'roadtrip.hazards.note': 'Οι προειδοποιήσεις δεν σημαίνουν κλειστούς δρόμους. Η διαδρομή δεν αλλάζει.',
+  'roadtrip.hazards.point': 'Μόνο τοποθεσία· άγνωστη πληγείσα περιοχή.',
+  'roadtrip.hazards.loading': 'Φόρτωση προειδοποιήσεων…',
+  'roadtrip.hazards.unavailable': 'Μη διαθέσιμο',
+  'roadtrip.hazards.offline': 'Εκτός σύνδεσης: μη διαθέσιμες προειδοποιήσεις',
+  'roadtrip.hazards.partial': 'Περιορισμένη κάλυψη',
   'roadtrip.stops.section': 'Στάσεις εξυπηρέτησης',
   'roadtrip.stops.inDays': 'Εμφάνιση και στις Ημέρες',
   'roadtrip.stops.daysHint':

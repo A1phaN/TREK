@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Polyline, CircleMarker, Circle, useMap
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { makeMarkerDraggable, makePoiDraggable, draggedPoiId } from './markerDrag'
 import RoadtripViaMarkers from './RoadtripViaMarkers'
+import HazardLayers from './HazardLayers'
 import { ALT_CASING, ALT_LABEL_TEXT } from '../Roadtrip/alternativeColors'
 import { serviceMarkerHtml, serviceMarkerOuter } from '../Roadtrip/serviceMarker'
 import type { AlternativeOverlay } from '../Roadtrip/alternativeOverlays'
@@ -666,6 +667,7 @@ export const MapView = memo(function MapView({
   tripId,
   routeVias = [],
   dayBoundaryControls,
+  hazards,
   accessLines = [],
   onPoiDropOnRoute,
   onRouteClick,
@@ -1153,6 +1155,7 @@ export const MapView = memo(function MapView({
         roadRoutes={transportRoutes}
       />
 
+      {hazards?.length > 0 && <HazardLayers hazards={hazards} />}
       <ClusteredPois pois={pois} enabled={clusterLoosely} onPoiClick={onPoiClick}>{poiMarkers}</ClusteredPois>
       {/* Charging stops / rest areas a plugin route places on the drawn day route.
           Host-vetted data (server-normalized), rendered as plain tone dots. */}

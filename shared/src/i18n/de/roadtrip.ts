@@ -1,10 +1,17 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.hazards.show': 'Gefahrengebiete anzeigen',
+  'roadtrip.hazards.current': 'Aktuelle Warnungen',
+  'roadtrip.hazards.note': 'Warnungen sind keine Straßensperrungen. Die Route bleibt unverändert.',
+  'roadtrip.hazards.point': 'Nur Ereignisort, betroffene Fläche unbekannt.',
+  'roadtrip.hazards.loading': 'Warnungen werden geladen…',
+  'roadtrip.hazards.unavailable': 'Nicht verfügbar',
+  'roadtrip.hazards.offline': 'Offline: aktuelle Warnungen nicht verfügbar',
+  'roadtrip.hazards.partial': 'Eingeschränkte Abdeckung',
   'roadtrip.stops.section': 'Service Stops',
   'roadtrip.stops.inDays': 'Auch in Days anzeigen',
-  'roadtrip.stops.daysHint':
-    'Gilt für alle Service Stops dieser Reise. Ausgeschaltet bleiben sie ausschließlich im Roadtrip-Plan; beim Einschalten erscheinen sie wieder in Days.',
+  'roadtrip.stops.daysHint': 'Aus: Alle Service Stops bleiben nur im Roadtrip.',
   'roadtrip.window.dragHint':
     'Online kannst du ein Tagesende entlang der Route oder auf einen Ort ziehen; ein Rechtsklick stellt das automatische Ende wieder her.',
   'roadtrip.window.resetBoundaries': 'Automatische Tagesenden wiederherstellen',
@@ -14,16 +21,15 @@ const roadtrip: TranslationStrings = {
   'roadtrip.window.endAt': 'Tagesende planen',
   'roadtrip.window.onRoute': 'Auf der Strecke',
   'roadtrip.window.atStop': 'Am letzten Ort',
-  'roadtrip.window.routeHint': 'Zur Endzeit an der erreichten Stelle auf der Strecke pausieren.',
-  'roadtrip.window.stopHint': 'Am letzten Ort bleiben, wenn der nächste vor Tagesende nicht mehr erreichbar ist.',
+  'roadtrip.window.routeHint': 'Zur Endzeit auf der Strecke pausieren.',
+  'roadtrip.window.stopHint': 'Stoppen, wenn der nächste Ort zu spät erreicht würde.',
   'roadtrip.window.legTooLong':
     'Eine Fahrt ist länger als das tägliche Zeitfenster. Ergänze einen Ort unterwegs oder wähle die Pause auf der Strecke.',
   'roadtrip.window.pointLabel': 'Tagesende von Tag {day} um {time} Uhr',
   'roadtrip.window.title': 'Tägliche Reisezeiten',
   'roadtrip.window.start': 'Tagesbeginn',
   'roadtrip.window.end': 'Tagesende',
-  'roadtrip.window.hint':
-    'Beide Zeiten setzen, um tägliche Pausen zu planen. Ein leeres Feld schaltet dies aus. Manuelle Zeiten haben Vorrang. Tage werden automatisch verbunden.',
+  'roadtrip.window.hint': 'Beide Zeiten aktivieren. Manuelle Zeiten gehen vor.',
   'roadtrip.window.invalid': 'Das Tagesende muss nach dem Tagesbeginn liegen.',
   'roadtrip.window.stop': 'Tagesende',
   'roadtrip.window.resume': 'Weiterfahrt',
@@ -75,8 +81,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.limit.fullNote': 'Ein Stopp macht wieder voll',
   'roadtrip.limit.rangeEmpty': 'Keine Reichweite',
   'roadtrip.limit.rangeEmptyHint': 'Trag eine Reichweite ein oder fülle die Felder aus, dann rechnet TREK sie aus.',
-  'roadtrip.limit.specHint': 'Ausgefüllt bestimmen diese Werte die Reichweite oben.',
-  'roadtrip.limit.vehicleHint': 'Sag, was du fährst, dann kannst du statt der Reichweite die Fahrzeugdaten angeben.',
+  'roadtrip.limit.specHint': 'Fahrzeugdaten bestimmen die Reichweite.',
+  'roadtrip.limit.vehicleHint': 'Fahrzeug wählen und Reichweite berechnen.',
   'roadtrip.limit.minutes': 'Min',
   'roadtrip.limit.off': 'aus',
   'roadtrip.limit.blockNote': 'Ein Block = {distance}',
@@ -85,7 +91,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.limit.echoDry': '{count} Abschnitte ohne erreichbaren Stopp.',
   'roadtrip.limit.echoEmpty': 'Öffne einen Roadtrip, um zu sehen, was das bewirkt.',
   'roadtrip.limit.specToggle': 'Aus den Fahrzeugdaten rechnen',
-  'roadtrip.limit.hint': 'Zählt nur Fahrzeit. Standzeiten und Übernachtungen sind nicht enthalten.',
+  'roadtrip.limit.hint': 'Nur Fahrzeit, ohne Aufenthalte und Nachtetappen.',
   'roadtrip.limit.legOver': '{time} über deiner längsten Fahrt',
   'roadtrip.limit.dayOver': '{time} drüber',
   'roadtrip.limit.range': '{distance} seit dem letzten Tanken',
@@ -93,15 +99,13 @@ const roadtrip: TranslationStrings = {
   'roadtrip.line.section': 'Routenlinie',
   'roadtrip.line.connect': 'Tage verbinden',
   'roadtrip.line.dayColors': 'Farbe je Tag',
-  'roadtrip.line.hint': 'Routet auch die Strecke zwischen zwei Tagen und zählt sie zum Ankunftstag.',
+  'roadtrip.line.hint': 'Verbindungsfahrten zählen zum Ankunftstag.',
   'roadtrip.avoid.section': 'Möglichst meiden',
   'roadtrip.avoid.toll': 'Mautstraßen',
   'roadtrip.avoid.motorway': 'Autobahnen',
   'roadtrip.avoid.ferry': 'Fähren',
-  'roadtrip.avoid.hint':
-    'Das wird nur schwächer gewichtet, nicht verboten. Wo eine Fahrt keinen Weg drumherum hat, nutzt sie es trotzdem, und der Tag sagt es.',
-  'roadtrip.avoid.unavailable':
-    'Nicht verfügbar: diese Instanz routet über ihre eigene Maschine, die keine Straßenklasse auslassen kann.',
+  'roadtrip.avoid.hint': 'Meidet nach Möglichkeit und markiert Ausnahmen.',
+  'roadtrip.avoid.unavailable': 'Der Routing-Anbieter unterstützt kein Meiden.',
   'roadtrip.avoid.badge': '{count} gemieden',
   'roadtrip.avoid.missed': '{classes} unvermeidbar',
   'roadtrip.avoid.missedHint':

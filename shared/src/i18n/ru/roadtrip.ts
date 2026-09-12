@@ -1,6 +1,14 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.hazards.show': 'Показывать опасные зоны',
+  'roadtrip.hazards.current': 'Текущие предупреждения',
+  'roadtrip.hazards.note': 'Предупреждения не означают закрытие дорог. Маршрут не меняется.',
+  'roadtrip.hazards.point': 'Только место события; затронутая зона неизвестна.',
+  'roadtrip.hazards.loading': 'Загрузка предупреждений…',
+  'roadtrip.hazards.unavailable': 'Недоступно',
+  'roadtrip.hazards.offline': 'Нет сети: текущие предупреждения недоступны',
+  'roadtrip.hazards.partial': 'Ограниченный охват',
   'roadtrip.stops.section': 'Сервисные остановки',
   'roadtrip.stops.inDays': 'Показывать также в разделе «Дни»',
   'roadtrip.stops.daysHint':

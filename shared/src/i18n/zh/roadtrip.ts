@@ -1,6 +1,14 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.hazards.show': '显示危险区域',
+  'roadtrip.hazards.current': '当前警报',
+  'roadtrip.hazards.note': '警报不代表道路封闭。路线保持不变。',
+  'roadtrip.hazards.point': '仅有事件位置，受影响区域未知。',
+  'roadtrip.hazards.loading': '正在加载警报…',
+  'roadtrip.hazards.unavailable': '不可用',
+  'roadtrip.hazards.offline': '离线：无法获取当前警报',
+  'roadtrip.hazards.partial': '覆盖有限',
   'roadtrip.stops.section': '服务停靠点',
   'roadtrip.stops.inDays': '也显示于每日行程',
   'roadtrip.stops.daysHint':

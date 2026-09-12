@@ -77,4 +77,5 @@ export * from './plugin-permissions';
 // Plugin settings contracts: the settings-field descriptor + admin instance-config wire shapes.
 export * from './plugins/plugins.schema';
 export * from './roadtrip/preferences.schema';
+export * from './roadtrip/hazards.schema';
 export * from './roadtrip/planning.schema';

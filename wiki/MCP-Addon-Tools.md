@@ -235,6 +235,8 @@ Resources provide read-only access via `trek://` URIs. The following resources r
 
 ---
 
+Roadtrip also exposes `get_roadtrip_hazards` (`tripId`, trips read scope). It returns current DWD/GDACS notices with geometry, source timestamps and availability. This does not reroute the trip. The shared `roadtrip_show_hazards` setting controls the online map overlay.
+
 ## Related
 
 - [MCP-Tools-and-Resources](MCP-Tools-and-Resources)

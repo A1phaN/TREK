@@ -21,6 +21,7 @@ export const roadtripPreferencesSchema = z
     roadtrip_connect_days: z.boolean().optional(),
     roadtrip_service_stops_in_days: z.boolean().optional(),
     roadtrip_day_colors: z.boolean().optional(),
+    roadtrip_show_hazards: z.boolean().optional(),
     roadtrip_avoid: z
       .string()
       .max(32)

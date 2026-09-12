@@ -1,6 +1,14 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.hazards.show': '위험 지역 표시',
+  'roadtrip.hazards.current': '현재 경보',
+  'roadtrip.hazards.note': '경보는 도로 폐쇄를 의미하지 않습니다. 경로는 변경되지 않습니다.',
+  'roadtrip.hazards.point': '발생 위치만 표시하며 영향 지역은 알 수 없습니다.',
+  'roadtrip.hazards.loading': '경보 불러오는 중…',
+  'roadtrip.hazards.unavailable': '사용 불가',
+  'roadtrip.hazards.offline': '오프라인: 현재 경보를 사용할 수 없습니다',
+  'roadtrip.hazards.partial': '제한된 범위',
   'roadtrip.stops.section': '편의시설 경유지',
   'roadtrip.stops.inDays': '일별 보기에도 표시',
   'roadtrip.stops.daysHint':

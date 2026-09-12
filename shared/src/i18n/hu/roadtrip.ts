@@ -1,6 +1,14 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.hazards.show': 'Veszélyes területek megjelenítése',
+  'roadtrip.hazards.current': 'Aktuális figyelmeztetések',
+  'roadtrip.hazards.note': 'A figyelmeztetések nem útlezárások. Az útvonal változatlan marad.',
+  'roadtrip.hazards.point': 'Csak helyszín; az érintett terület ismeretlen.',
+  'roadtrip.hazards.loading': 'Figyelmeztetések betöltése…',
+  'roadtrip.hazards.unavailable': 'Nem érhető el',
+  'roadtrip.hazards.offline': 'Offline: aktuális figyelmeztetések nem érhetők el',
+  'roadtrip.hazards.partial': 'Korlátozott lefedettség',
   'roadtrip.stops.section': 'Szervizmegállók',
   'roadtrip.stops.inDays': 'Megjelenítés a Napok nézetben is',
   'roadtrip.stops.daysHint':

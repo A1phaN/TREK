@@ -16,6 +16,7 @@ import ToggleSwitch from '../Settings/ToggleSwitch'
 import type { DistanceUnit, RouteAvoidClass } from '../../types'
 import { FS } from './typeScale'
 import DayWindowFields from './DayWindowFields'
+import SettingsHint from './SettingsHint'
 import { dayWindow } from './dayWindow'
 
 /**
@@ -193,10 +194,10 @@ function Panel({ icon: Icon, title, note, children }: {
   children: React.ReactNode
 }): React.ReactElement {
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-edge-faint bg-surface-secondary px-4 py-3.5">
+    <section className="flex min-w-0 flex-col gap-3 rounded-xl border border-edge-faint bg-surface-secondary px-4 py-3.5">
       <SectionTitle icon={Icon}>{title}</SectionTitle>
       {children}
-      {note ? <p className="text-caption leading-snug text-content-faint">{note}</p> : null}
+      {note ? <SettingsHint>{note}</SettingsHint> : null}
     </section>
   )
 }
@@ -429,7 +430,7 @@ export default function RoadtripLimitsCard({ onSave, onResetDayBoundaries, loadi
             {t('roadtrip.limit.title')}
           </span>
         }>
-          <div className="flex flex-col gap-4">
+          <div className="flex min-w-0 flex-col gap-4">
             {/* Two columns, kept. One column reads more tidily but turns the dialog into
                 something that has to be scrolled, and a setting you cannot see while you
                 change another is worse than a seam down the middle.
@@ -439,7 +440,7 @@ export default function RoadtripLimitsCard({ onSave, onResetDayBoundaries, loadi
                 ends on the same right edge, and the panels are stacked to one rhythm. The
                 left column holds trip settings, the right holds the car and route appearance. */}
             <div className="grid items-start gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-4">
+              <div className="flex min-w-0 flex-col gap-4">
                 <Panel icon={Clock} title={t('roadtrip.limit.sectionDriving')} note={t('roadtrip.limit.hint')}>
                   <LimitRow
                     icon={Clock}
@@ -484,7 +485,7 @@ export default function RoadtripLimitsCard({ onSave, onResetDayBoundaries, loadi
                 </Panel>
               </div>
 
-              <div className="flex flex-col gap-4">
+              <div className="flex min-w-0 flex-col gap-4">
                 <Panel
                   icon={Car}
                   title={t('roadtrip.limit.sectionVehicle')}
@@ -640,6 +641,10 @@ export default function RoadtripLimitsCard({ onSave, onResetDayBoundaries, loadi
                     disabled={false}
                     onToggle={() => onSave?.('roadtrip_day_colors', !settings.roadtrip_day_colors)}
                   />
+                </Panel>
+                <Panel icon={Signpost} title={t('roadtrip.hazards.current')} note={t('roadtrip.hazards.note')}>
+                  <AvoidRow icon={Signpost} label={t('roadtrip.hazards.show')} on={settings.roadtrip_show_hazards === true} disabled={!onSave}
+                    onToggle={() => onSave?.('roadtrip_show_hazards', !settings.roadtrip_show_hazards)} />
                 </Panel>
                 <Panel icon={Signpost} title={t('roadtrip.stops.section')} note={t('roadtrip.stops.daysHint')}>
                   <AvoidRow icon={Link2} label={t('roadtrip.stops.inDays')}

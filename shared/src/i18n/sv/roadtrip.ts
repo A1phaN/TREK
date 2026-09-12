@@ -1,6 +1,14 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.hazards.show': 'Visa riskområden',
+  'roadtrip.hazards.current': 'Aktuella varningar',
+  'roadtrip.hazards.note': 'Varningar är inte vägavstängningar. Rutten ändras inte.',
+  'roadtrip.hazards.point': 'Endast plats; berört område okänt.',
+  'roadtrip.hazards.loading': 'Läser in varningar…',
+  'roadtrip.hazards.unavailable': 'Inte tillgängligt',
+  'roadtrip.hazards.offline': 'Offline: aktuella varningar saknas',
+  'roadtrip.hazards.partial': 'Begränsad täckning',
   'roadtrip.stops.section': 'Servicestopp',
   'roadtrip.stops.inDays': 'Visa även i Dagar',
   'roadtrip.stops.daysHint':

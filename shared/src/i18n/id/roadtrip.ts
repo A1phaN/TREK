@@ -1,6 +1,14 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.hazards.show': 'Tampilkan area bahaya',
+  'roadtrip.hazards.current': 'Peringatan terkini',
+  'roadtrip.hazards.note': 'Peringatan bukan penutupan jalan. Rute tidak berubah.',
+  'roadtrip.hazards.point': 'Hanya lokasi; area terdampak tidak diketahui.',
+  'roadtrip.hazards.loading': 'Memuat peringatan…',
+  'roadtrip.hazards.unavailable': 'Tidak tersedia',
+  'roadtrip.hazards.offline': 'Luring: peringatan terkini tidak tersedia',
+  'roadtrip.hazards.partial': 'Cakupan terbatas',
   'roadtrip.stops.section': 'Perhentian layanan',
   'roadtrip.stops.inDays': 'Tampilkan juga di Hari',
   'roadtrip.stops.daysHint':

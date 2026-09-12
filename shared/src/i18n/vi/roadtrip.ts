@@ -1,6 +1,14 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.hazards.show': 'Hiển thị vùng nguy hiểm',
+  'roadtrip.hazards.current': 'Cảnh báo hiện tại',
+  'roadtrip.hazards.note': 'Cảnh báo không có nghĩa là đường bị đóng. Tuyến đường không thay đổi.',
+  'roadtrip.hazards.point': 'Chỉ có vị trí; chưa rõ vùng bị ảnh hưởng.',
+  'roadtrip.hazards.loading': 'Đang tải cảnh báo…',
+  'roadtrip.hazards.unavailable': 'Không khả dụng',
+  'roadtrip.hazards.offline': 'Ngoại tuyến: không có cảnh báo hiện tại',
+  'roadtrip.hazards.partial': 'Phạm vi hạn chế',
   'roadtrip.stops.section': 'Điểm dừng dịch vụ',
   'roadtrip.stops.inDays': 'Hiển thị cả trong Ngày',
   'roadtrip.stops.daysHint':

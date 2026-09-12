@@ -19,6 +19,9 @@ import { RoadtripController } from './roadtrip.controller';
 import { RoadtripMcp } from './roadtrip.mcp';
 import { RoadtripService } from './roadtrip.service';
 import { Module } from '@nestjs/common';
+import { RoadtripHazardsController } from './roadtrip-hazards.controller';
+import { RoadtripHazardsService } from './roadtrip-hazards.service';
+import { RoadtripHazardsMcp } from './roadtrip-hazards.mcp';
 
 /** Road trip domain (#1797): the points a drive is routed through. Registered in AppModule. */
 @Module({
@@ -34,8 +37,10 @@ import { Module } from '@nestjs/common';
     PluginsRuntimeModule,
     MapsModule,
   ],
-  controllers: [RoadtripPreferencesController, RoadtripController, DayBoundariesController],
+  controllers: [RoadtripPreferencesController, RoadtripController, DayBoundariesController, RoadtripHazardsController],
   providers: [
+    RoadtripHazardsService,
+    RoadtripHazardsMcp,
     RoadtripService,
     RoadtripMcp,
     DayBoundariesService,

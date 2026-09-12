@@ -1,10 +1,17 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.hazards.show': 'Show hazard areas',
+  'roadtrip.hazards.current': 'Current warnings',
+  'roadtrip.hazards.note': 'Warnings are not road closures. Routes stay unchanged.',
+  'roadtrip.hazards.point': 'Location only; affected area unknown.',
+  'roadtrip.hazards.loading': 'Loading warnings…',
+  'roadtrip.hazards.unavailable': 'Unavailable',
+  'roadtrip.hazards.offline': 'Offline: live warnings unavailable',
+  'roadtrip.hazards.partial': 'Limited coverage',
   'roadtrip.stops.section': 'Service stops',
   'roadtrip.stops.inDays': 'Show in Days too',
-  'roadtrip.stops.daysHint':
-    'Applies to all service stops in this trip. When off, they stay exclusively in the Roadtrip plan. Turn on to show them in Days again.',
+  'roadtrip.stops.daysHint': 'Off keeps all service stops in Roadtrip only.',
   'roadtrip.window.dragHint':
     'While online, drag a day ending along the route or onto a place; right-click it to restore the automatic ending.',
   'roadtrip.window.resetBoundaries': 'Restore automatic day endings',
@@ -14,16 +21,15 @@ const roadtrip: TranslationStrings = {
   'roadtrip.window.endAt': 'End the day',
   'roadtrip.window.onRoute': 'Along the route',
   'roadtrip.window.atStop': 'At the last place',
-  'roadtrip.window.routeHint': 'Pause along the route when the end time is reached.',
-  'roadtrip.window.stopHint': 'Stay at the last place if the next one cannot be reached before the end time.',
+  'roadtrip.window.routeHint': 'Pause on the route at the end time.',
+  'roadtrip.window.stopHint': 'Stop before the next place would exceed the end time.',
   'roadtrip.window.legTooLong':
     'A drive exceeds the daily travel window. Add a place along the way or choose to pause along the route.',
   'roadtrip.window.pointLabel': 'End of day {day} at {time}',
   'roadtrip.window.title': 'Daily travel times',
   'roadtrip.window.start': 'Day start time',
   'roadtrip.window.end': 'Day end time',
-  'roadtrip.window.hint':
-    'Set both times to plan daily breaks. Clear either to turn this off. Manual times take priority. Days are connected automatically.',
+  'roadtrip.window.hint': 'Set both times to enable. Manual times take priority.',
   'roadtrip.window.invalid': 'The end time must be later than the start time.',
   'roadtrip.window.stop': 'End of day',
   'roadtrip.window.resume': 'Continue journey',
@@ -74,8 +80,8 @@ const roadtrip: TranslationStrings = {
   'roadtrip.limit.fullNote': 'A stop fills right up',
   'roadtrip.limit.rangeEmpty': 'No range set',
   'roadtrip.limit.rangeEmptyHint': 'Type a range, or fill in the figures below and TREK works it out.',
-  'roadtrip.limit.specHint': 'Filled in, these decide the range above.',
-  'roadtrip.limit.vehicleHint': 'Name the kind of car and you can state its figures instead of a range.',
+  'roadtrip.limit.specHint': 'Vehicle details determine the range.',
+  'roadtrip.limit.vehicleHint': 'Choose a vehicle to calculate its range.',
   'roadtrip.limit.minutes': 'min',
   'roadtrip.limit.off': 'off',
   'roadtrip.limit.blockNote': 'One block = {distance}',
@@ -84,7 +90,7 @@ const roadtrip: TranslationStrings = {
   'roadtrip.limit.echoDry': '{count} stretches with no reachable stop.',
   'roadtrip.limit.echoEmpty': 'Open a road trip to see what these do to it.',
   'roadtrip.limit.specToggle': 'Work it out from the car',
-  'roadtrip.limit.hint': 'Counts driving time only. Time spent at stops and overnight legs are not included.',
+  'roadtrip.limit.hint': 'Driving only, excluding stays and overnight legs.',
   'roadtrip.limit.legOver': '{time} over your longest drive',
   'roadtrip.limit.dayOver': '{time} over',
   'roadtrip.limit.range': '{distance} since the last fill-up',
@@ -92,15 +98,13 @@ const roadtrip: TranslationStrings = {
   'roadtrip.line.section': 'Route line',
   'roadtrip.line.connect': 'Connect the days',
   'roadtrip.line.dayColors': 'A colour per day',
-  'roadtrip.line.hint': 'Also routes the gap between two days, and counts it on the day it arrives.',
+  'roadtrip.line.hint': 'Connecting drives count toward the arrival day.',
   'roadtrip.avoid.section': 'Avoid where possible',
   'roadtrip.avoid.toll': 'Toll roads',
   'roadtrip.avoid.motorway': 'Motorways',
   'roadtrip.avoid.ferry': 'Ferries',
-  'roadtrip.avoid.hint':
-    'These are weighted down, not banned. Where a drive has no way around one, it still uses it and the day says so.',
-  'roadtrip.avoid.unavailable':
-    'Not available: this instance routes through its own engine, which cannot leave a road class out.',
+  'roadtrip.avoid.hint': 'Avoids where possible; exceptions are flagged.',
+  'roadtrip.avoid.unavailable': 'Your routing provider does not support avoidance.',
   'roadtrip.avoid.badge': '{count} avoided',
   'roadtrip.avoid.missed': '{classes} unavoidable',
   'roadtrip.avoid.missedHint':

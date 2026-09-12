@@ -1,6 +1,14 @@
 import type { TranslationStrings } from '../types';
 
 const roadtrip: TranslationStrings = {
+  'roadtrip.hazards.show': 'Zobrazit nebezpečné oblasti',
+  'roadtrip.hazards.current': 'Aktuální výstrahy',
+  'roadtrip.hazards.note': 'Výstrahy nejsou uzavírky silnic. Trasa se nemění.',
+  'roadtrip.hazards.point': 'Pouze místo; zasažená oblast není známa.',
+  'roadtrip.hazards.loading': 'Načítání výstrah…',
+  'roadtrip.hazards.unavailable': 'Nedostupné',
+  'roadtrip.hazards.offline': 'Offline: aktuální výstrahy nejsou dostupné',
+  'roadtrip.hazards.partial': 'Omezené pokrytí',
   'roadtrip.stops.section': 'Servisní zastávky',
   'roadtrip.stops.inDays': 'Zobrazit také ve Dnech',
   'roadtrip.stops.daysHint':

@@ -91,6 +91,10 @@ When you first open a trip, a brief loading screen appears while the planner dat
 | Weather forecasts | [Weather-Forecasts](Weather-Forecasts) |
 | Reservations and bookings | [Reservations-and-Bookings](Reservations-and-Bookings) |
 
+Driving settings includes **Show hazard areas**, off by default and shared by the trip. In online Roadtrip mode, the map loads current DWD warnings for Germany and worldwide GDACS notices. Click an area or event point for its source report and update time. A point alone does not describe the affected area. Feeds refresh every ten minutes; unavailable or incomplete sources are labelled. These are current notices, not forecasts for travel dates or confirmed road closures, and they do not change routing. GDACS supplies a limited recent-event feed, with affected-area geometry loaded for up to twelve flood, wildfire or cyclone events. Coverage is not exhaustive.
+
+> **AI / MCP:** Use `get_roadtrip_hazards` to read notices and source availability. Set `roadtrip_show_hazards` through `update_roadtrip_settings` to change the shared map setting.
+
 ## Related Pages
 
 - [Places-and-Search](Places-and-Search)

@@ -17,6 +17,7 @@ import { DatabaseModule } from '../../src/nest/database/database.module';
 import { PermissionsService } from '../../src/nest/permissions/permissions.service';
 import { RealtimeModule } from '../../src/nest/realtime/realtime.module';
 import { RoadtripModule } from '../../src/nest/roadtrip/roadtrip.module';
+import { RoadtripHazardsService } from '../../src/nest/roadtrip/roadtrip-hazards.service';
 import { seedUser, sessionCookie } from './harness';
 import { Test } from '@nestjs/testing';
 
@@ -130,6 +131,17 @@ describe('Roadtrip e2e (real guard chain + temp SQLite)', () => {
   });
 
   const cookie = () => sessionCookie(1);
+  it('gates live hazards by addon, authentication and trip access', async () => {
+    const read = vi.spyOn(app.get(RoadtripHazardsService), 'read').mockResolvedValue({ fetchedAt: new Date().toISOString(), hazards: [], sources: [] });
+    try {
+      await request(server).get('/api/trips/5/roadtrip/hazards').expect(401);
+      await request(server).get('/api/trips/6/roadtrip/hazards').set('Cookie', cookie()).expect(404);
+      await request(server).get('/api/trips/5/roadtrip/hazards').set('Cookie', cookie()).expect(200);
+      setAddon(false);
+      await request(server).get('/api/trips/5/roadtrip/hazards').set('Cookie', cookie()).expect(404);
+      expect(read).toHaveBeenCalledTimes(1);
+    } finally { read.mockRestore(); }
+  });
 
   describe('shared trip driving preferences', () => {
     it('shares values with members and isolates other trips', async () => {
