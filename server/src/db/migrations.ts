@@ -4588,6 +4588,9 @@ function runMigrations(db: Database.Database): void {
       const cols = db.prepare("SELECT name FROM pragma_table_info('budget_settlements')").all() as Array<{ name: string }>;
       if (!cols.some(c => c.name === 'settled_at')) {
         db.exec('ALTER TABLE budget_settlements ADD COLUMN settled_at TEXT');
+      }
+    },
+
     /**
      * Amap (高德) as a keyed places provider.
      *
