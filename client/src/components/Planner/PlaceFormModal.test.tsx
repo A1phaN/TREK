@@ -462,33 +462,34 @@ describe('PlaceFormModal', () => {
     expect(await screen.findByText('OpenStreetMap')).toBeInTheDocument();
   });
 
-  // The notice says what is actually true per provider choice, not "add a
-  // Google key" on an install whose admin picked Amap. See utils/placesProvider.
-  describe('FE-PLANNER-PLACEFORM-022b: the OSM notice follows the provider choice', () => {
-    it('suggests the Amap key when the admin chose Amap and none is set', () => {
-      seedStore(useAuthStore, { user: buildUser(), isAuthenticated: true, hasMapsKey: false, hasAmapKey: false, placesProvider: 'amap' });
-      render(<PlaceFormModal {...defaultProps} />);
-      expect(screen.getByText(/高德|Amap/i)).toBeInTheDocument();
-    });
+  it('FE-PLANNER-PLACEFORM-022d: an Amap list marks its rows, and a pick keeps the Amap id', async () => {
+    // Amap answers from the slot Google otherwise holds, so its rows get the
+    // same mark the other sources get. The id travels with the place: it is
+    // what lets the saved place keep opening against Amap after the admin
+    // switches providers.
+    const user = userEvent.setup();
+    const onSave = vi.fn();
+    server.use(
+      http.post('/api/maps/search', () =>
+        HttpResponse.json({
+          places: [
+            { name: '天安门', address: '北京市东城区', lat: '39.9087', lng: '116.3975', amap_poi_id: 'amap:B000A7BD6C', source: 'amap' },
+          ],
+          source: 'amap',
+        }),
+      ),
+    );
 
-    it('stays quiet when the chosen provider has its key', () => {
-      seedStore(useAuthStore, { user: buildUser(), isAuthenticated: true, hasMapsKey: false, hasAmapKey: true, placesProvider: 'amap' });
-      render(<PlaceFormModal {...defaultProps} />);
-      expect(screen.queryByText(/OpenStreetMap/i)).not.toBeInTheDocument();
-    });
+    render(<PlaceFormModal {...defaultProps} onSave={onSave} />);
+    await user.type(screen.getByPlaceholderText('Search places...'), 'Tiananmen');
+    await user.keyboard('{Enter}');
 
-    it('stays quiet when the admin explicitly chose OpenStreetMap', () => {
-      seedStore(useAuthStore, { user: buildUser(), isAuthenticated: true, hasMapsKey: false, hasAmapKey: false, placesProvider: 'openstreetmap' });
-      render(<PlaceFormModal {...defaultProps} />);
-      // A deliberate choice is not a gap to fill — no upsell line at all.
-      expect(screen.queryByText(/OpenStreetMap/i)).not.toBeInTheDocument();
-    });
+    expect(await screen.findByText('Amap')).toBeInTheDocument();
+    await user.click(screen.getByText('天安门'));
+    await user.click(screen.getByRole('button', { name: /^Add$/i }));
 
-    it('stays quiet under auto when a Google key is configured', () => {
-      seedStore(useAuthStore, { user: buildUser(), isAuthenticated: true, hasMapsKey: true, hasAmapKey: true, placesProvider: 'auto' });
-      render(<PlaceFormModal {...defaultProps} />);
-      expect(screen.queryByText(/OpenStreetMap/i)).not.toBeInTheDocument();
-    });
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
+    expect(onSave.mock.calls[0][0].amap_poi_id).toBe('amap:B000A7BD6C');
   });
 
   // ── Category ─────────────────────────────────────────────────────────────────
